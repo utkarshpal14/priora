@@ -1,0 +1,22 @@
+# Flutter
+.dart_tool/
+.packages
+.pub-cache/
+build/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Environment
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
