@@ -10,8 +10,12 @@ __pycache__/
 .venv/
 venv/
 
-# Environment
+# Environment & Database
 .env
+*.env
+*.db
+*.sqlite
+*.sqlite3
 
 # IDE
 .vscode/

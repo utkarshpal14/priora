@@ -1,0 +1,90 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../features/auth/domain/auth_state.dart';
+import '../features/auth/presentation/controllers/auth_controller.dart';
+import '../features/auth/presentation/screens/login_screen.dart';
+import '../features/auth/presentation/screens/register_screen.dart';
+import '../features/dashboard/presentation/screens/placeholder_screen.dart';
+
+final routerProvider = Provider<GoRouter>((ref) {
+  final authState = ref.watch(authControllerProvider);
+
+  return GoRouter(
+    initialLocation: '/dashboard',
+    routes: [
+      // Public Routes
+      GoRoute(
+        path: '/login',
+        name: 'login',
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/register',
+        name: 'register',
+        builder: (context, state) => const RegisterScreen(),
+      ),
+
+      // Protected Routes
+      GoRoute(
+        path: '/dashboard',
+        name: 'dashboard',
+        builder: (context, state) => const PlaceholderScreen(),
+      ),
+      GoRoute(
+        path: '/tasks',
+        name: 'tasks',
+        builder: (context, state) => const PlaceholderScreen(),
+      ),
+      GoRoute(
+        path: '/planner',
+        name: 'planner',
+        builder: (context, state) => const PlaceholderScreen(),
+      ),
+      GoRoute(
+        path: '/goals',
+        name: 'goals',
+        builder: (context, state) => const PlaceholderScreen(),
+      ),
+      GoRoute(
+        path: '/review',
+        name: 'review',
+        builder: (context, state) => const PlaceholderScreen(),
+      ),
+      GoRoute(
+        path: '/reminders',
+        name: 'reminders',
+        builder: (context, state) => const PlaceholderScreen(),
+      ),
+      GoRoute(
+        path: '/attachments',
+        name: 'attachments',
+        builder: (context, state) => const PlaceholderScreen(),
+      ),
+    ],
+    redirect: (BuildContext context, GoRouterState state) {
+      final isAuthenticating = authState.status == AuthStatus.initial;
+      if (isAuthenticating) {
+        // App is still loading stored session on launch
+        return null;
+      }
+
+      final isAuthenticated = authState.isAuthenticated;
+      final location = state.uri.path;
+      final isPublicRoute = location == '/login' || location == '/register';
+
+      // 1. Unauthenticated users trying to access protected routes go to /login
+      if (!isAuthenticated && !isPublicRoute) {
+        return '/login';
+      }
+
+      // 2. Authenticated users on /login or /register go to /dashboard
+      if (isAuthenticated && isPublicRoute) {
+        return '/dashboard';
+      }
+
+      return null;
+    },
+  );
+});

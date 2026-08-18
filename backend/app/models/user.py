@@ -1,0 +1,46 @@
+from sqlalchemy import Boolean, String
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.core.database import BaseDBModel
+
+
+class User(BaseDBModel):
+    """
+    User entity definition for Priora.
+    Complies with DB-001 (UUID), DB-002 (Timestamps), DB-003 (Soft delete), and Document 11.
+    """
+    __tablename__ = "users"
+
+    email: Mapped[str] = mapped_column(
+        String(255),
+        unique=True,
+        index=True,
+        nullable=False,
+    )
+    hashed_password: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+    full_name: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+    avatar_url: Mapped[str | None] = mapped_column(
+        String(512),
+        nullable=True,
+    )
+    auth_provider: Mapped[str] = mapped_column(
+        String(20),
+        default="email",
+        nullable=False,
+    )
+    is_email_verified: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        nullable=False,
+    )
