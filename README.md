@@ -4,6 +4,8 @@ Plan. Prioritize. Progress.
 
 Priora is a productivity platform designed to help users manage tasks, deadlines, reminders, goals, schedules, and unfinished work in one place.
 
+---
+
 ## Tech Stack
 
 ### Frontend
@@ -19,9 +21,21 @@ Priora is a productivity platform designed to help users manage tasks, deadlines
 ### Notifications
 - Firebase Cloud Messaging
 
-## Status
+---
 
-🚧 In Development
+## Development Progress
 
-Current Phase:
-Milestone 0 - Project Setup
+- [x] Planning Phase
+- [ ] Milestone 0 - Project Setup
+- [ ] Milestone 1 - Authentication
+- [ ] Milestone 2 - Task Management
+- [ ] Milestone 3 - Deadlines & Priorities
+- [ ] Milestone 4 - Reminder System
+- [ ] Milestone 5 - Planner
+- [ ] Milestone 6 - End-of-Day Review
+- [ ] Milestone 7 - Goals
+- [ ] Milestone 8 - Attachments
+- [ ] Milestone 9 - Analytics
+- [ ] Milestone 10 - Polish
+- [ ] Milestone 11 - Testing
+- [ ] Milestone 12 - Release
