@@ -8,6 +8,7 @@ import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
 import '../features/dashboard/presentation/screens/placeholder_screen.dart';
 import '../features/planner/presentation/screens/planner_screen.dart';
+import '../features/review/presentation/screens/review_screen.dart';
 import '../features/tasks/presentation/screens/tasks_screen.dart';
 import '../shared/widgets/main_scaffold.dart';
 
@@ -61,7 +62,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/review',
             name: 'review',
-            builder: (context, state) => const PlaceholderScreen(),
+            builder: (context, state) => const ReviewScreen(),
           ),
           GoRoute(
             path: '/reminders',

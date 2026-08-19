@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
@@ -11,6 +12,7 @@ import 'package:frontend/features/planner/presentation/widgets/planner_progress_
 import 'package:frontend/features/planner/presentation/widgets/smart_focus_section.dart';
 import 'package:frontend/features/planner/presentation/widgets/timeline_schedule_section.dart';
 import 'package:frontend/features/planner/presentation/widgets/weekly_preview_section.dart';
+import 'package:frontend/features/review/presentation/widgets/evening_review_banner.dart';
 import 'package:frontend/features/tasks/presentation/widgets/create_task_bottom_sheet.dart';
 
 class PlannerScreen extends ConsumerWidget {
@@ -69,6 +71,11 @@ class PlannerScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.nights_stay_outlined, color: AppColors.primary, size: 20),
+            tooltip: 'End-of-Day Review',
+            onPressed: () => context.push('/review'),
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh_rounded, color: AppColors.textSecondary, size: 20),
             tooltip: 'Refresh Plan',
             onPressed: () => plannerNotifier.loadData(),
@@ -115,6 +122,12 @@ class PlannerScreen extends ConsumerWidget {
                   PlannerProgressSummary(
                     summary: summary,
                     isViewingToday: plannerState.isViewingToday,
+                  ),
+
+                // Evening Review Banner (inviting end-of-day wrap-up)
+                if (plannerState.isViewingToday)
+                  EveningReviewBanner(
+                    incompleteCount: summary?.pending ?? 0,
                   ),
 
                 // 3. Overdue Alert (if overdue tasks exist)
