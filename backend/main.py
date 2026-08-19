@@ -10,10 +10,30 @@ from app.core.config import settings
 from app.core.database import Base, engine
 
 
+def _sync_sqlite_schema() -> None:
+    """Helper to ensure new model columns in SQLite are automatically added if tables exist."""
+    from sqlalchemy import inspect, text
+
+    inspector = inspect(engine)
+    with engine.connect() as conn:
+        for table in Base.metadata.tables.values():
+            if inspector.has_table(table.name):
+                existing_cols = {col["name"] for col in inspector.get_columns(table.name)}
+                for column in table.columns:
+                    if column.name not in existing_cols:
+                        col_type = column.type.compile(engine.dialect)
+                        conn.execute(
+                            text(f"ALTER TABLE {table.name} ADD COLUMN {column.name} {col_type};")
+                        )
+                        conn.commit()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     # Auto-create tables on startup (DB-001 through DB-003)
     Base.metadata.create_all(bind=engine)
+    if engine.dialect.name == "sqlite":
+        _sync_sqlite_schema()
     yield
 
 
