@@ -7,6 +7,7 @@ import '../features/auth/presentation/controllers/auth_controller.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
 import '../features/dashboard/presentation/screens/placeholder_screen.dart';
+import '../features/tasks/presentation/screens/tasks_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authControllerProvider);
@@ -30,12 +31,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/dashboard',
         name: 'dashboard',
-        builder: (context, state) => const PlaceholderScreen(),
+        builder: (context, state) => const TasksScreen(),
       ),
       GoRoute(
         path: '/tasks',
         name: 'tasks',
-        builder: (context, state) => const PlaceholderScreen(),
+        builder: (context, state) => const TasksScreen(),
       ),
       GoRoute(
         path: '/planner',

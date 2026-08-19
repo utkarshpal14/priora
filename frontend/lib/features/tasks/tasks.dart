@@ -1,2 +1,10 @@
-/// Tasks feature module (Milestone 2 & 3)
-library;
+export 'data/tasks_api.dart';
+export 'data/tasks_repository.dart';
+export 'domain/category_model.dart';
+export 'domain/task_model.dart';
+export 'domain/tasks_state.dart';
+export 'presentation/controllers/tasks_controller.dart';
+export 'presentation/screens/tasks_screen.dart';
+export 'presentation/widgets/create_task_bottom_sheet.dart';
+export 'presentation/widgets/task_card.dart';
+export 'presentation/widgets/task_filter_chips.dart';
