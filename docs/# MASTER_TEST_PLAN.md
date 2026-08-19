@@ -2,9 +2,13 @@
 
 # Priora — Master QA Test Plan
 
+Version: 1.0
+Status: Living Document
+Last Updated: YYYY-MM-DD
+
 ---
 
-# Authentication
+# 1. Authentication
 
 ## Registration
 
@@ -46,7 +50,7 @@
 
 ---
 
-# Categories
+# 2. Categories
 
 ## Category Creation
 
@@ -73,7 +77,7 @@
 
 ---
 
-# Tasks
+# 3. Tasks
 
 ## Task Creation
 
@@ -82,6 +86,7 @@
 - Create task with category
 - Create task with deadline
 - Create task with priority
+- Create task with reminder
 - Create task with all fields
 - Create task with empty title
 - Create task with long title
@@ -94,6 +99,7 @@
 - Edit category
 - Edit deadline
 - Edit priority
+- Edit reminder
 - Edit multiple fields together
 - Save without changes
 - Cancel edit
@@ -130,6 +136,7 @@
 - In Progress
 - Completed
 - Cancelled
+- Overdue
 - All
 
 ### Priority
@@ -148,7 +155,7 @@
 
 ---
 
-# Deadlines & Priorities
+# 4. Deadlines & Priorities
 
 ## Deadline Assignment
 
@@ -196,7 +203,7 @@
 
 ---
 
-# Reminders
+# 5. Reminders
 
 ## Reminder Creation
 
@@ -250,54 +257,82 @@
 
 ---
 
-# Daily Planner (Future)
+# 6. Planner
 
-## Plan Generation
+## Calendar Navigation
+
+- Select day
+- Jump to today
+- Switch future dates
+- Switch past dates
+
+## Daily Plan
 
 - Generate plan for today
-- Generate plan with no tasks
+- Generate plan for empty day
 - Generate plan with overdue tasks
 - Generate plan with many tasks
-- Generate plan with deadlines
 
-## Priority Handling
+## Smart Focus
 
-- Critical tasks scheduled first
-- Overdue tasks scheduled first
-- Deadline tasks prioritized
+- Top 3 tasks calculated correctly
+- Overdue tasks prioritized
+- Critical tasks prioritized
+- Focus card actions work
 
-## Planner Updates
+## Timeline
 
-- Regenerate plan after new task
-- Regenerate plan after task completion
-- Regenerate plan after task deletion
+- Morning bucket
+- Afternoon bucket
+- Evening bucket
+- Flexible bucket
+
+## Weekly Preview
+
+- Correct task counts
+- Critical indicators
+- Completion counts
 
 ---
 
-# Daily Review & Rescheduling (Future)
+# 7. Daily Review
 
-## End Of Day Review
+## Review Summary
 
-- Show incomplete tasks
-- Show completed tasks
-- Show overdue tasks
+- Completed tasks shown
+- Incomplete tasks shown
+- Overdue tasks shown
+- Completion percentage correct
 
 ## Rescheduling
 
-- Move task to tomorrow
-- Move task to custom date
-- Keep deadline unchanged
-- Change deadline during reschedule
+- Move to tomorrow
+- Move to next week
+- Pick custom date
+- Mark done
+- Cancel task
 
-## Review Flow
+## Review Completion
 
-- Skip review
-- Complete review
-- Review with no pending tasks
+- All tasks processed
+- Celebration dialog appears
+- Statistics accurate
 
 ---
 
-# Long-Term Planning (Future)
+# 8. Future Features
+
+## Long-Term Goals
+
+- Create goal
+- Edit goal
+- Delete goal
+
+## Goal Breakdown
+
+- Convert goal to milestones
+- Convert milestone to tasks
+- Track progress
 
 ## Weekly Planning
 
@@ -309,38 +344,9 @@
 - Generate monthly plan
 - Update monthly plan
 
-## Goal Breakdown
-
-- Convert goal into tasks
-- Convert goal into milestones
-- Track goal progress
-
 ---
 
-# Attachments
-
-## Upload
-
-- Upload PDF
-- Upload Image
-- Upload Document
-- Upload Multiple Files
-- Upload Large File
-
-## Access
-
-- Open attachment
-- Download attachment
-- Preview attachment
-
-## Deletion
-
-- Delete attachment
-- Delete task with attachment
-
----
-
-# Dashboard & Analytics
+# 9. Analytics & Dashboard
 
 ## Metrics
 
@@ -359,36 +365,36 @@
 
 ## Accuracy
 
-- Metrics update after task creation
+- Metrics update after creation
 - Metrics update after completion
 - Metrics update after deletion
 
 ---
 
-# Offline & Sync
+# 10. Offline & Sync
 
-## Offline Mode
+## Offline
 
 - Open app offline
 - Create task offline
 - Edit task offline
 - Complete task offline
 
-## Reconnection
+## Sync
 
 - Sync after reconnect
-- Resolve conflicts
+- Conflict resolution
 - Retry failed requests
 
 ---
 
-# Security
+# 11. Security
 
 ## Authorization
 
 - User cannot access another user's tasks
 - User cannot access another user's reminders
-- User cannot modify another user's categories
+- User cannot access another user's categories
 
 ## Token Security
 
@@ -396,36 +402,100 @@
 - Expired JWT rejected
 - Refresh token misuse prevented
 
+## API Abuse
+
+- Rate limiting
+- Brute force protection
+- Malformed payload handling
+
 ---
 
-# Performance
+# 12. Performance
 
 ## Task Volume
 
 - 100 tasks
 - 500 tasks
 - 1000 tasks
+- 5000 tasks
 
 ## Reminder Volume
 
 - 50 reminders
 - 100 reminders
+- 500 reminders
 
 ## Startup
 
-- Cold start performance
-- Session restore performance
+- Cold start
+- Warm start
+- Session restore
 
 ---
 
-# Release Checklist
+# 13. Mobile Device Testing
+
+## Android
+
+- Android 10
+- Android 11
+- Android 12
+- Android 13
+- Android 14
+
+## Screen Sizes
+
+- Small phone
+- Medium phone
+- Large phone
+- Tablet
+
+## Orientation
+
+- Portrait
+- Landscape
+
+---
+
+# 14. Accessibility
+
+- Screen reader support
+- Large text support
+- High contrast mode
+- Keyboard navigation
+- Touch target size
+
+---
+
+# 15. Release Checklist
+
+## Functional
 
 - All automated tests passing
 - All manual tests passing
-- No critical bugs
 - No blocker bugs
+- No critical bugs
+
+## Mobile
+
 - Android notification testing complete
-- Production environment verified
-- Privacy policy available
+- Background notification testing complete
+- Deep link testing complete
+
+## Store Readiness
+
+- Privacy Policy available
+- Terms of Service available
 - App icon finalized
-- Play Store assets prepared
+- Screenshots prepared
+- Feature graphic prepared
+- Store description finalized
+- Versioning finalized
+
+## Production
+
+- Production environment verified
+- Database backup verified
+- Error monitoring configured
+- Analytics configured
+- Crash reporting configured
