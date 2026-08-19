@@ -1,26 +1,63 @@
-# Flutter
+# Flutter / Dart
 .dart_tool/
 .packages
 .pub-cache/
+.pub/
+.flutter-plugins
+.flutter-plugins-dependencies
 build/
+coverage/
+ephemeral/
+*.iml
 
-# Python
+# Platform-specific Flutter Ephemeral
+**/windows/flutter/ephemeral/
+**/linux/flutter/ephemeral/
+**/macos/Flutter/ephemeral/
+**/android/.gradle/
+**/android/app/build/
+
+# Python / FastAPI
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
 .venv/
 venv/
+ENV/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.log
 
-# Environment & Database
+# Environment & Secrets (Never commit credentials)
 .env
 *.env
+!.env.example
+*.pem
+*.key
+serviceAccountKey.json
+firebase-adminsdk*.json
+
+# Databases & Local Persistence
 *.db
+*.db-journal
 *.sqlite
 *.sqlite3
 
-# IDE
+# IDE & Editor Configs
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
-# OS
+# Operating System Files
 .DS_Store
+.DS_Store?
+._*
 Thumbs.db
+ehthumbs.db
+desktop.ini
