@@ -188,6 +188,8 @@ class TasksController extends StateNotifier<TasksState> {
     );
 
     final updatedTasks = state.tasks.map((t) => t.id == task.id ? updatedTask : t).toList();
+    final overdueCount = updatedTasks.where((t) => t.isOverdue).length;
+    final dueTodayCount = updatedTasks.where((t) => t.isDueToday).length;
     final updatedMetrics = TaskMetricsModel(
       total: state.metrics.total,
       completed: willComplete
@@ -196,6 +198,8 @@ class TasksController extends StateNotifier<TasksState> {
       pending: willComplete
           ? (state.metrics.pending > 0 ? state.metrics.pending - 1 : 0)
           : state.metrics.pending + 1,
+      overdue: overdueCount,
+      dueToday: dueTodayCount,
     );
 
     state = state.copyWith(tasks: updatedTasks, metrics: updatedMetrics);
@@ -224,6 +228,8 @@ class TasksController extends StateNotifier<TasksState> {
 
     // Optimistic removal
     final updatedTasks = state.tasks.where((t) => t.id != taskId).toList();
+    final overdueCount = updatedTasks.where((t) => t.isOverdue).length;
+    final dueTodayCount = updatedTasks.where((t) => t.isDueToday).length;
     final updatedMetrics = TaskMetricsModel(
       total: state.metrics.total > 0 ? state.metrics.total - 1 : 0,
       completed: wasCompleted
@@ -232,6 +238,8 @@ class TasksController extends StateNotifier<TasksState> {
       pending: !wasCompleted
           ? (state.metrics.pending > 0 ? state.metrics.pending - 1 : 0)
           : state.metrics.pending,
+      overdue: overdueCount,
+      dueToday: dueTodayCount,
     );
 
     state = state.copyWith(tasks: updatedTasks, metrics: updatedMetrics);

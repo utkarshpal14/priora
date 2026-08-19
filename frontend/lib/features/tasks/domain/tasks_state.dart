@@ -3,6 +3,7 @@ import 'task_model.dart';
 
 enum TaskTabFilter {
   pending,
+  overdue,
   completed,
   all,
 }
@@ -11,11 +12,15 @@ class TaskMetricsModel {
   final int total;
   final int completed;
   final int pending;
+  final int overdue;
+  final int dueToday;
 
   const TaskMetricsModel({
     this.total = 0,
     this.completed = 0,
     this.pending = 0,
+    this.overdue = 0,
+    this.dueToday = 0,
   });
 
   factory TaskMetricsModel.fromJson(Map<String, dynamic> json) {
@@ -23,6 +28,8 @@ class TaskMetricsModel {
       total: (json['total'] ?? 0) as int,
       completed: (json['completed'] ?? 0) as int,
       pending: (json['pending'] ?? 0) as int,
+      overdue: (json['overdue'] ?? 0) as int,
+      dueToday: (json['due_today'] ?? 0) as int,
     );
   }
 }
@@ -57,6 +64,7 @@ class TasksState {
       // Tab status filter
       if (tabFilter == TaskTabFilter.pending && task.isCompleted) return false;
       if (tabFilter == TaskTabFilter.completed && !task.isCompleted) return false;
+      if (tabFilter == TaskTabFilter.overdue && (!task.isOverdue || task.isCompleted)) return false;
 
       // Priority filter
       if (priorityFilter != null && task.priority != priorityFilter) return false;

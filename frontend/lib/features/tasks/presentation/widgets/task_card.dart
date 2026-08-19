@@ -21,6 +21,20 @@ class TaskCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDone = task.isCompleted;
+    final isOverdue = task.isOverdue && !isDone;
+    final isDueToday = task.isDueToday && !isDone;
+
+    final deadlineColor = isOverdue
+        ? const Color(0xFFDC2626)
+        : isDueToday
+            ? const Color(0xFFD97706)
+            : AppColors.textSecondary;
+
+    final deadlineIcon = isOverdue
+        ? Icons.error_outline_rounded
+        : isDueToday
+            ? Icons.today_rounded
+            : Icons.access_time_rounded;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -28,14 +42,20 @@ class TaskCard extends StatelessWidget {
         color: isDone ? Colors.white.withValues(alpha: 0.6) : Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDone ? Colors.black.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.08),
-          width: 1,
+          color: isDone
+              ? Colors.black.withValues(alpha: 0.04)
+              : isOverdue
+                  ? const Color(0xFFFCA5A5)
+                  : Colors.black.withValues(alpha: 0.08),
+          width: isOverdue ? 1.5 : 1,
         ),
         boxShadow: isDone
             ? []
             : [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
+                  color: isOverdue
+                      ? const Color(0xFFDC2626).withValues(alpha: 0.04)
+                      : Colors.black.withValues(alpha: 0.02),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -63,7 +83,11 @@ class TaskCard extends StatelessWidget {
                       shape: BoxShape.circle,
                       color: isDone ? AppColors.accent : Colors.transparent,
                       border: Border.all(
-                        color: isDone ? AppColors.accent : AppColors.textSecondary.withValues(alpha: 0.4),
+                        color: isDone
+                            ? AppColors.accent
+                            : isOverdue
+                                ? const Color(0xFFDC2626)
+                                : AppColors.textSecondary.withValues(alpha: 0.4),
                         width: 2,
                       ),
                     ),
@@ -109,18 +133,20 @@ class TaskCard extends StatelessWidget {
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
-                                  Icons.access_time_rounded,
+                                Icon(
+                                  deadlineIcon,
                                   size: 13,
-                                  color: AppColors.textSecondary,
+                                  color: deadlineColor,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
                                   task.formattedDeadline,
                                   style: GoogleFonts.inter(
                                     fontSize: 12,
-                                    color: AppColors.textSecondary,
-                                    fontWeight: FontWeight.w500,
+                                    color: deadlineColor,
+                                    fontWeight: isOverdue || isDueToday
+                                        ? FontWeight.w600
+                                        : FontWeight.w500,
                                   ),
                                 ),
                               ],

@@ -36,13 +36,21 @@ class TaskRepository:
         Fetch tasks with priority-first & nearest-deadline sorting,
         optional search, and category/status/priority filters.
         """
+        now = datetime.now(UTC)
         stmt = select(Task).where(
             Task.user_id == user_id,
             Task.is_deleted.is_(False),
         )
 
         if status:
-            stmt = stmt.where(Task.status == status.upper())
+            if status.upper() == "OVERDUE":
+                stmt = stmt.where(
+                    Task.status.notin_(["COMPLETED", "CANCELLED"]),
+                    Task.deadline.is_not(None),
+                    Task.deadline < now,
+                )
+            else:
+                stmt = stmt.where(Task.status == status.upper())
 
         if priority:
             stmt = stmt.where(Task.priority == priority.upper())
@@ -59,13 +67,31 @@ class TaskRepository:
                 )
             )
 
-        # Priority-First ordering (CRITICAL -> HIGH -> MEDIUM -> LOW)
+        # Composite ranking formula:
+        # 1. Overdue + Critical
+        # 2. Overdue + High
+        # 3. Overdue + Medium
+        # 4. Overdue + Low
+        # 5. Critical (Future / No deadline)
+        # 6. High
+        # 7. Medium
+        # 8. Low
+        is_overdue_cond = (
+            Task.deadline.is_not(None)
+            & (Task.deadline < now)
+            & Task.status.notin_(["COMPLETED", "CANCELLED"])
+        )
+
         priority_order = case(
-            (Task.priority == "CRITICAL", 1),
-            (Task.priority == "HIGH", 2),
-            (Task.priority == "MEDIUM", 3),
-            (Task.priority == "LOW", 4),
-            else_=5,
+            (is_overdue_cond & (Task.priority == "CRITICAL"), 1),
+            (is_overdue_cond & (Task.priority == "HIGH"), 2),
+            (is_overdue_cond & (Task.priority == "MEDIUM"), 3),
+            (is_overdue_cond & (Task.priority == "LOW"), 4),
+            (Task.priority == "CRITICAL", 5),
+            (Task.priority == "HIGH", 6),
+            (Task.priority == "MEDIUM", 7),
+            (Task.priority == "LOW", 8),
+            else_=9,
         )
 
         stmt = stmt.order_by(
@@ -77,7 +103,11 @@ class TaskRepository:
         return list(db.scalars(stmt).all())
 
     def get_metrics(self, db: Session, user_id: uuid.UUID) -> TaskMetrics:
-        """Calculate total, completed, and pending metrics for active tasks."""
+        """Calculate total, completed, pending, overdue, and due_today metrics for active tasks."""
+        now = datetime.now(UTC)
+        start_of_day = datetime(now.year, now.month, now.day, 0, 0, 0, tzinfo=UTC)
+        end_of_day = datetime(now.year, now.month, now.day, 23, 59, 59, 999999, tzinfo=UTC)
+
         total_stmt = select(func.count(Task.id)).where(
             Task.user_id == user_id,
             Task.is_deleted.is_(False),
@@ -93,10 +123,31 @@ class TaskRepository:
 
         pending = max(0, total - completed)
 
+        overdue_stmt = select(func.count(Task.id)).where(
+            Task.user_id == user_id,
+            Task.is_deleted.is_(False),
+            Task.status.notin_(["COMPLETED", "CANCELLED"]),
+            Task.deadline.is_not(None),
+            Task.deadline < now,
+        )
+        overdue = db.scalar(overdue_stmt) or 0
+
+        due_today_stmt = select(func.count(Task.id)).where(
+            Task.user_id == user_id,
+            Task.is_deleted.is_(False),
+            Task.status.notin_(["COMPLETED", "CANCELLED"]),
+            Task.deadline.is_not(None),
+            Task.deadline >= start_of_day,
+            Task.deadline <= end_of_day,
+        )
+        due_today = db.scalar(due_today_stmt) or 0
+
         return TaskMetrics(
             total=total,
             completed=completed,
             pending=pending,
+            overdue=overdue,
+            due_today=due_today,
         )
 
     def create(self, db: Session, task_in: TaskCreate, user_id: uuid.UUID) -> Task:

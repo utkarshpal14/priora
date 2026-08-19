@@ -51,6 +51,14 @@ class TaskFilterChips extends StatelessWidget {
                   onTap: () => onTabChanged(TaskTabFilter.pending),
                 ),
                 _buildTabButton(
+                  title: 'Overdue',
+                  count: metrics.overdue,
+                  isSelected: currentTab == TaskTabFilter.overdue,
+                  badgeColor: metrics.overdue > 0 ? const Color(0xFFDC2626) : null,
+                  badgeTextColor: metrics.overdue > 0 ? Colors.white : null,
+                  onTap: () => onTabChanged(TaskTabFilter.overdue),
+                ),
+                _buildTabButton(
                   title: 'Completed',
                   count: metrics.completed,
                   isSelected: currentTab == TaskTabFilter.completed,
@@ -161,8 +169,17 @@ class TaskFilterChips extends StatelessWidget {
     required String title,
     required int count,
     required bool isSelected,
+    Color? badgeColor,
+    Color? badgeTextColor,
     required VoidCallback onTap,
   }) {
+    final effectiveBadgeColor = badgeColor ??
+        (isSelected
+            ? AppColors.accent.withValues(alpha: 0.12)
+            : Colors.black.withValues(alpha: 0.05));
+    final effectiveTextColor = badgeTextColor ??
+        (isSelected ? AppColors.accent : AppColors.textSecondary);
+
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -189,26 +206,24 @@ class TaskFilterChips extends StatelessWidget {
                 Text(
                   title,
                   style: GoogleFonts.inter(
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                     color: isSelected ? AppColors.textPrimary : AppColors.textSecondary,
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                   decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.accent.withValues(alpha: 0.12)
-                        : Colors.black.withValues(alpha: 0.05),
+                    color: effectiveBadgeColor,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     '$count',
                     style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: isSelected ? AppColors.accent : AppColors.textSecondary,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: effectiveTextColor,
                     ),
                   ),
                 ),

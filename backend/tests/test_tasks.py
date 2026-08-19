@@ -238,3 +238,48 @@ def test_task_update_and_category_filtering(client: TestClient):
     all_res = client.get("/api/v1/tasks", headers=headers)
     assert len(all_res.json()["data"]["tasks"]) == 0
 
+
+def test_overdue_due_today_and_composite_ranking(client: TestClient):
+    headers = _get_auth_headers(client, "user_m3@priora.app")
+
+    # 1. Create task due later today (e.g., in 2 hours)
+    now = datetime.now(UTC)
+    # Target end of today UTC
+    today_deadline = (datetime(now.year, now.month, now.day, 23, 30, tzinfo=UTC)).isoformat()
+    client.post(
+        "/api/v1/tasks",
+        headers=headers,
+        json={"title": "Task Due Today", "priority": "MEDIUM", "deadline": today_deadline},
+    )
+
+    # 2. Check metrics reflect due_today
+    res = client.get("/api/v1/tasks", headers=headers)
+    assert res.status_code == 200
+    metrics = res.json()["data"]["metrics"]
+    assert metrics["due_today"] == 1
+    assert metrics["overdue"] == 0
+
+    # 3. Create task with future deadline
+    tomorrow_deadline = (now + timedelta(days=1, hours=2)).isoformat()
+    client.post(
+        "/api/v1/tasks",
+        headers=headers,
+        json={"title": "Task Tomorrow", "priority": "HIGH", "deadline": tomorrow_deadline},
+    )
+
+    next_week_deadline = (now + timedelta(days=7)).isoformat()
+    client.post(
+        "/api/v1/tasks",
+        headers=headers,
+        json={"title": "Task Next Week", "priority": "LOW", "deadline": next_week_deadline},
+    )
+
+    # 4. Verify composite ranking ordering: High (Tomorrow) -> Medium (Today) -> Low (Next Week)
+    list_res = client.get("/api/v1/tasks", headers=headers)
+    tasks = list_res.json()["data"]["tasks"]
+    assert len(tasks) == 3
+    assert tasks[0]["priority"] == "HIGH"
+    assert tasks[1]["priority"] == "MEDIUM"
+    assert tasks[2]["priority"] == "LOW"
+
+

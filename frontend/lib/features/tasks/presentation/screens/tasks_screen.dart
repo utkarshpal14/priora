@@ -146,6 +146,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
             ),
             const SizedBox(height: 8),
 
+            // Smart Urgency Banner (Overdue > Due Today > Hidden)
+            _buildSmartBanner(context, tasksState, tasksNotifier),
+
             // Error Banner (if any)
             if (tasksState.errorMessage != null)
               Container(
@@ -210,13 +213,115 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     );
   }
 
+  Widget _buildSmartBanner(BuildContext context, TasksState state, TasksController notifier) {
+    if (state.metrics.overdue > 0) {
+      final count = state.metrics.overdue;
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFEE2E2),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFFCA5A5)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, size: 20, color: Color(0xFFDC2626)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                '$count ${count == 1 ? "overdue task needs" : "overdue tasks need"} attention',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF991B1B),
+                ),
+              ),
+            ),
+            GestureDetector(
+              onTap: () => notifier.setTabFilter(TaskTabFilter.overdue),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDC2626),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'View Tasks',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else if (state.metrics.dueToday > 0) {
+      final count = state.metrics.dueToday;
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFEF3C7),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFFDE68A)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.calendar_today_rounded, size: 17, color: Color(0xFFD97706)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                '$count ${count == 1 ? "task" : "tasks"} due today',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF92400E),
+                ),
+              ),
+            ),
+            GestureDetector(
+              onTap: () => notifier.setTabFilter(TaskTabFilter.pending),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD97706),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Review Schedule',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
   Widget _buildEmptyState(BuildContext context, TaskTabFilter tabFilter) {
     String message = 'No tasks yet';
     String subMessage = 'Create your first task to get started.';
+    IconData iconData = Icons.check_circle_outline_rounded;
+    Color iconColor = AppColors.accent;
 
     if (tabFilter == TaskTabFilter.completed) {
       message = 'No completed tasks';
       subMessage = 'Tasks you finish will show up here.';
+    } else if (tabFilter == TaskTabFilter.overdue) {
+      message = '🎉 No overdue tasks';
+      subMessage = "You're all caught up!";
+      iconData = Icons.celebration_rounded;
+      iconColor = const Color(0xFFD97706);
     }
 
     return Center(
@@ -229,13 +334,13 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: AppColors.accent.withValues(alpha: 0.08),
+                color: iconColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.check_circle_outline_rounded,
+              child: Icon(
+                iconData,
                 size: 32,
-                color: AppColors.accent,
+                color: iconColor,
               ),
             ),
             const SizedBox(height: 16),
@@ -257,7 +362,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            if (tabFilter != TaskTabFilter.completed)
+            if (tabFilter != TaskTabFilter.completed && tabFilter != TaskTabFilter.overdue)
               ElevatedButton.icon(
                 onPressed: () => CreateTaskBottomSheet.show(context),
                 icon: const Icon(Icons.add, size: 18),

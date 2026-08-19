@@ -32,6 +32,8 @@ class FakeTasksRepository extends TasksRepository {
     final completedCount = _tasks.where((t) => t.isCompleted).length;
     final totalCount = _tasks.length;
     final pendingCount = totalCount - completedCount;
+    final overdueCount = _tasks.where((t) => t.isOverdue).length;
+    final dueTodayCount = _tasks.where((t) => t.isDueToday).length;
 
     return (
       tasks: List<TaskModel>.from(_tasks),
@@ -39,6 +41,8 @@ class FakeTasksRepository extends TasksRepository {
         total: totalCount,
         completed: completedCount,
         pending: pendingCount,
+        overdue: overdueCount,
+        dueToday: dueTodayCount,
       ),
     );
   }
@@ -290,4 +294,87 @@ void main() {
     expect(find.text('Personal Task Item'), findsOneWidget);
     expect(find.text('Work Task Item'), findsNothing);
   });
+
+  testWidgets('Overdue tab and Smart Urgency Banner function properly', (WidgetTester tester) async {
+    final fakeRepo = FakeTasksRepository();
+    // 1 Overdue task
+    await fakeRepo.createTask(
+      title: 'Overdue Project Task',
+      deadline: DateTime.now().subtract(const Duration(days: 2)),
+      priority: TaskPriority.critical,
+    );
+    // 1 Future task
+    await fakeRepo.createTask(
+      title: 'Future Project Task',
+      deadline: DateTime.now().add(const Duration(days: 3)),
+      priority: TaskPriority.low,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          tasksRepositoryProvider.overrideWithValue(fakeRepo),
+          authControllerProvider.overrideWith((ref) => FakeAuthController()),
+        ],
+        child: const MaterialApp(
+          home: TasksScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify smart urgency banner appears
+    expect(find.text('1 overdue task needs attention'), findsOneWidget);
+    expect(find.text('View Tasks'), findsOneWidget);
+
+    // Tap View Tasks in banner to switch to Overdue tab
+    await tester.tap(find.text('View Tasks'));
+    await tester.pumpAndSettle();
+
+    // In Overdue tab: Overdue task is shown, future task is hidden
+    expect(find.text('Overdue Project Task'), findsOneWidget);
+    expect(find.text('Future Project Task'), findsNothing);
+  });
+
+  testWidgets('Overdue empty state renders celebration message when no overdue tasks', (WidgetTester tester) async {
+    final fakeRepo = FakeTasksRepository();
+    await fakeRepo.createTask(
+      title: 'Future Task Only',
+      deadline: DateTime.now().add(const Duration(days: 2)),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          tasksRepositoryProvider.overrideWithValue(fakeRepo),
+          authControllerProvider.overrideWith((ref) => FakeAuthController()),
+        ],
+        child: const MaterialApp(
+          home: TasksScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Switch to Overdue tab
+    await tester.tap(find.text('Overdue'));
+    await tester.pumpAndSettle();
+
+    // Verify celebration empty state
+    expect(find.text('🎉 No overdue tasks'), findsOneWidget);
+    expect(find.text("You're all caught up!"), findsOneWidget);
+  });
+
+  test('TaskModel.parseUtcDateTime safely parses UTC datetime strings without Z suffix into local time', () {
+    final dtWithZ = TaskModel.parseUtcDateTime('2026-08-19T16:45:00Z');
+    final dtWithoutZ = TaskModel.parseUtcDateTime('2026-08-19T16:45:00');
+    final dtWithSpace = TaskModel.parseUtcDateTime('2026-08-19 16:45:00');
+
+    expect(dtWithZ, isNotNull);
+    expect(dtWithoutZ, isNotNull);
+    expect(dtWithSpace, isNotNull);
+    expect(dtWithZ, equals(dtWithoutZ));
+    expect(dtWithZ, equals(dtWithSpace));
+  });
 }
+

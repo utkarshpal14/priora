@@ -29,7 +29,7 @@ Priora is a productivity platform designed to help users manage tasks, deadlines
 - [x] Milestone 0 - Project Setup
 - [x] Milestone 1 - Authentication
 - [x] Milestone 2 - Task Management
-- [ ] Milestone 3 - Deadlines & Priorities
+- [x] Milestone 3 - Deadlines & Priorities
 - [ ] Milestone 4 - Reminder System
 - [ ] Milestone 5 - Planner
 - [ ] Milestone 6 - End-of-Day Review

@@ -74,23 +74,71 @@ class TaskModel {
 
   bool get isCompleted => status == TaskStatus.completed;
 
+  bool get isOverdue {
+    if (isCompleted || status == TaskStatus.cancelled) return false;
+    if (deadline == null) return false;
+    return deadline!.toUtc().isBefore(DateTime.now().toUtc());
+  }
+
+  bool get isDueToday {
+    if (isCompleted || status == TaskStatus.cancelled) return false;
+    if (deadline == null) return false;
+    final now = DateTime.now();
+    final localDeadline = deadline!.toLocal();
+    return localDeadline.year == now.year &&
+        localDeadline.month == now.month &&
+        localDeadline.day == now.day;
+  }
+
+  bool get isDueTomorrow {
+    if (isCompleted || status == TaskStatus.cancelled) return false;
+    if (deadline == null) return false;
+    final tomorrow = DateTime.now().add(const Duration(days: 1));
+    final localDeadline = deadline!.toLocal();
+    return localDeadline.year == tomorrow.year &&
+        localDeadline.month == tomorrow.month &&
+        localDeadline.day == tomorrow.day;
+  }
+
   String get formattedDeadline {
     if (deadline == null) return 'No deadline';
     final now = DateTime.now();
     final localDeadline = deadline!.toLocal();
-    final diff = localDeadline.difference(DateTime(now.year, now.month, now.day)).inDays;
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final deadlineDay = DateTime(localDeadline.year, localDeadline.month, localDeadline.day);
+    final dayDiff = deadlineDay.difference(todayStart).inDays;
 
-    if (diff == 0) {
-      return 'Today ${DateFormat('h:mm a').format(localDeadline)}';
-    } else if (diff == 1) {
-      return 'Tomorrow ${DateFormat('h:mm a').format(localDeadline)}';
-    } else if (diff == -1) {
-      return 'Yesterday';
-    } else if (diff < -1) {
-      return 'Overdue (${DateFormat('MMM d').format(localDeadline)})';
+    if (isOverdue) {
+      if (dayDiff == 0) {
+        return 'Overdue (Today • ${DateFormat('h:mm a').format(localDeadline)})';
+      } else if (dayDiff == -1) {
+        return 'Overdue (Yesterday • ${DateFormat('h:mm a').format(localDeadline)})';
+      } else {
+        return 'Overdue (${DateFormat('MMM d • h:mm a').format(localDeadline)})';
+      }
+    } else if (dayDiff == 0) {
+      return 'Due Today • ${DateFormat('h:mm a').format(localDeadline)}';
+    } else if (dayDiff == 1) {
+      return 'Tomorrow • ${DateFormat('h:mm a').format(localDeadline)}';
+    } else if (dayDiff > 1 && dayDiff < 7) {
+      return DateFormat('EEEE • h:mm a').format(localDeadline);
     } else {
-      return DateFormat('MMM d, h:mm a').format(localDeadline);
+      return DateFormat('MMM d • h:mm a').format(localDeadline);
     }
+  }
+
+  static DateTime? parseUtcDateTime(dynamic value) {
+    if (value == null) return null;
+    String str = value.toString().trim();
+    if (str.isEmpty) return null;
+    str = str.replaceFirst(' ', 'T');
+    DateTime dt;
+    if (str.endsWith('Z') || RegExp(r'[+-]\d{2}(:?\d{2})?$').hasMatch(str)) {
+      dt = DateTime.parse(str);
+    } else {
+      dt = DateTime.parse('${str}Z');
+    }
+    return dt.toLocal();
   }
 
   factory TaskModel.fromJson(Map<String, dynamic> json) {
@@ -105,13 +153,10 @@ class TaskModel {
       category: json['category'] != null
           ? CategoryModel.fromJson(json['category'] as Map<String, dynamic>)
           : null,
-      deadline: json['deadline'] != null ? DateTime.parse(json['deadline'] as String) : null,
-      completedAt:
-          json['completed_at'] != null ? DateTime.parse(json['completed_at'] as String) : null,
-      createdAt:
-          json['created_at'] != null ? DateTime.parse(json['created_at'] as String) : null,
-      updatedAt:
-          json['updated_at'] != null ? DateTime.parse(json['updated_at'] as String) : null,
+      deadline: parseUtcDateTime(json['deadline']),
+      completedAt: parseUtcDateTime(json['completed_at']),
+      createdAt: parseUtcDateTime(json['created_at']),
+      updatedAt: parseUtcDateTime(json['updated_at']),
     );
   }
 
