@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../reminders/domain/reminder_model.dart';
 import 'category_model.dart';
 
 enum TaskPriority {
@@ -53,9 +54,11 @@ class TaskModel {
   final String? categoryId;
   final CategoryModel? category;
   final DateTime? deadline;
+  final int? estimatedMinutes;
   final DateTime? completedAt;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final List<ReminderModel> reminders;
 
   const TaskModel({
     required this.id,
@@ -67,12 +70,24 @@ class TaskModel {
     this.categoryId,
     this.category,
     this.deadline,
+    this.estimatedMinutes,
     this.completedAt,
     this.createdAt,
     this.updatedAt,
+    this.reminders = const [],
   });
 
   bool get isCompleted => status == TaskStatus.completed;
+
+  bool get hasActiveReminder => reminders.any((r) => r.isScheduled);
+
+  String? get formattedDuration {
+    if (estimatedMinutes == null) return null;
+    if (estimatedMinutes! < 60) return '${estimatedMinutes}m';
+    final h = estimatedMinutes! ~/ 60;
+    final m = estimatedMinutes! % 60;
+    return m == 0 ? '${h}h' : '${h}h ${m}m';
+  }
 
   bool get isOverdue {
     if (isCompleted || status == TaskStatus.cancelled) return false;
@@ -142,6 +157,7 @@ class TaskModel {
   }
 
   factory TaskModel.fromJson(Map<String, dynamic> json) {
+    final rawReminders = json['reminders'] as List<dynamic>?;
     return TaskModel(
       id: json['id'] as String,
       userId: (json['user_id'] ?? '') as String,
@@ -154,9 +170,13 @@ class TaskModel {
           ? CategoryModel.fromJson(json['category'] as Map<String, dynamic>)
           : null,
       deadline: parseUtcDateTime(json['deadline']),
+      estimatedMinutes: json['estimated_minutes'] as int?,
       completedAt: parseUtcDateTime(json['completed_at']),
       createdAt: parseUtcDateTime(json['created_at']),
       updatedAt: parseUtcDateTime(json['updated_at']),
+      reminders: rawReminders != null
+          ? rawReminders.map((r) => ReminderModel.fromJson(r as Map<String, dynamic>)).toList()
+          : const [],
     );
   }
 
@@ -170,6 +190,7 @@ class TaskModel {
       'status': status.apiValue,
       'category_id': categoryId,
       'deadline': deadline?.toUtc().toIso8601String(),
+      'estimated_minutes': estimatedMinutes,
     };
   }
 
@@ -183,9 +204,11 @@ class TaskModel {
     String? categoryId,
     CategoryModel? category,
     DateTime? deadline,
+    int? estimatedMinutes,
     DateTime? completedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
+    List<ReminderModel>? reminders,
   }) {
     return TaskModel(
       id: id ?? this.id,
@@ -197,9 +220,12 @@ class TaskModel {
       categoryId: categoryId ?? this.categoryId,
       category: category ?? this.category,
       deadline: deadline ?? this.deadline,
+      estimatedMinutes: estimatedMinutes ?? this.estimatedMinutes,
       completedAt: completedAt ?? this.completedAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      reminders: reminders ?? this.reminders,
     );
   }
 }
+

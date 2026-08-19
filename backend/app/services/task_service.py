@@ -6,8 +6,9 @@ from sqlalchemy.orm import Session
 
 from app.models.task import Task
 from app.repositories.category_repository import category_repository
+from app.repositories.reminder_repository import reminder_repository
 from app.repositories.task_repository import task_repository
-from app.schemas.task import TaskCreate, TaskListResponse, TaskRead, TaskUpdate
+from app.schemas.task import TaskCreate, TaskListResponse, TaskRead, TaskStatus, TaskUpdate
 
 
 class TaskService:
@@ -86,7 +87,7 @@ class TaskService:
         task_in: TaskUpdate,
         user_id: uuid.UUID,
     ) -> Task:
-        """Update task properties."""
+        """Update task properties and auto-cancel reminders if status is CANCELLED."""
         task = self.get_task_by_id(db, task_id, user_id)
 
         # Validate category ownership if updating category
@@ -98,14 +99,23 @@ class TaskService:
                     detail="Specified category was not found.",
                 )
 
-        return task_repository.update(db, task, task_in)
+        updated_task = task_repository.update(db, task, task_in)
+
+        # Auto-cancel scheduled reminders if status transitioned to CANCELLED or COMPLETED
+        if task_in.status in (TaskStatus.CANCELLED, TaskStatus.COMPLETED):
+            reminder_repository.cancel_task_reminders(db, task_id, user_id)
+
+        return updated_task
 
     def complete_task(
         self, db: Session, task_id: uuid.UUID, user_id: uuid.UUID
     ) -> Task:
-        """Complete task lifecycle transition."""
+        """Complete task lifecycle transition and auto-cancel scheduled reminders."""
         task = self.get_task_by_id(db, task_id, user_id)
-        return task_repository.complete(db, task)
+        completed_task = task_repository.complete(db, task)
+        # Auto-Cancel Rule: clear all scheduled reminders for finished tasks
+        reminder_repository.cancel_task_reminders(db, task_id, user_id)
+        return completed_task
 
     def reopen_task(
         self, db: Session, task_id: uuid.UUID, user_id: uuid.UUID
@@ -117,9 +127,12 @@ class TaskService:
     def delete_task(
         self, db: Session, task_id: uuid.UUID, user_id: uuid.UUID
     ) -> None:
-        """Soft delete task."""
+        """Soft delete task and cancel all associated reminders."""
         task = self.get_task_by_id(db, task_id, user_id)
         task_repository.delete(db, task)
+        # Auto-Cancel Rule: clear all scheduled reminders for soft-deleted tasks
+        reminder_repository.cancel_task_reminders(db, task_id, user_id)
 
 
 task_service = TaskService()
+

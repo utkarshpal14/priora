@@ -5,6 +5,7 @@ from enum import StrEnum
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_serializer
 
 from app.schemas.category import CategoryRead
+from app.schemas.reminder import ReminderRead, ReminderStatus
 
 
 class TaskPriority(StrEnum):
@@ -27,6 +28,7 @@ class TaskBase(BaseModel):
     priority: TaskPriority = TaskPriority.MEDIUM
     category_id: uuid.UUID | None = None
     deadline: datetime | None = None
+    estimated_minutes: int | None = Field(default=None, ge=1, le=1440)
 
 
 class TaskCreate(TaskBase):
@@ -40,6 +42,7 @@ class TaskUpdate(BaseModel):
     status: TaskStatus | None = None
     category_id: uuid.UUID | None = None
     deadline: datetime | None = None
+    estimated_minutes: int | None = Field(default=None, ge=1, le=1440)
 
 
 class TaskRead(BaseModel):
@@ -52,9 +55,11 @@ class TaskRead(BaseModel):
     category_id: uuid.UUID | None = None
     category: CategoryRead | None = None
     deadline: datetime | None = None
+    estimated_minutes: int | None = None
     completed_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
+    reminders: list[ReminderRead] = []
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -72,6 +77,11 @@ class TaskRead(BaseModel):
         elif not iso.endswith("Z") and "+" not in iso:
             iso += "Z"
         return iso
+
+    @computed_field
+    @property
+    def has_active_reminder(self) -> bool:
+        return any(r.status == ReminderStatus.SCHEDULED for r in self.reminders)
 
     @computed_field
     @property

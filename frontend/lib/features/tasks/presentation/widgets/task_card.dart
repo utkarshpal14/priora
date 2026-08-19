@@ -197,6 +197,36 @@ class TaskCard extends StatelessWidget {
                               ),
                             ),
                           ],
+
+                          // Active Reminder Indicator (if scheduled)
+                          if (task.hasActiveReminder && !isDone) ...[
+                            Text(
+                              '•',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppColors.textSecondary.withValues(alpha: 0.5),
+                              ),
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.notifications_active_rounded,
+                                  size: 12.5,
+                                  color: Color(0xFFD97706),
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  task.reminders.firstWhere((r) => r.isScheduled).formattedRemindAt,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.5,
+                                    color: const Color(0xFFD97706),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ],

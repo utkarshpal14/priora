@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../reminders/domain/reminder_model.dart';
 import '../../domain/task_model.dart';
 import '../controllers/tasks_controller.dart';
 
@@ -31,6 +32,8 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
   TaskPriority _selectedPriority = TaskPriority.medium;
   String? _selectedCategoryId;
   DateTime? _selectedDeadline;
+  ReminderPreset _selectedReminderPreset = ReminderPreset.none;
+  DateTime? _customReminderTime;
   bool _showDescriptionField = false;
 
   @override
@@ -46,6 +49,12 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
     _titleController.dispose();
     _descController.dispose();
     super.dispose();
+  }
+
+  DateTime? _getEffectiveRemindAt() {
+    if (_selectedReminderPreset == ReminderPreset.none) return null;
+    if (_selectedReminderPreset == ReminderPreset.custom) return _customReminderTime;
+    return _selectedReminderPreset.calculateRemindAt(_selectedDeadline);
   }
 
   Future<void> _pickDeadline() async {
@@ -72,6 +81,55 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
             pickedTime.hour,
             pickedTime.minute,
           );
+          // Recalculate preset reminder time if preset is active
+          if (_selectedReminderPreset != ReminderPreset.none &&
+              _selectedReminderPreset != ReminderPreset.custom) {
+            _customReminderTime =
+                _selectedReminderPreset.calculateRemindAt(_selectedDeadline);
+          }
+        });
+      }
+    }
+  }
+
+  Future<void> _pickCustomReminderTime() async {
+    final now = DateTime.now();
+    final maxDate = _selectedDeadline ?? now.add(const Duration(days: 365));
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _customReminderTime ?? now,
+      firstDate: now,
+      lastDate: maxDate,
+    );
+
+    if (pickedDate != null && mounted) {
+      final pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(_customReminderTime ?? now),
+      );
+
+      if (pickedTime != null && mounted) {
+        final candidate = DateTime(
+          pickedDate.year,
+          pickedDate.month,
+          pickedDate.day,
+          pickedTime.hour,
+          pickedTime.minute,
+        );
+
+        if (_selectedDeadline != null && candidate.isAfter(_selectedDeadline!)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Reminder cannot be scheduled after the task deadline.'),
+              backgroundColor: Color(0xFFDC2626),
+            ),
+          );
+          return;
+        }
+
+        setState(() {
+          _selectedReminderPreset = ReminderPreset.custom;
+          _customReminderTime = candidate;
         });
       }
     }
@@ -91,6 +149,7 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
           priority: _selectedPriority,
           categoryId: catId,
           deadline: _selectedDeadline,
+          remindAt: _getEffectiveRemindAt(),
         );
 
     if (success && mounted) {
@@ -342,6 +401,83 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 16),
+
+              // Reminder Presets Selector
+              Text(
+                'Reminder',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: ReminderPreset.values.map((preset) {
+                    final isSelected = _selectedReminderPreset == preset;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: GestureDetector(
+                        onTap: () {
+                          if (preset == ReminderPreset.custom) {
+                            _pickCustomReminderTime();
+                          } else {
+                            setState(() {
+                              _selectedReminderPreset = preset;
+                              _customReminderTime =
+                                  preset.calculateRemindAt(_selectedDeadline);
+                            });
+                          }
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: isSelected ? const Color(0xFFFEF3C7) : Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isSelected
+                                  ? const Color(0xFFD97706)
+                                  : Colors.black.withValues(alpha: 0.1),
+                              width: isSelected ? 1.5 : 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isSelected
+                                    ? Icons.notifications_active_rounded
+                                    : Icons.notifications_none_rounded,
+                                size: 14,
+                                color: isSelected
+                                    ? const Color(0xFFD97706)
+                                    : AppColors.textSecondary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                preset == ReminderPreset.custom && _customReminderTime != null
+                                    ? DateFormat('MMM d, h:mm a').format(_customReminderTime!)
+                                    : preset.label,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                  color: isSelected
+                                      ? const Color(0xFF92400E)
+                                      : AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
               const SizedBox(height: 16),
 

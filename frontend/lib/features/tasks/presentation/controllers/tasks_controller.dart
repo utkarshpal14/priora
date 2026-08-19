@@ -1,6 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/services/local_notification_service.dart';
+import '../../../reminders/data/reminders_repository.dart';
+import '../../../reminders/domain/reminder_model.dart';
 import '../../data/tasks_repository.dart';
 import '../../domain/category_model.dart';
 import '../../domain/task_model.dart';
@@ -9,13 +12,21 @@ import '../../domain/tasks_state.dart';
 final tasksControllerProvider =
     StateNotifierProvider<TasksController, TasksState>((ref) {
   final repository = ref.watch(tasksRepositoryProvider);
-  return TasksController(repository);
+  final remindersRepo = ref.watch(remindersRepositoryProvider);
+  final notificationService = ref.watch(localNotificationServiceProvider);
+  return TasksController(repository, remindersRepo, notificationService);
 });
 
 class TasksController extends StateNotifier<TasksState> {
   final TasksRepository _repository;
+  final RemindersRepository _remindersRepository;
+  final LocalNotificationService _notificationService;
 
-  TasksController(this._repository) : super(const TasksState()) {
+  TasksController(
+    this._repository,
+    this._remindersRepository,
+    this._notificationService,
+  ) : super(const TasksState()) {
     loadData();
   }
 
@@ -91,16 +102,36 @@ class TasksController extends StateNotifier<TasksState> {
     TaskPriority priority = TaskPriority.medium,
     String? categoryId,
     DateTime? deadline,
+    DateTime? remindAt,
   }) async {
     state = state.copyWith(isCreating: true, clearError: true);
     try {
-      await _repository.createTask(
+      final task = await _repository.createTask(
         title: title,
         description: description,
         priority: priority,
         categoryId: categoryId,
         deadline: deadline,
       );
+
+      // If user selected a reminder, schedule local notification and persist on backend
+      if (remindAt != null) {
+        final notifId = DateTime.now().millisecondsSinceEpoch.remainder(100000);
+        await _notificationService.scheduleNotification(
+          notificationId: notifId,
+          title: '⏰ Reminder: ${task.title}',
+          body: task.deadline != null
+              ? 'Deadline approaching: ${task.formattedDeadline}'
+              : 'Task reminder: ${task.title}',
+          scheduledDate: remindAt,
+        );
+        await _remindersRepository.createReminder(
+          taskId: task.id,
+          remindAt: remindAt,
+          notificationId: notifId,
+        );
+      }
+
       state = state.copyWith(isCreating: false);
       await refreshTasks();
       return true;
@@ -108,6 +139,57 @@ class TasksController extends StateNotifier<TasksState> {
       state = state.copyWith(
         isCreating: false,
         errorMessage: _extractError(e, 'Failed to create task.'),
+      );
+      return false;
+    }
+  }
+
+  Future<bool> addReminderToTask({
+    required String taskId,
+    required String taskTitle,
+    required DateTime remindAt,
+    String? formattedDeadline,
+  }) async {
+    try {
+      final notifId = DateTime.now().millisecondsSinceEpoch.remainder(100000);
+      await _notificationService.scheduleNotification(
+        notificationId: notifId,
+        title: '⏰ Reminder: $taskTitle',
+        body: formattedDeadline != null
+            ? 'Deadline approaching: $formattedDeadline'
+            : 'Task reminder: $taskTitle',
+        scheduledDate: remindAt,
+      );
+      await _remindersRepository.createReminder(
+        taskId: taskId,
+        remindAt: remindAt,
+        notificationId: notifId,
+      );
+      await refreshTasks();
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        errorMessage: _extractError(e, 'Failed to set reminder.'),
+      );
+      return false;
+    }
+  }
+
+  Future<bool> deleteReminder({
+    required String taskId,
+    required String reminderId,
+    int? notificationId,
+  }) async {
+    try {
+      if (notificationId != null) {
+        await _notificationService.cancelNotification(notificationId);
+      }
+      await _remindersRepository.deleteReminder(reminderId);
+      await refreshTasks();
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        errorMessage: _extractError(e, 'Failed to remove reminder.'),
       );
       return false;
     }
@@ -204,6 +286,17 @@ class TasksController extends StateNotifier<TasksState> {
 
     state = state.copyWith(tasks: updatedTasks, metrics: updatedMetrics);
 
+    // Auto-Cancel Rule: Clear local notifications when task is completed
+    if (willComplete) {
+      final notifIds = task.reminders
+          .map((r) => r.notificationId)
+          .whereType<int>()
+          .toList();
+      if (notifIds.isNotEmpty) {
+        _notificationService.cancelTaskNotifications(notifIds);
+      }
+    }
+
     try {
       if (willComplete) {
         await _repository.completeTask(task.id);
@@ -243,6 +336,15 @@ class TasksController extends StateNotifier<TasksState> {
     );
 
     state = state.copyWith(tasks: updatedTasks, metrics: updatedMetrics);
+
+    // Auto-Cancel Rule: Clear local alarms when task is deleted
+    final notifIds = targetTask.reminders
+        .map((r) => r.notificationId)
+        .whereType<int>()
+        .toList();
+    if (notifIds.isNotEmpty) {
+      _notificationService.cancelTaskNotifications(notifIds);
+    }
 
     try {
       await _repository.deleteTask(taskId);

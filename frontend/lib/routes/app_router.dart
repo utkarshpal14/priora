@@ -7,7 +7,9 @@ import '../features/auth/presentation/controllers/auth_controller.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
 import '../features/dashboard/presentation/screens/placeholder_screen.dart';
+import '../features/planner/presentation/screens/planner_screen.dart';
 import '../features/tasks/presentation/screens/tasks_screen.dart';
+import '../shared/widgets/main_scaffold.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authControllerProvider);
@@ -27,41 +29,51 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const RegisterScreen(),
       ),
 
-      // Protected Routes
-      GoRoute(
-        path: '/dashboard',
-        name: 'dashboard',
-        builder: (context, state) => const TasksScreen(),
-      ),
-      GoRoute(
-        path: '/tasks',
-        name: 'tasks',
-        builder: (context, state) => const TasksScreen(),
-      ),
-      GoRoute(
-        path: '/planner',
-        name: 'planner',
-        builder: (context, state) => const PlaceholderScreen(),
-      ),
-      GoRoute(
-        path: '/goals',
-        name: 'goals',
-        builder: (context, state) => const PlaceholderScreen(),
-      ),
-      GoRoute(
-        path: '/review',
-        name: 'review',
-        builder: (context, state) => const PlaceholderScreen(),
-      ),
-      GoRoute(
-        path: '/reminders',
-        name: 'reminders',
-        builder: (context, state) => const PlaceholderScreen(),
-      ),
-      GoRoute(
-        path: '/attachments',
-        name: 'attachments',
-        builder: (context, state) => const PlaceholderScreen(),
+      // Protected Shell Routes (with persistent bottom navigation)
+      ShellRoute(
+        builder: (context, state, child) {
+          return MainScaffold(
+            location: state.uri.path,
+            child: child,
+          );
+        },
+        routes: [
+          GoRoute(
+            path: '/dashboard',
+            name: 'dashboard',
+            builder: (context, state) => const TasksScreen(),
+          ),
+          GoRoute(
+            path: '/tasks',
+            name: 'tasks',
+            builder: (context, state) => const TasksScreen(),
+          ),
+          GoRoute(
+            path: '/planner',
+            name: 'planner',
+            builder: (context, state) => const PlannerScreen(),
+          ),
+          GoRoute(
+            path: '/goals',
+            name: 'goals',
+            builder: (context, state) => const PlaceholderScreen(),
+          ),
+          GoRoute(
+            path: '/review',
+            name: 'review',
+            builder: (context, state) => const PlaceholderScreen(),
+          ),
+          GoRoute(
+            path: '/reminders',
+            name: 'reminders',
+            builder: (context, state) => const PlaceholderScreen(),
+          ),
+          GoRoute(
+            path: '/attachments',
+            name: 'attachments',
+            builder: (context, state) => const PlaceholderScreen(),
+          ),
+        ],
       ),
     ],
     redirect: (BuildContext context, GoRouterState state) {

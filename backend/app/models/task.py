@@ -1,11 +1,15 @@
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, Uuid
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import BaseDBModel
 from app.models.category import Category
+
+if TYPE_CHECKING:
+    from app.models.reminder import Reminder
 
 
 class Task(BaseDBModel):
@@ -52,6 +56,10 @@ class Task(BaseDBModel):
         nullable=True,
         index=True,
     )
+    estimated_minutes: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+    )
     completed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
@@ -59,3 +67,10 @@ class Task(BaseDBModel):
 
     # Relationships
     category: Mapped[Category | None] = relationship("Category", lazy="joined")
+    reminders: Mapped[list["Reminder"]] = relationship(
+        "Reminder",
+        back_populates="task",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+

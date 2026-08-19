@@ -160,6 +160,7 @@ class TaskRepository:
             priority=task_in.priority.value,
             status="PENDING",
             deadline=task_in.deadline,
+            estimated_minutes=task_in.estimated_minutes,
         )
         db.add(task)
         db.commit()
@@ -184,6 +185,8 @@ class TaskRepository:
             task.category_id = task_in.category_id
         if task_in.deadline is not None:
             task.deadline = task_in.deadline
+        if task_in.estimated_minutes is not None:
+            task.estimated_minutes = task_in.estimated_minutes
 
         db.add(task)
         db.commit()

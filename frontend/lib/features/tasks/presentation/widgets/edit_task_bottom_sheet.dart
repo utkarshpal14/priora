@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../reminders/domain/reminder_model.dart';
 import '../../domain/task_model.dart';
 import '../controllers/tasks_controller.dart';
 
@@ -445,6 +446,179 @@ class _EditTaskBottomSheetState extends ConsumerState<EditTaskBottomSheet> {
                   ),
                 ],
               ),
+              const SizedBox(height: 16),
+
+              // Reminders Section
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Reminders (${widget.task.reminders.length}/5)',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // List existing active reminders
+              if (widget.task.reminders.isNotEmpty) ...[
+                Column(
+                  children: widget.task.reminders.map((rem) {
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: rem.isScheduled
+                              ? const Color(0xFFD97706).withValues(alpha: 0.3)
+                              : Colors.black.withValues(alpha: 0.08),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            rem.isScheduled
+                                ? Icons.notifications_active_rounded
+                                : Icons.notifications_off_outlined,
+                            size: 15,
+                            color: rem.isScheduled
+                                ? const Color(0xFFD97706)
+                                : AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '${rem.formattedRemindAt} (${rem.status})',
+                              style: GoogleFonts.inter(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w500,
+                                color: rem.isScheduled
+                                    ? AppColors.textPrimary
+                                    : AppColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 16, color: Color(0xFFDC2626)),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            tooltip: 'Remove reminder',
+                            onPressed: () async {
+                              await ref
+                                  .read(tasksControllerProvider.notifier)
+                                  .deleteReminder(
+                                    taskId: widget.task.id,
+                                    reminderId: rem.id,
+                                    notificationId: rem.notificationId,
+                                  );
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 6),
+              ],
+
+              // Quick Add Preset Chips (if < 5 reminders)
+              if (widget.task.reminders.length < 5) ...[
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: ReminderPreset.values
+                        .where((p) => p != ReminderPreset.none)
+                        .map((preset) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: GestureDetector(
+                          onTap: () async {
+                            DateTime? targetTime;
+                            if (preset == ReminderPreset.custom) {
+                              final now = DateTime.now();
+                              final maxDate = _selectedDeadline ?? now.add(const Duration(days: 365));
+                              final pickedDate = await showDatePicker(
+                                context: context,
+                                initialDate: now.add(const Duration(hours: 1)),
+                                firstDate: now,
+                                lastDate: maxDate,
+                              );
+                              if (pickedDate != null && context.mounted) {
+                                final pickedTime = await showTimePicker(
+                                  context: context,
+                                  initialTime: TimeOfDay.now(),
+                                );
+                                if (pickedTime != null) {
+                                  targetTime = DateTime(
+                                    pickedDate.year,
+                                    pickedDate.month,
+                                    pickedDate.day,
+                                    pickedTime.hour,
+                                    pickedTime.minute,
+                                  );
+                                }
+                              }
+                            } else {
+                              targetTime = preset.calculateRemindAt(_selectedDeadline);
+                            }
+
+                            if (targetTime != null && context.mounted) {
+                              if (_selectedDeadline != null &&
+                                  targetTime.isAfter(_selectedDeadline!)) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Reminder cannot be scheduled after deadline.'),
+                                    backgroundColor: Color(0xFFDC2626),
+                                  ),
+                                );
+                                return;
+                              }
+                              await ref
+                                  .read(tasksControllerProvider.notifier)
+                                  .addReminderToTask(
+                                    taskId: widget.task.id,
+                                    taskTitle: widget.task.title,
+                                    remindAt: targetTime,
+                                    formattedDeadline: widget.task.formattedDeadline,
+                                  );
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(7),
+                              border: Border.all(color: Colors.black.withValues(alpha: 0.1)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.add_alarm_rounded,
+                                    size: 13, color: AppColors.accent),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '+ ${preset.label}',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
               const SizedBox(height: 16),
 
               // Description Field

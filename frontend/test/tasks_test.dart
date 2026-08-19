@@ -5,6 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/features/auth/domain/auth_state.dart';
 import 'package:frontend/features/auth/domain/user_model.dart';
 import 'package:frontend/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:frontend/features/reminders/data/reminders_api.dart';
+import 'package:frontend/features/reminders/data/reminders_repository.dart';
+import 'package:frontend/features/reminders/domain/reminder_model.dart';
 import 'package:frontend/features/tasks/data/tasks_api.dart';
 import 'package:frontend/features/tasks/data/tasks_repository.dart';
 import 'package:frontend/features/tasks/domain/category_model.dart';
@@ -12,6 +15,39 @@ import 'package:frontend/features/tasks/domain/task_model.dart';
 import 'package:frontend/features/tasks/domain/tasks_state.dart';
 import 'package:frontend/features/tasks/presentation/screens/tasks_screen.dart';
 import 'package:frontend/features/tasks/presentation/widgets/task_card.dart';
+
+class FakeRemindersRepository extends RemindersRepository {
+  final List<ReminderModel> _reminders = [];
+
+  FakeRemindersRepository() : super(RemindersApi(Dio()));
+
+  @override
+  Future<ReminderModel> createReminder({
+    required String taskId,
+    required DateTime remindAt,
+    int? notificationId,
+  }) async {
+    final newReminder = ReminderModel(
+      id: 'rem-${_reminders.length + 1}',
+      taskId: taskId,
+      remindAt: remindAt,
+      notificationId: notificationId ?? 1,
+      status: 'SCHEDULED',
+    );
+    _reminders.add(newReminder);
+    return newReminder;
+  }
+
+  @override
+  Future<List<ReminderModel>> getReminders({String? taskId, String? status}) async {
+    return _reminders;
+  }
+
+  @override
+  Future<void> deleteReminder(String id) async {
+    _reminders.removeWhere((r) => r.id == id);
+  }
+}
 
 class FakeTasksRepository extends TasksRepository {
   final List<TaskModel> _tasks = [];
@@ -172,6 +208,7 @@ void main() {
       ProviderScope(
         overrides: [
           tasksRepositoryProvider.overrideWithValue(fakeRepo),
+          remindersRepositoryProvider.overrideWithValue(FakeRemindersRepository()),
           authControllerProvider.overrideWith((ref) => FakeAuthController()),
         ],
         child: const MaterialApp(
@@ -197,6 +234,7 @@ void main() {
       ProviderScope(
         overrides: [
           tasksRepositoryProvider.overrideWithValue(fakeRepo),
+          remindersRepositoryProvider.overrideWithValue(FakeRemindersRepository()),
           authControllerProvider.overrideWith((ref) => FakeAuthController()),
         ],
         child: const MaterialApp(
@@ -226,6 +264,7 @@ void main() {
       ProviderScope(
         overrides: [
           tasksRepositoryProvider.overrideWithValue(fakeRepo),
+          remindersRepositoryProvider.overrideWithValue(FakeRemindersRepository()),
           authControllerProvider.overrideWith((ref) => FakeAuthController()),
         ],
         child: const MaterialApp(
@@ -270,6 +309,7 @@ void main() {
       ProviderScope(
         overrides: [
           tasksRepositoryProvider.overrideWithValue(fakeRepo),
+          remindersRepositoryProvider.overrideWithValue(FakeRemindersRepository()),
           authControllerProvider.overrideWith((ref) => FakeAuthController()),
         ],
         child: const MaterialApp(
@@ -314,6 +354,7 @@ void main() {
       ProviderScope(
         overrides: [
           tasksRepositoryProvider.overrideWithValue(fakeRepo),
+          remindersRepositoryProvider.overrideWithValue(FakeRemindersRepository()),
           authControllerProvider.overrideWith((ref) => FakeAuthController()),
         ],
         child: const MaterialApp(
@@ -347,6 +388,7 @@ void main() {
       ProviderScope(
         overrides: [
           tasksRepositoryProvider.overrideWithValue(fakeRepo),
+          remindersRepositoryProvider.overrideWithValue(FakeRemindersRepository()),
           authControllerProvider.overrideWith((ref) => FakeAuthController()),
         ],
         child: const MaterialApp(
@@ -376,5 +418,67 @@ void main() {
     expect(dtWithZ, equals(dtWithoutZ));
     expect(dtWithZ, equals(dtWithSpace));
   });
+
+  test('ReminderPreset.calculateRemindAt accurately computes preset offsets from deadline', () {
+    final deadline = DateTime(2026, 8, 20, 18, 0); // 6:00 PM
+
+    expect(
+      ReminderPreset.fifteenMinutes.calculateRemindAt(deadline),
+      equals(DateTime(2026, 8, 20, 17, 45)),
+    );
+    expect(
+      ReminderPreset.thirtyMinutes.calculateRemindAt(deadline),
+      equals(DateTime(2026, 8, 20, 17, 30)),
+    );
+    expect(
+      ReminderPreset.oneHour.calculateRemindAt(deadline),
+      equals(DateTime(2026, 8, 20, 17, 0)),
+    );
+    expect(
+      ReminderPreset.threeHours.calculateRemindAt(deadline),
+      equals(DateTime(2026, 8, 20, 15, 0)),
+    );
+    expect(
+      ReminderPreset.oneDay.calculateRemindAt(deadline),
+      equals(DateTime(2026, 8, 19, 18, 0)),
+    );
+  });
+
+  testWidgets('TaskCard displays active reminder icon and text when reminder is scheduled', (WidgetTester tester) async {
+    final task = TaskModel(
+      id: 'task-rem-1',
+      userId: 'user-1',
+      title: 'Task with Active Reminder',
+      priority: TaskPriority.high,
+      status: TaskStatus.pending,
+      deadline: DateTime(2026, 8, 20, 18, 0),
+      reminders: [
+        ReminderModel(
+          id: 'rem-1',
+          taskId: 'task-rem-1',
+          notificationId: 101,
+          remindAt: DateTime(2026, 8, 20, 17, 0),
+          status: 'SCHEDULED',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: TaskCard(
+            task: task,
+            onToggleComplete: (_) {},
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Verify reminder active bell icon is displayed
+    expect(find.byIcon(Icons.notifications_active_rounded), findsOneWidget);
+    expect(find.text('Task with Active Reminder'), findsOneWidget);
+  });
 }
+
 
