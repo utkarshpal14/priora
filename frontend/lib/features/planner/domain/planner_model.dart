@@ -1,4 +1,58 @@
+import 'package:intl/intl.dart';
+
 import 'package:frontend/features/tasks/domain/task_model.dart';
+
+class TaskSessionModel {
+  final String id;
+  final String taskId;
+  final DateTime scheduledStart;
+  final DateTime scheduledEnd;
+  final int durationMinutes;
+  final String formattedTimeRange;
+  final bool hasConflict;
+  final List<String> conflictingWith;
+  final TaskModel? task;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  const TaskSessionModel({
+    required this.id,
+    required this.taskId,
+    required this.scheduledStart,
+    required this.scheduledEnd,
+    required this.durationMinutes,
+    required this.formattedTimeRange,
+    this.hasConflict = false,
+    this.conflictingWith = const [],
+    this.task,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  String get formattedDuration {
+    if (durationMinutes < 60) return '${durationMinutes}m';
+    final h = durationMinutes ~/ 60;
+    final m = durationMinutes % 60;
+    return m == 0 ? '${h}h' : '${h}h ${m}m';
+  }
+
+  factory TaskSessionModel.fromJson(Map<String, dynamic> json) {
+    final rawConflicting = json['conflicting_with'] as List<dynamic>? ?? [];
+    return TaskSessionModel(
+      id: json['id'] as String,
+      taskId: json['task_id'] as String,
+      scheduledStart: TaskModel.parseUtcDateTime(json['scheduled_start'] as String) ?? DateTime.now(),
+      scheduledEnd: TaskModel.parseUtcDateTime(json['scheduled_end'] as String) ?? DateTime.now(),
+      durationMinutes: (json['duration_minutes'] as num?)?.toInt() ?? 0,
+      formattedTimeRange: json['formatted_time_range'] as String? ?? '',
+      hasConflict: json['has_conflict'] as bool? ?? false,
+      conflictingWith: rawConflicting.map((e) => e.toString()).toList(),
+      task: json['task'] != null ? TaskModel.fromJson(json['task'] as Map<String, dynamic>) : null,
+      createdAt: json['created_at'] != null ? TaskModel.parseUtcDateTime(json['created_at'] as String) : null,
+      updatedAt: json['updated_at'] != null ? TaskModel.parseUtcDateTime(json['updated_at'] as String) : null,
+    );
+  }
+}
 
 class DayPlanSummaryModel {
   final int total;
@@ -17,13 +71,15 @@ class DayPlanSummaryModel {
     this.totalEstimatedMinutes = 0,
   });
 
-  String get formattedTotalDuration {
+  String get formattedWorkloadDuration {
     if (totalEstimatedMinutes <= 0) return '0m';
     final h = totalEstimatedMinutes ~/ 60;
     final m = totalEstimatedMinutes % 60;
     if (h == 0) return '${m}m';
     return m == 0 ? '${h}h' : '${h}h ${m}m';
   }
+
+  String get formattedTotalDuration => formattedWorkloadDuration;
 
   factory DayPlanSummaryModel.fromJson(Map<String, dynamic> json) {
     return DayPlanSummaryModel(
@@ -63,19 +119,25 @@ class DailyPlanModel {
   final DayPlanSummaryModel summary;
   final List<TaskModel> overdueTasks;
   final List<TaskModel> focusTasks;
+  final List<TaskSessionModel> timeBlocks;
+  final List<TaskModel> unscheduledTasks;
   final List<TimelineBucketModel> timeline;
 
   const DailyPlanModel({
     required this.date,
-    this.summary = const DayPlanSummaryModel(),
+    required this.summary,
     this.overdueTasks = const [],
     this.focusTasks = const [],
+    this.timeBlocks = const [],
+    this.unscheduledTasks = const [],
     this.timeline = const [],
   });
 
   factory DailyPlanModel.fromJson(Map<String, dynamic> json) {
     final rawOverdue = json['overdue_tasks'] as List<dynamic>? ?? [];
     final rawFocus = json['focus_tasks'] as List<dynamic>? ?? [];
+    final rawBlocks = json['time_blocks'] as List<dynamic>? ?? [];
+    final rawUnscheduled = json['unscheduled_tasks'] as List<dynamic>? ?? [];
     final rawTimeline = json['timeline'] as List<dynamic>? ?? [];
 
     return DailyPlanModel(
@@ -85,12 +147,14 @@ class DailyPlanModel {
           : const DayPlanSummaryModel(),
       overdueTasks: rawOverdue.map((t) => TaskModel.fromJson(t as Map<String, dynamic>)).toList(),
       focusTasks: rawFocus.map((t) => TaskModel.fromJson(t as Map<String, dynamic>)).toList(),
+      timeBlocks: rawBlocks.map((b) => TaskSessionModel.fromJson(b as Map<String, dynamic>)).toList(),
+      unscheduledTasks: rawUnscheduled.map((t) => TaskModel.fromJson(t as Map<String, dynamic>)).toList(),
       timeline: rawTimeline.map((b) => TimelineBucketModel.fromJson(b as Map<String, dynamic>)).toList(),
     );
   }
 }
 
-class WeeklyDayModel {
+class WeeklyPlanDayModel {
   final String date;
   final String dayName;
   final int taskCount;
@@ -99,7 +163,7 @@ class WeeklyDayModel {
   final int overdueCount;
   final bool hasCritical;
 
-  const WeeklyDayModel({
+  const WeeklyPlanDayModel({
     required this.date,
     required this.dayName,
     this.taskCount = 0,
@@ -109,8 +173,8 @@ class WeeklyDayModel {
     this.hasCritical = false,
   });
 
-  factory WeeklyDayModel.fromJson(Map<String, dynamic> json) {
-    return WeeklyDayModel(
+  factory WeeklyPlanDayModel.fromJson(Map<String, dynamic> json) {
+    return WeeklyPlanDayModel(
       date: (json['date'] ?? '') as String,
       dayName: (json['day_name'] ?? '') as String,
       taskCount: (json['task_count'] as num?)?.toInt() ?? 0,
@@ -125,7 +189,7 @@ class WeeklyDayModel {
 class WeeklyPlanModel {
   final String startDate;
   final String endDate;
-  final List<WeeklyDayModel> days;
+  final List<WeeklyPlanDayModel> days;
   final int totalTasks;
   final int completedTasks;
 
@@ -142,9 +206,11 @@ class WeeklyPlanModel {
     return WeeklyPlanModel(
       startDate: (json['start_date'] ?? '') as String,
       endDate: (json['end_date'] ?? '') as String,
-      days: rawDays.map((d) => WeeklyDayModel.fromJson(d as Map<String, dynamic>)).toList(),
+      days: rawDays.map((d) => WeeklyPlanDayModel.fromJson(d as Map<String, dynamic>)).toList(),
       totalTasks: (json['total_tasks'] as num?)?.toInt() ?? 0,
       completedTasks: (json['completed_tasks'] as num?)?.toInt() ?? 0,
     );
   }
 }
+
+typedef WeeklyDayModel = WeeklyPlanDayModel;

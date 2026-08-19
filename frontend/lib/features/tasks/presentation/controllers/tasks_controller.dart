@@ -102,6 +102,8 @@ class TasksController extends StateNotifier<TasksState> {
     TaskPriority priority = TaskPriority.medium,
     String? categoryId,
     DateTime? deadline,
+    DateTime? scheduledStart,
+    DateTime? scheduledEnd,
     DateTime? remindAt,
   }) async {
     state = state.copyWith(isCreating: true, clearError: true);
@@ -112,6 +114,8 @@ class TasksController extends StateNotifier<TasksState> {
         priority: priority,
         categoryId: categoryId,
         deadline: deadline,
+        scheduledStart: scheduledStart,
+        scheduledEnd: scheduledEnd,
       );
 
       // If user selected a reminder, schedule local notification and persist on backend
@@ -203,6 +207,8 @@ class TasksController extends StateNotifier<TasksState> {
     TaskStatus? status,
     String? categoryId,
     DateTime? deadline,
+    DateTime? scheduledStart,
+    DateTime? scheduledEnd,
   }) async {
     final originalTasks = [...state.tasks];
     final originalMetrics = state.metrics;
@@ -227,6 +233,8 @@ class TasksController extends StateNotifier<TasksState> {
         categoryId: categoryId ?? oldTask.categoryId,
         category: updatedCategory,
         deadline: deadline ?? oldTask.deadline,
+        scheduledStart: scheduledStart ?? oldTask.scheduledStart,
+        scheduledEnd: scheduledEnd ?? oldTask.scheduledEnd,
         updatedAt: DateTime.now(),
       );
 
@@ -244,6 +252,8 @@ class TasksController extends StateNotifier<TasksState> {
         status: status,
         categoryId: categoryId,
         deadline: deadline,
+        scheduledStart: scheduledStart,
+        scheduledEnd: scheduledEnd,
       );
       final finalTasks = state.tasks.map((t) => t.id == taskId ? updated : t).toList();
       state = state.copyWith(tasks: finalTasks);

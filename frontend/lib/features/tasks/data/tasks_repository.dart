@@ -35,6 +35,8 @@ class TasksRepository {
     TaskPriority priority = TaskPriority.medium,
     String? categoryId,
     DateTime? deadline,
+    DateTime? scheduledStart,
+    DateTime? scheduledEnd,
   }) {
     return _api.createTask(
       title: title,
@@ -42,6 +44,8 @@ class TasksRepository {
       priority: priority,
       categoryId: categoryId,
       deadline: deadline,
+      scheduledStart: scheduledStart,
+      scheduledEnd: scheduledEnd,
     );
   }
 
@@ -53,6 +57,8 @@ class TasksRepository {
     TaskStatus? status,
     String? categoryId,
     DateTime? deadline,
+    DateTime? scheduledStart,
+    DateTime? scheduledEnd,
   }) {
     return _api.updateTask(
       taskId,
@@ -62,6 +68,8 @@ class TasksRepository {
       status: status,
       categoryId: categoryId,
       deadline: deadline,
+      scheduledStart: scheduledStart,
+      scheduledEnd: scheduledEnd,
     );
   }
 

@@ -8,9 +8,9 @@ import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:frontend/features/planner/presentation/controllers/planner_controller.dart';
 import 'package:frontend/features/planner/presentation/widgets/calendar_strip.dart';
+import 'package:frontend/features/planner/presentation/widgets/hourly_timeline_section.dart';
 import 'package:frontend/features/planner/presentation/widgets/planner_progress_summary.dart';
 import 'package:frontend/features/planner/presentation/widgets/smart_focus_section.dart';
-import 'package:frontend/features/planner/presentation/widgets/timeline_schedule_section.dart';
 import 'package:frontend/features/planner/presentation/widgets/weekly_preview_section.dart';
 import 'package:frontend/features/review/presentation/widgets/evening_review_banner.dart';
 import 'package:frontend/features/tasks/presentation/widgets/create_task_bottom_sheet.dart';
@@ -29,14 +29,15 @@ class PlannerScreen extends ConsumerWidget {
     final weeklyPlan = plannerState.weeklyPlan;
     final overdueTasks = dailyPlan?.overdueTasks ?? [];
     final focusTasks = dailyPlan?.focusTasks ?? [];
-    final timelineBuckets = dailyPlan?.timeline ?? [];
+    final timeBlocks = dailyPlan?.timeBlocks ?? [];
+    final unscheduledTasks = dailyPlan?.unscheduledTasks ?? [];
     final summary = dailyPlan?.summary;
 
     // Construct map of date -> task count from weekly plan for calendar strip dots
     final taskCountMap = <String, int>{};
     if (weeklyPlan != null) {
       for (final day in weeklyPlan.days) {
-        taskCountMap[day.date] = day.dueCount;
+        taskCountMap[day.date] = day.taskCount;
       }
     }
 
@@ -50,7 +51,9 @@ class PlannerScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Daily Planner 📅',
+              plannerState.isViewingToday
+                  ? "Today's Plan 🎯"
+                  : DateFormat('EEEE, MMM d').format(plannerState.selectedDate),
               style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -58,12 +61,9 @@ class PlannerScreen extends ConsumerWidget {
               ),
             ),
             Text(
-              plannerState.isViewingToday
-                  ? "Plan your day, $userName"
-                  : DateFormat('MMMM d, yyyy').format(plannerState.selectedDate),
+              'Welcome, $userName 👋',
               style: GoogleFonts.inter(
                 fontSize: 12,
-                fontWeight: FontWeight.w500,
                 color: AppColors.textSecondary,
               ),
             ),
@@ -71,12 +71,7 @@ class PlannerScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.nights_stay_outlined, color: AppColors.primary, size: 20),
-            tooltip: 'End-of-Day Review',
-            onPressed: () => context.push('/review'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: AppColors.textSecondary, size: 20),
+            icon: const Icon(Icons.refresh_rounded, color: AppColors.textPrimary),
             tooltip: 'Refresh Plan',
             onPressed: () => plannerNotifier.loadData(),
           ),
@@ -169,12 +164,14 @@ class PlannerScreen extends ConsumerWidget {
 
                 const SizedBox(height: 10),
 
-                // 5. Timeline Schedule
-                TimelineScheduleSection(
-                  timelineBuckets: timelineBuckets,
-                  onToggleComplete: (task) => plannerNotifier.toggleTaskCompletion(task),
-                  onMoveToToday: (taskId) => plannerNotifier.moveToToday(taskId),
+                // 5. Hourly Timeline Schedule with Time Blocks & Unscheduled Tasks
+                HourlyTimelineSection(
+                  timeBlocks: timeBlocks,
+                  unscheduledTasks: unscheduledTasks,
                   isViewingToday: plannerState.isViewingToday,
+                  selectedDate: plannerState.selectedDate,
+                  onDeleteSession: (sessionId) => plannerNotifier.deleteSession(sessionId),
+                  onToggleTaskComplete: (task) => plannerNotifier.toggleTaskCompletion(task),
                 ),
 
                 const SizedBox(height: 14),

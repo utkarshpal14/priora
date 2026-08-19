@@ -4,6 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
 from app.schemas.task import TaskRead
+from app.schemas.task_session import TaskSessionRead
 
 
 class DayPlanSummary(BaseModel):
@@ -26,6 +27,8 @@ class DailyPlanRead(BaseModel):
     summary: DayPlanSummary
     overdue_tasks: list[TaskRead] = []
     focus_tasks: list[TaskRead] = []
+    time_blocks: list[TaskSessionRead] = []
+    unscheduled_tasks: list[TaskRead] = []
     timeline: list[TimelineBucket] = []
 
     model_config = ConfigDict(from_attributes=True)

@@ -9,7 +9,9 @@ from app.core.database import BaseDBModel
 from app.models.category import Category
 
 if TYPE_CHECKING:
+    from app.models.goal import Goal, GoalMilestone
     from app.models.reminder import Reminder
+    from app.models.task_session import TaskSession
 
 
 class Task(BaseDBModel):
@@ -28,6 +30,18 @@ class Task(BaseDBModel):
     category_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid,
         ForeignKey("categories.id", ondelete="SET NULL"),
+        index=True,
+        nullable=True,
+    )
+    goal_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid,
+        ForeignKey("goals.id", ondelete="SET NULL"),
+        index=True,
+        nullable=True,
+    )
+    milestone_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid,
+        ForeignKey("goal_milestones.id", ondelete="SET NULL"),
         index=True,
         nullable=True,
     )
@@ -56,6 +70,16 @@ class Task(BaseDBModel):
         nullable=True,
         index=True,
     )
+    scheduled_start: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        index=True,
+    )
+    scheduled_end: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        index=True,
+    )
     estimated_minutes: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
@@ -67,8 +91,16 @@ class Task(BaseDBModel):
 
     # Relationships
     category: Mapped[Category | None] = relationship("Category", lazy="joined")
+    goal: Mapped["Goal | None"] = relationship("Goal", back_populates="tasks")
+    milestone: Mapped["GoalMilestone | None"] = relationship("GoalMilestone", back_populates="tasks")
     reminders: Mapped[list["Reminder"]] = relationship(
         "Reminder",
+        back_populates="task",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    sessions: Mapped[list["TaskSession"]] = relationship(
+        "TaskSession",
         back_populates="task",
         cascade="all, delete-orphan",
         lazy="selectin",

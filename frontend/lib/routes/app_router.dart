@@ -7,6 +7,8 @@ import '../features/auth/presentation/controllers/auth_controller.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
 import '../features/dashboard/presentation/screens/placeholder_screen.dart';
+import '../features/goals/presentation/screens/goal_detail_screen.dart';
+import '../features/goals/presentation/screens/goals_screen.dart';
 import '../features/planner/presentation/screens/planner_screen.dart';
 import '../features/review/presentation/screens/review_screen.dart';
 import '../features/tasks/presentation/screens/tasks_screen.dart';
@@ -28,6 +30,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/register',
         name: 'register',
         builder: (context, state) => const RegisterScreen(),
+      ),
+
+      // Goal Detail Screen
+      GoRoute(
+        path: '/goals/:id',
+        name: 'goal_detail',
+        builder: (context, state) => GoalDetailScreen(
+          goalId: state.pathParameters['id']!,
+        ),
       ),
 
       // Protected Shell Routes (with persistent bottom navigation)
@@ -57,7 +68,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/goals',
             name: 'goals',
-            builder: (context, state) => const PlaceholderScreen(),
+            builder: (context, state) => const GoalsScreen(),
           ),
           GoRoute(
             path: '/review',

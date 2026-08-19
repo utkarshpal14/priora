@@ -155,16 +155,33 @@ class TaskRepository:
         task = Task(
             user_id=user_id,
             category_id=task_in.category_id,
+            goal_id=task_in.goal_id,
+            milestone_id=task_in.milestone_id,
             title=task_in.title.strip(),
             description=task_in.description.strip() if task_in.description else None,
             priority=task_in.priority.value,
             status="PENDING",
             deadline=task_in.deadline,
+            scheduled_start=task_in.scheduled_start,
+            scheduled_end=task_in.scheduled_end,
             estimated_minutes=task_in.estimated_minutes,
         )
         db.add(task)
         db.commit()
         db.refresh(task)
+
+        # Auto-create session if both start and end times provided
+        if task_in.scheduled_start and task_in.scheduled_end:
+            from app.models.task_session import TaskSession
+            session = TaskSession(
+                task_id=task.id,
+                scheduled_start=task_in.scheduled_start,
+                scheduled_end=task_in.scheduled_end,
+            )
+            db.add(session)
+            db.commit()
+            db.refresh(task)
+
         return task
 
     def update(self, db: Session, task: Task, task_in: TaskUpdate) -> Task:
@@ -183,8 +200,16 @@ class TaskRepository:
                 task.completed_at = None
         if task_in.category_id is not None:
             task.category_id = task_in.category_id
+        if task_in.goal_id is not None:
+            task.goal_id = task_in.goal_id
+        if task_in.milestone_id is not None:
+            task.milestone_id = task_in.milestone_id
         if task_in.deadline is not None:
             task.deadline = task_in.deadline
+        if task_in.scheduled_start is not None:
+            task.scheduled_start = task_in.scheduled_start
+        if task_in.scheduled_end is not None:
+            task.scheduled_end = task_in.scheduled_end
         if task_in.estimated_minutes is not None:
             task.estimated_minutes = task_in.estimated_minutes
 

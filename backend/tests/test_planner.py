@@ -247,3 +247,129 @@ def test_schedule_task_action(client: TestClient):
     assert response.status_code == 200
     updated = response.json()["data"]
     assert updated["deadline"] is not None
+
+
+def test_task_session_crud_and_validation(client: TestClient):
+    headers, _ = _get_auth_context(client, "session_crud@priora.app")
+    now = datetime.now(UTC)
+    today = now.date()
+
+    task = client.post(
+        "/api/v1/tasks",
+        headers=headers,
+        json={"title": "Striver Arrays", "priority": "HIGH"},
+    ).json()["data"]
+
+    # 1. Invalid time window (end <= start) -> rejected
+    start_time = datetime(today.year, today.month, today.day, 12, 0, tzinfo=UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    invalid_end = datetime(today.year, today.month, today.day, 10, 0, tzinfo=UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    invalid_res = client.post(
+        "/api/v1/planner/sessions",
+        headers=headers,
+        json={"task_id": task["id"], "scheduled_start": start_time, "scheduled_end": invalid_end},
+    )
+    assert invalid_res.status_code in (400, 422)
+
+    # 2. Valid session (10:00 AM - 12:00 PM -> 120 mins)
+    valid_start = datetime(today.year, today.month, today.day, 10, 0, tzinfo=UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    valid_end = datetime(today.year, today.month, today.day, 12, 0, tzinfo=UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    res = client.post(
+        "/api/v1/planner/sessions",
+        headers=headers,
+        json={"task_id": task["id"], "scheduled_start": valid_start, "scheduled_end": valid_end},
+    )
+    assert res.status_code == 201
+    session = res.json()["data"]
+    assert session["duration_minutes"] == 120
+    assert "10:00 AM" in session["formatted_time_range"]
+    assert "12:00 PM" in session["formatted_time_range"]
+
+    # 3. Update session window to 10:00 AM - 1:00 PM (180 mins)
+    new_end = datetime(today.year, today.month, today.day, 13, 0, tzinfo=UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    update_res = client.put(
+        f"/api/v1/planner/sessions/{session['id']}",
+        headers=headers,
+        json={"scheduled_end": new_end},
+    )
+    assert update_res.status_code == 200
+    assert update_res.json()["data"]["duration_minutes"] == 180
+
+    # 4. Delete session
+    del_res = client.delete(f"/api/v1/planner/sessions/{session['id']}", headers=headers)
+    assert del_res.status_code == 200
+
+
+def test_time_block_conflict_detection(client: TestClient):
+    headers, _ = _get_auth_context(client, "conflict_test@priora.app")
+    now = datetime.now(UTC)
+    today = now.date()
+    today_str = today.strftime("%Y-%m-%d")
+
+    task1 = client.post(
+        "/api/v1/tasks",
+        headers=headers,
+        json={"title": "DSA Practice", "priority": "HIGH"},
+    ).json()["data"]
+
+    task2 = client.post(
+        "/api/v1/tasks",
+        headers=headers,
+        json={"title": "System Design Reading", "priority": "MEDIUM"},
+    ).json()["data"]
+
+    # Session 1: 10:00 AM - 12:00 PM
+    s1_start = datetime(today.year, today.month, today.day, 10, 0, tzinfo=UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    s1_end = datetime(today.year, today.month, today.day, 12, 0, tzinfo=UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    client.post(
+        "/api/v1/planner/sessions",
+        headers=headers,
+        json={"task_id": task1["id"], "scheduled_start": s1_start, "scheduled_end": s1_end},
+    )
+
+    # Session 2: 11:00 AM - 1:00 PM (Overlaps with Session 1)
+    s2_start = datetime(today.year, today.month, today.day, 11, 0, tzinfo=UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    s2_end = datetime(today.year, today.month, today.day, 13, 0, tzinfo=UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    client.post(
+        "/api/v1/planner/sessions",
+        headers=headers,
+        json={"task_id": task2["id"], "scheduled_start": s2_start, "scheduled_end": s2_end},
+    )
+
+    # Fetch daily plan
+    res = client.get(f"/api/v1/planner/day?date={today_str}", headers=headers)
+    assert res.status_code == 200
+    blocks = res.json()["data"]["time_blocks"]
+
+    assert len(blocks) == 2
+    assert blocks[0]["has_conflict"] is True
+    assert "System Design Reading" in blocks[0]["conflicting_with"]
+    assert blocks[1]["has_conflict"] is True
+    assert "DSA Practice" in blocks[1]["conflicting_with"]
+
+
+def test_auto_placement_and_earlier_incomplete_tasks(client: TestClient):
+    headers, _ = _get_auth_context(client, "autoplace@priora.app")
+    now = datetime.now(UTC)
+    today = now.date()
+    today_str = today.strftime("%Y-%m-%d")
+
+    # Future task for today (e.g. 5 hours in future today)
+    future_time = now + timedelta(hours=5)
+    future_deadline = future_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+    future_task = client.post(
+        "/api/v1/tasks",
+        headers=headers,
+        json={"title": "Upcoming Today Task", "priority": "HIGH", "deadline": future_deadline},
+    ).json()["data"]
+
+    # Query planner for future_time's date
+    target_date_str = future_time.strftime("%Y-%m-%d")
+    res = client.get(f"/api/v1/planner/day?date={target_date_str}", headers=headers)
+    assert res.status_code == 200
+    data = res.json()["data"]
+
+    # The upcoming task is auto-placed into time_blocks
+    time_blocks = data["time_blocks"]
+    assert any(b["task_id"] == future_task["id"] for b in time_blocks)
+
+

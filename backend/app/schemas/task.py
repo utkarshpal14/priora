@@ -27,7 +27,11 @@ class TaskBase(BaseModel):
     description: str | None = None
     priority: TaskPriority = TaskPriority.MEDIUM
     category_id: uuid.UUID | None = None
+    goal_id: uuid.UUID | None = None
+    milestone_id: uuid.UUID | None = None
     deadline: datetime | None = None
+    scheduled_start: datetime | None = None
+    scheduled_end: datetime | None = None
     estimated_minutes: int | None = Field(default=None, ge=1, le=1440)
 
 
@@ -41,7 +45,11 @@ class TaskUpdate(BaseModel):
     priority: TaskPriority | None = None
     status: TaskStatus | None = None
     category_id: uuid.UUID | None = None
+    goal_id: uuid.UUID | None = None
+    milestone_id: uuid.UUID | None = None
     deadline: datetime | None = None
+    scheduled_start: datetime | None = None
+    scheduled_end: datetime | None = None
     estimated_minutes: int | None = Field(default=None, ge=1, le=1440)
 
 
@@ -54,7 +62,11 @@ class TaskRead(BaseModel):
     status: TaskStatus
     category_id: uuid.UUID | None = None
     category: CategoryRead | None = None
+    goal_id: uuid.UUID | None = None
+    milestone_id: uuid.UUID | None = None
     deadline: datetime | None = None
+    scheduled_start: datetime | None = None
+    scheduled_end: datetime | None = None
     estimated_minutes: int | None = None
     completed_at: datetime | None = None
     created_at: datetime
@@ -63,7 +75,7 @@ class TaskRead(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    @field_serializer("deadline", "completed_at", "created_at", "updated_at", when_used="json")
+    @field_serializer("deadline", "scheduled_start", "scheduled_end", "completed_at", "created_at", "updated_at", when_used="json")
     def serialize_datetime_utc(self, dt: datetime | None) -> str | None:
         if dt is None:
             return None

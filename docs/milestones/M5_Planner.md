@@ -1,116 +1,75 @@
-# Milestone 5 — Planner (Daily Planner & Timeline Scheduling)
+# Milestone 5: Daily Planner & Hourly Time-Block Scheduling
 
-## 1. Overview & Purpose
-The **Planner** transforms Priora from a passive task storage manager into an active execution engine. It provides a structured daily timeline and weekly lookahead, answering the essential question: *"What should I do today, and how is my time allocated across the day and week?"*
+## Status
+Completed (Upgraded to Hourly Time-Block & Multi-Session Scheduling)
 
----
-
-## 2. Core Architecture Invariants
-
-1. **Derived System / No Synchronized Shadow Tables**:
-   - The planner is generated dynamically from the active `Task` collection (`deadline`, `priority`, `status`, `category`, `estimated_minutes`).
-   - No separate planner tables or synchronization workers are needed.
-
-2. **Lightweight Task Duration (`estimated_minutes`)**:
-   - Tasks support an optional duration in minutes (e.g. `15`, `30`, `60`, `120`).
-   - Used for displaying duration badges and calculating total daily workload.
-
-3. **Composite Ranking for Top 3 Smart Focus**:
-   - Top 3 focus tasks for the day are computed using composite urgency scoring:
-     1. `Overdue + Critical`
-     2. `Overdue + High`
-     3. `Overdue + Medium`
-     4. `Overdue + Low`
-     5. `Critical`
-     6. `High`
-     7. `Medium`
-     8. `Low`
-   - Nearest deadline acts as the tie-breaker within the same priority level.
-
-4. **Timeline Buckets**:
-   - Tasks for a selected date are bucketed into:
-     - **Morning** (`deadline` time < 12:00 PM)
-     - **Afternoon** (`deadline` time between 12:00 PM and 5:00 PM)
-     - **Evening** (`deadline` time >= 5:00 PM)
-     - **Flexible / Anytime** (no time specified or unscheduled on that date)
-
-5. **Actionable User Flow**:
-   - Focus items and timeline tasks allow direct actions: `Mark Complete`, `Start / In-Progress`, `Move to Today`, and tap to open edit sheet.
+## Objective
+Provide an actionable, structured daily execution view. Instead of vague broad buckets, Priora empowers users with **concrete hourly time-blocking and multi-session scheduling** (e.g. *10:00 AM – 12:00 PM: Solve DSA*), current time indicator, conflict detection, and quick scheduling directly from the planner.
 
 ---
 
-## 3. API Endpoints
+## 1. Architectural Principles
 
-### 1. Daily Plan
-`GET /api/v1/planner/day?date=YYYY-MM-DD`
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "data": {
-      "date": "2026-08-20",
-      "summary": {
-        "total": 5,
-        "completed": 2,
-        "pending": 3,
-        "overdue_count": 1,
-        "completion_percentage": 40.0
-      },
-      "overdue_tasks": [...],
-      "focus_tasks": [...],
-      "timeline": [
-        { "name": "Morning", "tasks": [...] },
-        { "name": "Afternoon", "tasks": [...] },
-        { "name": "Evening", "tasks": [...] },
-        { "name": "Anytime", "tasks": [...] }
-      ]
+1. **Deadline vs Scheduled Time Distinction:**
+   - **Deadline (`Task.deadline`):** The absolute due date/time when a task must be finished.
+   - **Work Session (`TaskSession`):** When the user actually plans to sit down and focus on the task.
+2. **Multi-Session Task Architecture:**
+   - A single substantial task (e.g., *Complete Striver Arrays*) can be worked on across multiple scheduled sessions:
+     - *Session 1:* Monday 10:00 AM – 12:00 PM (120 mins)
+     - *Session 2:* Wednesday 6:00 PM – 8:00 PM (120 mins)
+     - *Session 3:* Saturday 9:00 AM – 12:00 PM (180 mins)
+3. **Automatic Duration Computation:**
+   - Duration is derived directly from `(scheduled_end - scheduled_start)` in minutes.
+4. **Conflict & Overlap Detection:**
+   - Soft overlap detection flags overlapping sessions in the planner UI, highlighting conflicts while giving students full scheduling freedom.
+5. **Real-Time Timeline Marker:**
+   - Real-time current time indicator displays exact position in the day (e.g., `11:15 AM`).
+
+---
+
+## 2. Data Models
+
+### `TaskSession`
+- `id`: UUID (Primary Key)
+- `task_id`: UUID (FK to `tasks.id`, ondelete="CASCADE")
+- `scheduled_start`: DateTime (with timezone UTC)
+- `scheduled_end`: DateTime (with timezone UTC)
+- `created_at`, `updated_at`, `is_deleted`
+
+---
+
+## 3. API Contract
+
+### `GET /api/v1/planner/day?date=YYYY-MM-DD`
+Fetch comprehensive day plan with hourly time-blocks and unscheduled tasks.
+
+**Response:**
+```json
+{
+  "date": "2026-08-20",
+  "time_blocks": [
+    {
+      "id": "session-uuid-1",
+      "task_id": "task-uuid-1",
+      "scheduled_start": "2026-08-20T10:00:00Z",
+      "scheduled_end": "2026-08-20T12:00:00Z",
+      "duration_minutes": 120,
+      "formatted_time_range": "10:00 AM – 12:00 PM",
+      "has_conflict": false,
+      "task": { ... }
     }
-  }
-  ```
+  ],
+  "unscheduled_tasks": [ ... ],
+  "focus_tasks": [ ... ],
+  "summary": { ... }
+}
+```
 
-### 2. Weekly Plan
-`GET /api/v1/planner/week?start_date=YYYY-MM-DD`
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "data": {
-      "start_date": "2026-08-17",
-      "end_date": "2026-08-23",
-      "total_tasks": 15,
-      "completed_tasks": 6,
-      "days": [
-        {
-          "date": "2026-08-20",
-          "day_name": "Thursday",
-          "task_count": 5,
-          "due_count": 4,
-          "completed_count": 2,
-          "overdue_count": 1,
-          "has_critical": true
-        }
-      ]
-    }
-  }
-  ```
+### `POST /api/v1/planner/sessions`
+Create a work session for a task. Validates `scheduled_end > scheduled_start`.
 
-### 3. Move to Today
-`POST /api/v1/planner/move-to-today`
-- **Request**: `{ "task_id": "uuid" }`
-- **Action**: Sets the task's deadline to today (preserving time or setting to end of day).
+### `PUT /api/v1/planner/sessions/{id}`
+Update session time window.
 
-### 4. Schedule Task
-`POST /api/v1/planner/schedule`
-- **Request**: `{ "task_id": "uuid", "deadline": "2026-08-21T18:00:00Z" }`
-- **Action**: Updates the task's deadline.
-
----
-
-## 4. Screen Layout Order (Planner)
-
-1. 📅 **Calendar Strip** (horizontal day selector with active task indicators)
-2. 📊 **Progress Summary** (completion percentage & count)
-3. 🔥 **Overdue Alert** (urgent callout when overdue tasks exist)
-4. 🎯 **Top 3 Smart Focus** (actionable priority cards)
-5. ⏰ **Timeline Schedule** (Morning, Afternoon, Evening, Flexible)
-6. 🗓️ **Weekly Preview** (7-day lookahead cards with `due_count`)
+### `DELETE /api/v1/planner/sessions/{id}`
+Remove a scheduled work session.

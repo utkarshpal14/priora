@@ -17,7 +17,9 @@ class PlannerApi {
   PlannerApi(this._dio);
 
   Future<DailyPlanModel> getDailyPlan({String? date}) async {
-    final queryParams = <String, dynamic>{};
+    final queryParams = <String, dynamic>{
+      'tz_offset': DateTime.now().timeZoneOffset.inMinutes,
+    };
     if (date != null) queryParams['date'] = date;
 
     final response = await _dio.get(
@@ -30,7 +32,9 @@ class PlannerApi {
   }
 
   Future<WeeklyPlanModel> getWeeklyPlan({String? startDate}) async {
-    final queryParams = <String, dynamic>{};
+    final queryParams = <String, dynamic>{
+      'tz_offset': DateTime.now().timeZoneOffset.inMinutes,
+    };
     if (startDate != null) queryParams['start_date'] = startDate;
 
     final response = await _dio.get(
@@ -65,5 +69,51 @@ class PlannerApi {
 
     final data = response.data['data'] as Map<String, dynamic>;
     return TaskModel.fromJson(data);
+  }
+
+  Future<TaskSessionModel> createSession({
+    required String taskId,
+    required DateTime scheduledStart,
+    required DateTime scheduledEnd,
+  }) async {
+    final payload = {
+      'task_id': taskId,
+      'scheduled_start': scheduledStart.toUtc().toIso8601String(),
+      'scheduled_end': scheduledEnd.toUtc().toIso8601String(),
+    };
+
+    final response = await _dio.post(
+      '${ApiEndpoints.baseUrl}/planner/sessions',
+      data: payload,
+    );
+
+    final data = response.data['data'] as Map<String, dynamic>;
+    return TaskSessionModel.fromJson(data);
+  }
+
+  Future<TaskSessionModel> updateSession({
+    required String sessionId,
+    DateTime? scheduledStart,
+    DateTime? scheduledEnd,
+  }) async {
+    final payload = <String, dynamic>{};
+    if (scheduledStart != null) {
+      payload['scheduled_start'] = scheduledStart.toUtc().toIso8601String();
+    }
+    if (scheduledEnd != null) {
+      payload['scheduled_end'] = scheduledEnd.toUtc().toIso8601String();
+    }
+
+    final response = await _dio.put(
+      '${ApiEndpoints.baseUrl}/planner/sessions/$sessionId',
+      data: payload,
+    );
+
+    final data = response.data['data'] as Map<String, dynamic>;
+    return TaskSessionModel.fromJson(data);
+  }
+
+  Future<void> deleteSession(String sessionId) async {
+    await _dio.delete('${ApiEndpoints.baseUrl}/planner/sessions/$sessionId');
   }
 }

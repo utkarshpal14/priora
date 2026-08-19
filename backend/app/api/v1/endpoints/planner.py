@@ -1,3 +1,4 @@
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, status
@@ -9,6 +10,11 @@ from app.models.user import User
 from app.schemas.planner import DailyPlanRead, MoveToTodayRequest, ScheduleTaskRequest, WeeklyPlanRead
 from app.schemas.response import ApiResponse
 from app.schemas.task import TaskRead
+from app.schemas.task_session import (
+    TaskSessionCreate,
+    TaskSessionRead,
+    TaskSessionUpdate,
+)
 from app.services.planner_service import planner_service
 
 router = APIRouter()
@@ -22,10 +28,11 @@ router = APIRouter()
 )
 def get_daily_plan(
     date: Annotated[str | None, Query(description="Target date in YYYY-MM-DD format")] = None,
+    tz_offset: Annotated[int, Query(description="Client timezone offset in minutes from UTC")] = 0,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> ApiResponse[DailyPlanRead]:
-    daily_plan = planner_service.get_daily_plan(db, current_user.id, date)
+    daily_plan = planner_service.get_daily_plan(db, current_user.id, date, tz_offset_minutes=tz_offset)
     return ApiResponse(
         success=True,
         message="Daily plan retrieved successfully.",
@@ -41,10 +48,11 @@ def get_daily_plan(
 )
 def get_weekly_plan(
     start_date: Annotated[str | None, Query(description="Week start date in YYYY-MM-DD format")] = None,
+    tz_offset: Annotated[int, Query(description="Client timezone offset in minutes from UTC")] = 0,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> ApiResponse[WeeklyPlanRead]:
-    weekly_plan = planner_service.get_weekly_plan(db, current_user.id, start_date)
+    weekly_plan = planner_service.get_weekly_plan(db, current_user.id, start_date, tz_offset_minutes=tz_offset)
     return ApiResponse(
         success=True,
         message="Weekly plan retrieved successfully.",
@@ -87,4 +95,65 @@ def schedule_task(
         success=True,
         message="Task scheduled successfully.",
         data=task,
+    )
+
+
+# -------------------- Task Session (Time-Block) Endpoints --------------------
+
+@router.post(
+    "/sessions",
+    response_model=ApiResponse[TaskSessionRead],
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a scheduled focus block",
+    description="Create a work session with scheduled start and end times for a task.",
+)
+def create_session(
+    payload: TaskSessionCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ApiResponse[TaskSessionRead]:
+    session = planner_service.create_session(db, current_user.id, payload)
+    return ApiResponse(
+        success=True,
+        message="Focus block scheduled successfully.",
+        data=session,
+    )
+
+
+@router.put(
+    "/sessions/{session_id}",
+    response_model=ApiResponse[TaskSessionRead],
+    summary="Update a scheduled focus block",
+    description="Update the scheduled time window of a focus session.",
+)
+def update_session(
+    session_id: uuid.UUID,
+    payload: TaskSessionUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ApiResponse[TaskSessionRead]:
+    session = planner_service.update_session(db, current_user.id, session_id, payload)
+    return ApiResponse(
+        success=True,
+        message="Focus block updated successfully.",
+        data=session,
+    )
+
+
+@router.delete(
+    "/sessions/{session_id}",
+    response_model=ApiResponse[None],
+    summary="Delete a scheduled focus block",
+    description="Remove a scheduled focus block.",
+)
+def delete_session(
+    session_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ApiResponse[None]:
+    planner_service.delete_session(db, current_user.id, session_id)
+    return ApiResponse(
+        success=True,
+        message="Focus block removed successfully.",
+        data=None,
     )

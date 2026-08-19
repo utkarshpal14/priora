@@ -69,6 +69,16 @@ class TaskService:
                     detail="Task deadline cannot be set in the past.",
                 )
 
+        # Time Window Validation
+        if task_in.scheduled_start and task_in.scheduled_end:
+            start_utc = task_in.scheduled_start if task_in.scheduled_start.tzinfo else task_in.scheduled_start.replace(tzinfo=UTC)
+            end_utc = task_in.scheduled_end if task_in.scheduled_end.tzinfo else task_in.scheduled_end.replace(tzinfo=UTC)
+            if end_utc <= start_utc:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="scheduled_end must be strictly after scheduled_start.",
+                )
+
         # Validate category ownership if provided
         if task_in.category_id is not None:
             category = category_repository.get_by_id(db, task_in.category_id, user_id)
@@ -97,6 +107,18 @@ class TaskService:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Specified category was not found.",
+                )
+
+        # Time Window Validation
+        new_start = task_in.scheduled_start or task.scheduled_start
+        new_end = task_in.scheduled_end or task.scheduled_end
+        if new_start and new_end:
+            start_utc = new_start if new_start.tzinfo else new_start.replace(tzinfo=UTC)
+            end_utc = new_end if new_end.tzinfo else new_end.replace(tzinfo=UTC)
+            if end_utc <= start_utc:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="scheduled_end must be strictly after scheduled_start.",
                 )
 
         updated_task = task_repository.update(db, task, task_in)

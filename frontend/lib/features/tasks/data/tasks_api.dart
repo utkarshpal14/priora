@@ -53,6 +53,8 @@ class TasksApi {
     TaskPriority priority = TaskPriority.medium,
     String? categoryId,
     DateTime? deadline,
+    DateTime? scheduledStart,
+    DateTime? scheduledEnd,
   }) async {
     final payload = <String, dynamic>{
       'title': title.trim(),
@@ -66,6 +68,12 @@ class TasksApi {
     }
     if (deadline != null) {
       payload['deadline'] = deadline.toUtc().toIso8601String();
+    }
+    if (scheduledStart != null) {
+      payload['scheduled_start'] = scheduledStart.toUtc().toIso8601String();
+    }
+    if (scheduledEnd != null) {
+      payload['scheduled_end'] = scheduledEnd.toUtc().toIso8601String();
     }
 
     final response = await _dio.post(
@@ -85,6 +93,8 @@ class TasksApi {
     TaskStatus? status,
     String? categoryId,
     DateTime? deadline,
+    DateTime? scheduledStart,
+    DateTime? scheduledEnd,
   }) async {
     final payload = <String, dynamic>{};
     if (title != null) payload['title'] = title.trim();
@@ -93,6 +103,8 @@ class TasksApi {
     if (status != null) payload['status'] = status.apiValue;
     if (categoryId != null) payload['category_id'] = categoryId;
     if (deadline != null) payload['deadline'] = deadline.toUtc().toIso8601String();
+    if (scheduledStart != null) payload['scheduled_start'] = scheduledStart.toUtc().toIso8601String();
+    if (scheduledEnd != null) payload['scheduled_end'] = scheduledEnd.toUtc().toIso8601String();
 
     final response = await _dio.put(
       '${ApiEndpoints.tasks}/$taskId',

@@ -29,4 +29,32 @@ class PlannerRepository {
   Future<TaskModel> scheduleTask(String taskId, DateTime? deadline) async {
     return _api.scheduleTask(taskId, deadline);
   }
+
+  Future<TaskSessionModel> createSession({
+    required String taskId,
+    required DateTime scheduledStart,
+    required DateTime scheduledEnd,
+  }) async {
+    return _api.createSession(
+      taskId: taskId,
+      scheduledStart: scheduledStart,
+      scheduledEnd: scheduledEnd,
+    );
+  }
+
+  Future<TaskSessionModel> updateSession({
+    required String sessionId,
+    DateTime? scheduledStart,
+    DateTime? scheduledEnd,
+  }) async {
+    return _api.updateSession(
+      sessionId: sessionId,
+      scheduledStart: scheduledStart,
+      scheduledEnd: scheduledEnd,
+    );
+  }
+
+  Future<void> deleteSession(String sessionId) async {
+    return _api.deleteSession(sessionId);
+  }
 }

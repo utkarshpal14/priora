@@ -153,6 +153,64 @@ class PlannerController extends StateNotifier<PlannerState> {
     }
   }
 
+  Future<bool> createSession({
+    required String taskId,
+    required DateTime scheduledStart,
+    required DateTime scheduledEnd,
+  }) async {
+    try {
+      await _plannerRepository.createSession(
+        taskId: taskId,
+        scheduledStart: scheduledStart,
+        scheduledEnd: scheduledEnd,
+      );
+      await _tasksController.refreshTasks();
+      await loadData();
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        errorMessage: _extractError(e, 'Failed to create focus block.'),
+      );
+      return false;
+    }
+  }
+
+  Future<bool> updateSession({
+    required String sessionId,
+    DateTime? scheduledStart,
+    DateTime? scheduledEnd,
+  }) async {
+    try {
+      await _plannerRepository.updateSession(
+        sessionId: sessionId,
+        scheduledStart: scheduledStart,
+        scheduledEnd: scheduledEnd,
+      );
+      await _tasksController.refreshTasks();
+      await loadData();
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        errorMessage: _extractError(e, 'Failed to update focus block.'),
+      );
+      return false;
+    }
+  }
+
+  Future<bool> deleteSession(String sessionId) async {
+    try {
+      await _plannerRepository.deleteSession(sessionId);
+      await _tasksController.refreshTasks();
+      await loadData();
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        errorMessage: _extractError(e, 'Failed to remove focus block.'),
+      );
+      return false;
+    }
+  }
+
   String _extractError(dynamic error, String fallback) {
     if (error is DioException) {
       final responseData = error.response?.data;

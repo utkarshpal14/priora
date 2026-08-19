@@ -95,6 +95,8 @@ class FakeTasksRepository extends TasksRepository {
     TaskPriority priority = TaskPriority.medium,
     String? categoryId,
     DateTime? deadline,
+    DateTime? scheduledStart,
+    DateTime? scheduledEnd,
   }) async {
     final newTask = TaskModel(
       id: 'task-${_tasks.length + 1}',
@@ -105,6 +107,8 @@ class FakeTasksRepository extends TasksRepository {
       status: TaskStatus.pending,
       categoryId: categoryId,
       deadline: deadline,
+      scheduledStart: scheduledStart,
+      scheduledEnd: scheduledEnd,
     );
     _tasks.add(newTask);
     return newTask;
@@ -141,6 +145,8 @@ class FakeTasksRepository extends TasksRepository {
     TaskStatus? status,
     String? categoryId,
     DateTime? deadline,
+    DateTime? scheduledStart,
+    DateTime? scheduledEnd,
   }) async {
     final index = _tasks.indexWhere((t) => t.id == taskId);
     final old = _tasks[index];
@@ -159,6 +165,8 @@ class FakeTasksRepository extends TasksRepository {
       categoryId: categoryId ?? old.categoryId,
       category: category,
       deadline: deadline ?? old.deadline,
+      scheduledStart: scheduledStart ?? old.scheduledStart,
+      scheduledEnd: scheduledEnd ?? old.scheduledEnd,
       updatedAt: DateTime.now(),
     );
     _tasks[index] = updated;

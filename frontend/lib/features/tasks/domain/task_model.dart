@@ -53,6 +53,10 @@ class TaskModel {
   final TaskStatus status;
   final String? categoryId;
   final CategoryModel? category;
+  final String? goalId;
+  final String? milestoneId;
+  final DateTime? scheduledStart;
+  final DateTime? scheduledEnd;
   final DateTime? deadline;
   final int? estimatedMinutes;
   final DateTime? completedAt;
@@ -69,6 +73,10 @@ class TaskModel {
     this.status = TaskStatus.pending,
     this.categoryId,
     this.category,
+    this.goalId,
+    this.milestoneId,
+    this.scheduledStart,
+    this.scheduledEnd,
     this.deadline,
     this.estimatedMinutes,
     this.completedAt,
@@ -81,7 +89,21 @@ class TaskModel {
 
   bool get hasActiveReminder => reminders.any((r) => r.isScheduled);
 
+  String? get formattedTimeRange {
+    if (scheduledStart == null || scheduledEnd == null) return null;
+    final startStr = DateFormat('h:mm a').format(scheduledStart!.toLocal());
+    final endStr = DateFormat('h:mm a').format(scheduledEnd!.toLocal());
+    return '$startStr – $endStr';
+  }
+
   String? get formattedDuration {
+    if (scheduledStart != null && scheduledEnd != null) {
+      final mins = scheduledEnd!.difference(scheduledStart!).inMinutes;
+      if (mins < 60) return '${mins}m';
+      final h = mins ~/ 60;
+      final m = mins % 60;
+      return m == 0 ? '${h}h' : '${h}h ${m}m';
+    }
     if (estimatedMinutes == null) return null;
     if (estimatedMinutes! < 60) return '${estimatedMinutes}m';
     final h = estimatedMinutes! ~/ 60;
@@ -134,9 +156,7 @@ class TaskModel {
     } else if (dayDiff == 0) {
       return 'Due Today • ${DateFormat('h:mm a').format(localDeadline)}';
     } else if (dayDiff == 1) {
-      return 'Tomorrow • ${DateFormat('h:mm a').format(localDeadline)}';
-    } else if (dayDiff > 1 && dayDiff < 7) {
-      return DateFormat('EEEE • h:mm a').format(localDeadline);
+      return 'Due Tomorrow • ${DateFormat('h:mm a').format(localDeadline)}';
     } else {
       return DateFormat('MMM d • h:mm a').format(localDeadline);
     }
@@ -169,6 +189,10 @@ class TaskModel {
       category: json['category'] != null
           ? CategoryModel.fromJson(json['category'] as Map<String, dynamic>)
           : null,
+      goalId: json['goal_id'] as String?,
+      milestoneId: json['milestone_id'] as String?,
+      scheduledStart: parseUtcDateTime(json['scheduled_start']),
+      scheduledEnd: parseUtcDateTime(json['scheduled_end']),
       deadline: parseUtcDateTime(json['deadline']),
       estimatedMinutes: json['estimated_minutes'] as int?,
       completedAt: parseUtcDateTime(json['completed_at']),
@@ -189,6 +213,10 @@ class TaskModel {
       'priority': priority.apiValue,
       'status': status.apiValue,
       'category_id': categoryId,
+      'goal_id': goalId,
+      'milestone_id': milestoneId,
+      'scheduled_start': scheduledStart?.toUtc().toIso8601String(),
+      'scheduled_end': scheduledEnd?.toUtc().toIso8601String(),
       'deadline': deadline?.toUtc().toIso8601String(),
       'estimated_minutes': estimatedMinutes,
     };
@@ -203,6 +231,10 @@ class TaskModel {
     TaskStatus? status,
     String? categoryId,
     CategoryModel? category,
+    String? goalId,
+    String? milestoneId,
+    DateTime? scheduledStart,
+    DateTime? scheduledEnd,
     DateTime? deadline,
     int? estimatedMinutes,
     DateTime? completedAt,
@@ -219,6 +251,10 @@ class TaskModel {
       status: status ?? this.status,
       categoryId: categoryId ?? this.categoryId,
       category: category ?? this.category,
+      goalId: goalId ?? this.goalId,
+      milestoneId: milestoneId ?? this.milestoneId,
+      scheduledStart: scheduledStart ?? this.scheduledStart,
+      scheduledEnd: scheduledEnd ?? this.scheduledEnd,
       deadline: deadline ?? this.deadline,
       estimatedMinutes: estimatedMinutes ?? this.estimatedMinutes,
       completedAt: completedAt ?? this.completedAt,
@@ -228,4 +264,3 @@ class TaskModel {
     );
   }
 }
-

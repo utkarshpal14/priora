@@ -198,6 +198,43 @@ class TaskCard extends StatelessWidget {
                             ),
                           ],
 
+                          // Scheduled Focus Time Range (if scheduled)
+                          if (task.formattedTimeRange != null) ...[
+                            Text(
+                              '•',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppColors.textSecondary.withValues(alpha: 0.5),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE0E7FF),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.schedule_rounded,
+                                    size: 11.5,
+                                    color: AppColors.primary,
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    task.formattedTimeRange!,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+
                           // Active Reminder Indicator (if scheduled)
                           if (task.hasActiveReminder && !isDone) ...[
                             Text(
