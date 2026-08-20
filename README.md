@@ -74,6 +74,7 @@ Priora is an intelligent, full-stack productivity platform built to help users s
 
 ## 📑 System Architecture & Milestone Directory
 
+- 🚀 **v1.0.0 Release Notes**: [`docs/RELEASE_NOTES_v1.0.0.md`](file:///docs/RELEASE_NOTES_v1.0.0.md)
 - 📐 **Frozen System Architecture v1.0.0**: [`docs/ARCHITECTURE_v1.0.0.md`](file:///docs/ARCHITECTURE_v1.0.0.md)
 
 ### Detailed Milestone Specifications
