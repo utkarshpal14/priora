@@ -67,14 +67,16 @@ Priora is an intelligent, full-stack productivity platform built to help users s
 - [x] **Milestone 8** — [Attachments & Multi-Entity Resources](file:///docs/milestones/M8_Attachments.md)
 - [x] **Milestone 9** — [Analytics & Productivity Reports](file:///docs/milestones/M9_Analytics.md)
 - [x] **Milestone 10** — [UI Polish, Dark Mode Themes & Settings](file:///docs/milestones/M10_UI_Polish_and_Themes.md)
-- [ ] **Milestone 11** — End-to-End Integration Testing
+- [ ] **Milestone 11** — [End-to-End Integration Testing & Cloud Push Engine](file:///docs/milestones/M11_Integration_Testing_and_Notifications.md)
 - [ ] **Milestone 12** — Production Release & Deployment
 
 ---
 
-## 📑 Milestone Specifications Directory
+## 📑 System Architecture & Milestone Directory
 
-Detailed technical design specs, schema definitions, and API contracts for each completed milestone:
+- 📐 **Frozen System Architecture v1.0.0**: [`docs/ARCHITECTURE_v1.0.0.md`](file:///docs/ARCHITECTURE_v1.0.0.md)
+
+### Detailed Milestone Specifications
 
 | Milestone | Specification Document | Key Features Covered |
 |---|---|---|
@@ -88,6 +90,8 @@ Detailed technical design specs, schema definitions, and API contracts for each 
 | **M7** | [`M7_Goals.md`](file:///docs/milestones/M7_Goals.md) | High-level goals, sub-milestones, progress bars |
 | **M8** | [`M8_Attachments.md`](file:///docs/milestones/M8_Attachments.md) | Multi-entity attachments, files, links, notes, tags, thumbnails |
 | **M9** | [`M9_Analytics.md`](file:///docs/milestones/M9_Analytics.md) | Productive streaks, personal records, goal stats, focus time, velocity, heatmap |
+| **M10** | [`M10_UI_Polish_and_Themes.md`](file:///docs/milestones/M10_UI_Polish_and_Themes.md) | Dynamic theme engine (light/dark/system), 5 accent colors, reduce motion, settings |
+| **M11** | [`M11_Integration_Testing_and_Notifications.md`](file:///docs/milestones/M11_Integration_Testing_and_Notifications.md) | End-to-end integration testing suite, push notification engine, settings integration |
 
 ---
 
