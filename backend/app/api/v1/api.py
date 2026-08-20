@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
+    analytics,
     attachments,
     auth,
     categories,
@@ -24,6 +25,7 @@ api_router.include_router(planner.router, prefix="/planner", tags=["Planner"])
 api_router.include_router(review.router, prefix="/review", tags=["Review"])
 api_router.include_router(goals.router, prefix="/goals", tags=["Goals"])
 api_router.include_router(attachments.router, prefix="/attachments", tags=["Attachments"])
+api_router.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
 
 
 

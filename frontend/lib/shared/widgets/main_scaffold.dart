@@ -16,6 +16,8 @@ class MainScaffold extends StatelessWidget {
 
   int _calculateSelectedIndex(String loc) {
     if (loc.startsWith('/planner')) return 1;
+    if (loc.startsWith('/goals')) return 2;
+    if (loc.startsWith('/analytics')) return 3;
     return 0; // /tasks, /dashboard, etc.
   }
 
@@ -26,6 +28,12 @@ class MainScaffold extends StatelessWidget {
         break;
       case 1:
         context.go('/planner');
+        break;
+      case 2:
+        context.go('/goals');
+        break;
+      case 3:
+        context.go('/analytics');
         break;
     }
   }
@@ -73,6 +81,16 @@ class MainScaffold extends StatelessWidget {
               icon: Icon(Icons.calendar_today_outlined),
               activeIcon: Icon(Icons.calendar_today_rounded),
               label: 'Planner',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.flag_outlined),
+              activeIcon: Icon(Icons.flag_rounded),
+              label: 'Goals',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.bar_chart_outlined),
+              activeIcon: Icon(Icons.bar_chart_rounded),
+              label: 'Analytics',
             ),
           ],
         ),

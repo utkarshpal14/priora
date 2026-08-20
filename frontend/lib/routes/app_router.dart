@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/analytics/presentation/screens/analytics_screen.dart';
 import '../features/auth/domain/auth_state.dart';
 import '../features/auth/presentation/controllers/auth_controller.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
@@ -69,6 +70,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/goals',
             name: 'goals',
             builder: (context, state) => const GoalsScreen(),
+          ),
+          GoRoute(
+            path: '/analytics',
+            name: 'analytics',
+            builder: (context, state) => const AnalyticsScreen(),
           ),
           GoRoute(
             path: '/review',

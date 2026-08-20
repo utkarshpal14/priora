@@ -49,5 +49,8 @@ class ApiEndpoints {
   static String get attachments => '$baseUrl/attachments';
 
   // Analytics (Milestone 9)
+  static String get analyticsOverview => '$baseUrl/analytics/overview';
   static String get analyticsWeekly => '$baseUrl/analytics/weekly';
+  static String get analyticsBreakdown => '$baseUrl/analytics/breakdown';
+  static String get analyticsHeatmap => '$baseUrl/analytics/heatmap';
 }

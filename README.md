@@ -65,7 +65,7 @@ Priora is an intelligent, full-stack productivity platform built to help users s
 - [x] **Milestone 6** — [End-of-Day Review & Celebration Stats](file:///docs/milestones/M6_Review.md)
 - [x] **Milestone 7** — [Goals & Milestone Progression](file:///docs/milestones/M7_Goals.md)
 - [x] **Milestone 8** — [Attachments & Multi-Entity Resources](file:///docs/milestones/M8_Attachments.md)
-- [ ] **Milestone 9** — Analytics & Productivity Reports
+- [x] **Milestone 9** — [Analytics & Productivity Reports](file:///docs/milestones/M9_Analytics.md)
 - [ ] **Milestone 10** — UI Polish & Dark Mode Themes
 - [ ] **Milestone 11** — End-to-End Integration Testing
 - [ ] **Milestone 12** — Production Release & Deployment
@@ -87,6 +87,7 @@ Detailed technical design specs, schema definitions, and API contracts for each 
 | **M6** | [`M6_Review.md`](file:///docs/milestones/M6_Review.md) | Evening review workflow, reflection, celebration stats |
 | **M7** | [`M7_Goals.md`](file:///docs/milestones/M7_Goals.md) | High-level goals, sub-milestones, progress bars |
 | **M8** | [`M8_Attachments.md`](file:///docs/milestones/M8_Attachments.md) | Multi-entity attachments, files, links, notes, tags, thumbnails |
+| **M9** | [`M9_Analytics.md`](file:///docs/milestones/M9_Analytics.md) | Productive streaks, personal records, goal stats, focus time, velocity, heatmap |
 
 ---
 
