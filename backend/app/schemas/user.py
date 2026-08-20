@@ -1,7 +1,8 @@
 import uuid
 from datetime import datetime
+from typing import Any
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, ValidationInfo, field_validator
 
 
 class UserBase(BaseModel):
@@ -52,3 +53,20 @@ class UserRead(UserBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator(
+        "storage_used_bytes",
+        "notifications_enabled",
+        "sound_enabled",
+        "deadline_reminders",
+        "review_reminders",
+        "goal_alerts",
+        mode="before",
+    )
+    @classmethod
+    def fallback_none_values(cls, v: Any, info: ValidationInfo) -> Any:
+        if v is None:
+            if info.field_name == "storage_used_bytes":
+                return 0
+            return True
+        return v

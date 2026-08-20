@@ -26,6 +26,19 @@ def _sync_sqlite_schema() -> None:
                             text(f"ALTER TABLE {table.name} ADD COLUMN {column.name} {col_type};")
                         )
                         conn.commit()
+        if inspector.has_table("users"):
+            conn.execute(
+                text(
+                    "UPDATE users SET "
+                    "storage_used_bytes = COALESCE(storage_used_bytes, 0), "
+                    "notifications_enabled = COALESCE(notifications_enabled, 1), "
+                    "sound_enabled = COALESCE(sound_enabled, 1), "
+                    "deadline_reminders = COALESCE(deadline_reminders, 1), "
+                    "review_reminders = COALESCE(review_reminders, 1), "
+                    "goal_alerts = COALESCE(goal_alerts, 1);"
+                )
+            )
+            conn.commit()
 
 
 @asynccontextmanager
