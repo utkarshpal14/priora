@@ -2,7 +2,9 @@ import uuid
 from datetime import date, datetime
 from enum import Enum
 
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.schemas.category import CategoryRead
 from app.schemas.task import TaskRead
@@ -40,11 +42,21 @@ class GoalMilestoneRead(GoalMilestoneBase):
     id: uuid.UUID
     goal_id: uuid.UUID
     is_completed: bool
-    attachment_count: int = 0
+    attachment_count: int = Field(default=0)
     created_at: datetime
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("attachment_count", mode="before")
+    @classmethod
+    def default_attachment_count(cls, v: Any) -> int:
+        if v is None:
+            return 0
+        try:
+            return int(v)
+        except (ValueError, TypeError):
+            return 0
 
 
 # -------------------- Activity Schema --------------------
@@ -91,12 +103,22 @@ class GoalRead(GoalBase):
     completed_milestones_count: int = 0
     tasks_count: int = 0
     completed_tasks_count: int = 0
-    attachment_count: int = 0
+    attachment_count: int = Field(default=0)
     category: CategoryRead | None = None
     created_at: datetime
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("attachment_count", mode="before")
+    @classmethod
+    def default_attachment_count(cls, v: Any) -> int:
+        if v is None:
+            return 0
+        try:
+            return int(v)
+        except (ValueError, TypeError):
+            return 0
 
 
 class GoalDetailRead(GoalRead):

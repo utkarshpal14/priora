@@ -1,8 +1,9 @@
 import uuid
 from datetime import UTC, datetime
 from enum import StrEnum
+from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, field_serializer
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_serializer, field_validator
 
 from app.schemas.category import CategoryRead
 from app.schemas.reminder import ReminderRead, ReminderStatus
@@ -68,13 +69,23 @@ class TaskRead(BaseModel):
     scheduled_start: datetime | None = None
     scheduled_end: datetime | None = None
     estimated_minutes: int | None = None
-    attachment_count: int = 0
+    attachment_count: int = Field(default=0)
     completed_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
     reminders: list[ReminderRead] = []
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("attachment_count", mode="before")
+    @classmethod
+    def default_attachment_count(cls, v: Any) -> int:
+        if v is None:
+            return 0
+        try:
+            return int(v)
+        except (ValueError, TypeError):
+            return 0
 
     @field_serializer("deadline", "scheduled_start", "scheduled_end", "completed_at", "created_at", "updated_at", when_used="json")
     def serialize_datetime_utc(self, dt: datetime | None) -> str | None:
