@@ -27,7 +27,7 @@ class ResourceSectionWidget extends ConsumerWidget {
 
   Future<void> _pickAndUploadFile(BuildContext context, WidgetRef ref, {bool imagesOnly = false}) async {
     try {
-      final result = await FilePicker.pickFiles(
+      final result = await FilePicker.platform.pickFiles(
         type: imagesOnly ? FileType.image : FileType.any,
         allowMultiple: false,
         withData: true,
