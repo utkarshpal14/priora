@@ -48,9 +48,9 @@ def test_default_categories_and_crud(client: TestClient):
 def test_create_task_and_due_date_validation(client: TestClient):
     headers = _get_auth_headers(client, "user_due@priora.app")
 
-    # 1. Past deadline should be rejected
+    # 1. Past deadline task should be created successfully as overdue
     past_time = (datetime.now(UTC) - timedelta(hours=2)).isoformat()
-    bad_res = client.post(
+    ok_past_res = client.post(
         "/api/v1/tasks",
         headers=headers,
         json={
@@ -59,8 +59,7 @@ def test_create_task_and_due_date_validation(client: TestClient):
             "priority": "HIGH",
         },
     )
-    assert bad_res.status_code == 400
-    assert "past" in bad_res.json()["detail"].lower()
+    assert ok_past_res.status_code == 201
 
     # 2. Future deadline should succeed
     future_time = (datetime.now(UTC) + timedelta(days=2)).isoformat()

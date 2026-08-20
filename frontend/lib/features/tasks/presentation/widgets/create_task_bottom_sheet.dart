@@ -39,9 +39,14 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
   @override
   void initState() {
     super.initState();
-    // Default deadline: Today 6:00 PM or Tomorrow 10:00 AM
+    // Default deadline: Today 6:00 PM (if before 6 PM) or Tomorrow 6:00 PM
     final now = DateTime.now();
-    _selectedDeadline = DateTime(now.year, now.month, now.day, 18, 0);
+    if (now.hour >= 18) {
+      final tomorrow = now.add(const Duration(days: 1));
+      _selectedDeadline = DateTime(tomorrow.year, tomorrow.month, tomorrow.day, 18, 0);
+    } else {
+      _selectedDeadline = DateTime(now.year, now.month, now.day, 18, 0);
+    }
   }
 
   @override
@@ -62,7 +67,7 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: _selectedDeadline ?? now,
-      firstDate: now,
+      firstDate: now.subtract(const Duration(days: 365)),
       lastDate: now.add(const Duration(days: 365)),
     );
 
@@ -98,7 +103,7 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: _customReminderTime ?? now,
-      firstDate: now,
+      firstDate: now.subtract(const Duration(days: 30)),
       lastDate: maxDate,
     );
 
@@ -116,16 +121,6 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
           pickedTime.hour,
           pickedTime.minute,
         );
-
-        if (_selectedDeadline != null && candidate.isAfter(_selectedDeadline!)) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Reminder cannot be scheduled after the task deadline.'),
-              backgroundColor: Color(0xFFDC2626),
-            ),
-          );
-          return;
-        }
 
         setState(() {
           _selectedReminderPreset = ReminderPreset.custom;
@@ -154,6 +149,14 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
 
     if (success && mounted) {
       Navigator.of(context).pop();
+    } else if (mounted) {
+      final error = ref.read(tasksControllerProvider).errorMessage;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error ?? 'Failed to create task.'),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
     }
   }
 

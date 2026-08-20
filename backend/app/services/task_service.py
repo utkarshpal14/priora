@@ -55,19 +55,7 @@ class TaskService:
     def create_task(
         self, db: Session, task_in: TaskCreate, user_id: uuid.UUID
     ) -> Task:
-        """Create new task with past deadline validation and category verification."""
-        # Due Date Validation: Prevent past deadlines on task creation
-        if task_in.deadline is not None:
-            now = datetime.now(UTC)
-            # Ensure deadline is timezone-aware
-            deadline = task_in.deadline
-            if deadline.tzinfo is None:
-                deadline = deadline.replace(tzinfo=UTC)
-            if deadline < now - timedelta(minutes=5):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Task deadline cannot be set in the past.",
-                )
+        """Create new task with category verification."""
 
         # Time Window Validation
         if task_in.scheduled_start and task_in.scheduled_end:

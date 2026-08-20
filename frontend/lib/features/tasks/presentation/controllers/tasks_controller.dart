@@ -120,20 +120,26 @@ class TasksController extends StateNotifier<TasksState> {
 
       // If user selected a reminder, schedule local notification and persist on backend
       if (remindAt != null) {
-        final notifId = DateTime.now().millisecondsSinceEpoch.remainder(100000);
-        await _notificationService.scheduleNotification(
-          notificationId: notifId,
-          title: '⏰ Reminder: ${task.title}',
-          body: task.deadline != null
-              ? 'Deadline approaching: ${task.formattedDeadline}'
-              : 'Task reminder: ${task.title}',
-          scheduledDate: remindAt,
-        );
-        await _remindersRepository.createReminder(
-          taskId: task.id,
-          remindAt: remindAt,
-          notificationId: notifId,
-        );
+        try {
+          final notifId = DateTime.now().millisecondsSinceEpoch.remainder(100000);
+          if (remindAt.isAfter(DateTime.now())) {
+            await _notificationService.scheduleNotification(
+              notificationId: notifId,
+              title: '⏰ Reminder: ${task.title}',
+              body: task.deadline != null
+                  ? 'Deadline approaching: ${task.formattedDeadline}'
+                  : 'Task reminder: ${task.title}',
+              scheduledDate: remindAt,
+            );
+          }
+          await _remindersRepository.createReminder(
+            taskId: task.id,
+            remindAt: remindAt,
+            notificationId: notifId,
+          );
+        } catch (err) {
+          debugPrint('Reminder setup notice: $err');
+        }
       }
 
       state = state.copyWith(isCreating: false);
