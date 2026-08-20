@@ -47,8 +47,8 @@ def test_get_daily_review_empty(client: TestClient):
 def test_get_daily_review_metrics(client: TestClient):
     headers, _ = _get_auth_context(client, "metrics_rev@priora.app")
     now = datetime.now(UTC)
-    deadline_t1 = (now + timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
-    deadline_t2 = (now + timedelta(hours=3)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    deadline_t1 = (now + timedelta(minutes=5)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    deadline_t2 = (now + timedelta(minutes=10)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     # 1. Create a task that is completed today (60m)
     t1 = client.post(

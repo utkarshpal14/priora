@@ -269,7 +269,7 @@ class AttachmentService:
             db, user_id, task_id=task_id, goal_id=goal_id, milestone_id=milestone_id, tag=tag
         )
         user = db.get(User, user_id)
-        storage_used = user.storage_used_bytes if user else 0
+        storage_used = (user.storage_used_bytes or 0) if user else 0
 
         return AttachmentListResponse(
             attachments=[AttachmentRead.model_validate(r) for r in records],
@@ -287,7 +287,7 @@ class AttachmentService:
     ) -> AttachmentListResponse:
         records = attachment_repository.search(db, user_id, query=query, tag=tag, type_filter=type_filter)
         user = db.get(User, user_id)
-        storage_used = user.storage_used_bytes if user else 0
+        storage_used = (user.storage_used_bytes or 0) if user else 0
 
         return AttachmentListResponse(
             attachments=[AttachmentRead.model_validate(r) for r in records],
