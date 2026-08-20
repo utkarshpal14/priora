@@ -13,6 +13,7 @@ import '../features/goals/presentation/screens/goals_screen.dart';
 import '../features/planner/presentation/screens/planner_screen.dart';
 import '../features/review/presentation/screens/review_screen.dart';
 import '../features/tasks/presentation/screens/tasks_screen.dart';
+import '../features/settings/presentation/screens/settings_screen.dart';
 import '../shared/widgets/main_scaffold.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -90,6 +91,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/attachments',
             name: 'attachments',
             builder: (context, state) => const PlaceholderScreen(),
+          ),
+          GoRoute(
+            path: '/settings',
+            name: 'settings',
+            builder: (context, state) => const SettingsScreen(),
           ),
         ],
       ),

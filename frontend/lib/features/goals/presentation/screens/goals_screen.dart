@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:frontend/core/constants/app_colors.dart';
+import 'package:frontend/shared/widgets/app_empty_view.dart';
+import 'package:frontend/shared/widgets/app_error_view.dart';
 import 'package:frontend/features/goals/domain/goal_model.dart';
 import 'package:frontend/features/goals/presentation/controllers/goals_controller.dart';
 import 'package:frontend/features/goals/presentation/widgets/create_goal_bottom_sheet.dart';
@@ -233,50 +235,12 @@ class GoalsScreen extends ConsumerWidget {
                   child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
                 )
               else if (filteredGoals.isEmpty)
-                Container(
-                  margin: const EdgeInsets.all(20),
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
-                  ),
-                  child: Center(
-                    child: Column(
-                      children: [
-                        const Text('🎯', style: TextStyle(fontSize: 36)),
-                        const SizedBox(height: 12),
-                        Text(
-                          'No goals found',
-                          style: GoogleFonts.inter(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Set your roadmap targets, add checkpoints, and track real progress.',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: () => CreateGoalBottomSheet.show(context),
-                          icon: const Icon(Icons.add_rounded, size: 18),
-                          label: const Text('Create a Goal'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                AppEmptyView(
+                  icon: Icons.flag_rounded,
+                  title: 'No goals created yet',
+                  message: 'Start with a learning objective, placement milestone, or personal habit.',
+                  actionLabel: 'New Goal',
+                  onActionPressed: () => CreateGoalBottomSheet.show(context),
                 )
               else
                 ...filteredGoals.map((g) => GoalCard(

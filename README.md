@@ -66,7 +66,7 @@ Priora is an intelligent, full-stack productivity platform built to help users s
 - [x] **Milestone 7** — [Goals & Milestone Progression](file:///docs/milestones/M7_Goals.md)
 - [x] **Milestone 8** — [Attachments & Multi-Entity Resources](file:///docs/milestones/M8_Attachments.md)
 - [x] **Milestone 9** — [Analytics & Productivity Reports](file:///docs/milestones/M9_Analytics.md)
-- [ ] **Milestone 10** — UI Polish & Dark Mode Themes
+- [x] **Milestone 10** — [UI Polish, Dark Mode Themes & Settings](file:///docs/milestones/M10_UI_Polish_and_Themes.md)
 - [ ] **Milestone 11** — End-to-End Integration Testing
 - [ ] **Milestone 12** — Production Release & Deployment
 

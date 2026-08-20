@@ -2,6 +2,7 @@ import 'category_model.dart';
 import 'task_model.dart';
 
 enum TaskTabFilter {
+  today,
   pending,
   overdue,
   completed,

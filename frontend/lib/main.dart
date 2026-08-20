@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/constants/app_constants.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_controller.dart';
 import 'features/auth/presentation/controllers/auth_controller.dart';
 import 'routes/app_router.dart';
 
@@ -35,7 +36,7 @@ class _PrioraAppState extends ConsumerState<PrioraApp> {
   @override
   void initState() {
     super.initState();
-    // Restore user session on app startup (Document 11 & User Requirement 7)
+    // Restore user session on app startup
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(authControllerProvider.notifier).initialize();
     });
@@ -44,11 +45,14 @@ class _PrioraAppState extends ConsumerState<PrioraApp> {
   @override
   Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
+    final themeState = ref.watch(themeControllerProvider);
 
     return MaterialApp.router(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.lightTheme(themeState.accent),
+      darkTheme: AppTheme.darkTheme(themeState.accent),
+      themeMode: themeState.mode,
       routerConfig: router,
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:frontend/shared/widgets/app_empty_view.dart';
+import 'package:frontend/shared/widgets/app_error_view.dart';
 import 'package:frontend/features/analytics/presentation/controllers/analytics_controller.dart';
 import 'package:frontend/features/analytics/presentation/widgets/activity_heatmap_grid_widget.dart';
 import 'package:frontend/features/analytics/presentation/widgets/category_breakdown_widget.dart';
@@ -43,17 +44,9 @@ class AnalyticsScreen extends ConsumerWidget {
                 child: CircularProgressIndicator(color: Color(0xFF6366F1)),
               )
             : state.errorMessage != null
-                ? ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(24),
-                    children: [
-                      Center(
-                        child: Text(
-                          state.errorMessage!,
-                          style: const TextStyle(color: Colors.redAccent),
-                        ),
-                      ),
-                    ],
+                ? AppErrorView(
+                    message: state.errorMessage!,
+                    onRetry: () => ref.read(analyticsControllerProvider.notifier).refresh(),
                   )
                 : ListView(
                     physics: const AlwaysScrollableScrollPhysics(),

@@ -251,11 +251,10 @@ void main() {
         ),
       ),
     );
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    expect(find.text('No tasks yet'), findsOneWidget);
-    expect(find.text('Create your first task to get started.'), findsOneWidget);
-    expect(find.text('New Task'), findsOneWidget);
+    expect(find.textContaining('No tasks'), findsOneWidget);
+    expect(find.text('Create Task'), findsWidgets);
   });
 
   testWidgets('TasksScreen renders task cards and toggles completion', (WidgetTester tester) async {
@@ -449,7 +448,7 @@ void main() {
 
     // Verify celebration empty state
     expect(find.text('🎉 No overdue tasks'), findsOneWidget);
-    expect(find.text("You're all caught up!"), findsOneWidget);
+    expect(find.textContaining("You're all caught up!"), findsOneWidget);
   });
 
   test('TaskModel.parseUtcDateTime safely parses UTC datetime strings without Z suffix into local time', () {

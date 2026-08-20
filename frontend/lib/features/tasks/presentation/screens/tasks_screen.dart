@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../shared/widgets/app_empty_view.dart';
+import '../../../../shared/widgets/app_error_view.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../domain/tasks_state.dart';
 import '../controllers/tasks_controller.dart';
@@ -64,6 +67,11 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, color: AppColors.textSecondary, size: 22),
+            tooltip: 'Settings & Preferences',
+            onPressed: () => context.push('/settings'),
+          ),
           IconButton(
             icon: const Icon(Icons.logout_rounded, color: AppColors.textSecondary, size: 20),
             tooltip: 'Log out',
@@ -309,83 +317,34 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context, TaskTabFilter tabFilter) {
-    String message = 'No tasks yet';
-    String subMessage = 'Create your first task to get started.';
-    IconData iconData = Icons.check_circle_outline_rounded;
-    Color iconColor = AppColors.accent;
-
-    if (tabFilter == TaskTabFilter.completed) {
-      message = 'No completed tasks';
-      subMessage = 'Tasks you finish will show up here.';
+    if (tabFilter == TaskTabFilter.today) {
+      return AppEmptyView(
+        icon: Icons.today_rounded,
+        title: 'No tasks due today',
+        message: 'Stay ahead of your schedule by creating a task with today\'s deadline.',
+        actionLabel: 'Create Task',
+        onActionPressed: () => CreateTaskBottomSheet.show(context),
+      );
+    } else if (tabFilter == TaskTabFilter.completed) {
+      return const AppEmptyView(
+        icon: Icons.check_circle_outline_rounded,
+        title: 'No completed tasks',
+        message: 'Tasks you finish will show up here.',
+      );
     } else if (tabFilter == TaskTabFilter.overdue) {
-      message = '🎉 No overdue tasks';
-      subMessage = "You're all caught up!";
-      iconData = Icons.celebration_rounded;
-      iconColor = const Color(0xFFD97706);
+      return const AppEmptyView(
+        icon: Icons.celebration_rounded,
+        title: '🎉 No overdue tasks',
+        message: "You're all caught up! Great job staying on top of your priorities.",
+      );
     }
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                iconData,
-                size: 32,
-                color: iconColor,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              message,
-              style: GoogleFonts.inter(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              subMessage,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 20),
-            if (tabFilter != TaskTabFilter.completed && tabFilter != TaskTabFilter.overdue)
-              ElevatedButton.icon(
-                onPressed: () => CreateTaskBottomSheet.show(context),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  'Create Task',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  elevation: 0,
-                ),
-              ),
-          ],
-        ),
-      ),
+    return AppEmptyView(
+      icon: Icons.task_alt_rounded,
+      title: 'No tasks yet',
+      message: 'Organize your day, track deadlines, and accomplish your goals.',
+      actionLabel: 'Create Task',
+      onActionPressed: () => CreateTaskBottomSheet.show(context),
     );
   }
 }
