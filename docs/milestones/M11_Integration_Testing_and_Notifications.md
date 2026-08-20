@@ -9,74 +9,89 @@
 ## 🎯 Executive Summary
 
 Milestone 11 completes Priora's core product lifecycle by introducing:
-1. A multi-layer **End-to-End Integration Test Suite** validating real user journeys from account registration to analytics reporting.
-2. A dual-channel **Cloud & Local Push Notifications Engine** delivering scheduled alerts both online and offline.
-3. Live **Notification Settings Wiring** connecting Settings Screen controls to backend user preferences and device token registration.
+1. Multi-layer **End-to-End Integration Testing** validating real user journeys (`User -> Goal -> Milestone -> Task -> Session -> Review -> Analytics`).
+2. Dual-channel **Push Notifications Infrastructure** supporting multiple device tokens per user.
+3. Granular **Notification Preferences & History Audit Logs** (`notification_logs` table).
+4. **Live Settings UI Wiring** connecting Settings Screen controls to backend user preferences.
 
 ---
 
-## 📋 Detailed Milestone Phases
+## 🚪 Internal Gate Breakdown
 
-### Phase 1 — End-to-End Integration Testing
-
-#### Backend Integration Tests (`backend/tests/test_e2e_integration.py`)
-Validate end-to-end user journeys rather than isolated unit endpoints:
-- **Full User Journey**:
-  `Register User -> Login -> Create Category -> Create Goal -> Add Milestone -> Create Task (linked to Goal & Milestone) -> Timeblock Session -> Trigger Reminder -> Complete Task -> Perform Evening Review -> Verify Analytics overview & heatmap metrics`.
-- **Auth Token Refresh Cycle**:
-  Login -> Token Expiry -> Call `POST /api/v1/auth/refresh` -> Validate new access token grants access to protected endpoints.
-- **Attachment Storage Quota Lifecycle**:
-  Create Note/Upload -> Verify `storage_used_bytes` increases -> Delete Attachment -> Verify quota is released.
-
-#### Frontend Integration Tests (`frontend/test/e2e_integration_test.dart`)
-Validate full multi-screen Riverpod controller workflows and user navigation in GoRouter:
-- **User Navigation & State Flow**:
-  `LoginScreen -> TasksScreen -> Create Task -> GoalsScreen -> Create Goal with Milestones -> PlannerScreen -> Schedule Timeblock -> Complete Task -> EveningReviewScreen -> AnalyticsScreen`.
+```
+Milestone 11
+├── 🚪 Gate A: Release Critical
+│    ├── End-to-End Integration Test Suite (Backend & Frontend)
+│    ├── Multiple Device Token Storage (User 1:N DeviceTokens)
+│    ├── Granular Notification Preferences (including session_reminders)
+│    └── Local Notifications Delivery (Offline Capable)
+│
+└── 🚪 Gate B: Production Ready
+     ├── Notification History Table (notification_logs Audit Trail)
+     ├── Background Dispatcher Engine & Retry Loop
+     └── Failure & Invalid Token Handling (Non-blocking queue execution)
+```
 
 ---
 
-### Phase 2 — Cloud & Local Push Notifications Engine
+## 📋 Gate A — Release Critical Deliverables
 
-#### Dual Delivery Channels
-1. **Local Notifications (`flutter_local_notifications`)**:
-   - Must function completely offline without requiring server connection.
-   - Schedules OS-level alerts directly on device using system alarms.
-2. **Cloud Push Notifications (FCM / APNs)**:
-   - Backend background job runner inspecting scheduled `reminders` table entries every 60 seconds.
-   - Dispatches remote push notifications via FCM to registered user device tokens.
+### A1. End-to-End Integration Test Suite
+- **Backend Journey (`backend/tests/test_e2e_integration.py`)**:
+  `Register User -> Login -> Create Category -> Create Goal -> Add Milestone -> Create Task -> Timeblock Session -> Schedule Reminder -> Dispatcher Executes -> Log Notification -> Complete Task -> Evening Review -> Analytics`.
+- **Frontend Journey (`frontend/test/e2e_integration_test.dart`)**:
+  Simulates Riverpod state sync and navigation across `TasksScreen`, `GoalsScreen`, `PlannerScreen`, `ReviewScreen`, `AnalyticsScreen`, and `SettingsScreen`.
 
-#### Reminder Types & Trigger Scenarios
-- ⏰ **Scheduled Focus Session**: At timeblock start time.
-- ⏳ **Upcoming Focus Block**: 15 minutes before scheduled session start.
-- 🚨 **Task Due Soon**: 1 hour before task deadline.
-- 🎯 **Goal Milestone Approaching**: 24 hours before milestone target date.
+### A2. Multiple Device Token Support (`device_tokens` Table)
+A user can own multiple active device tokens (`Phone`, `Tablet`, `Web`):
+```
+User (id)
+ ├── DeviceToken (id, token_1, platform: 'android')
+ ├── DeviceToken (id, token_2, platform: 'ios')
+ └── DeviceToken (id, token_3, platform: 'web')
+```
 
-#### Backend Device Token Endpoints
-- `POST /api/v1/users/device-token`: Register FCM/APNs push device token.
-- `DELETE /api/v1/users/device-token/{token}`: Unregister token on logout.
+### A3. Granular Notification Preferences
+Preferences stored on `User` model and local preferences:
+- `notifications_enabled`: Global master toggle.
+- `sound_enabled`: Sound/haptics toggle.
+- `deadline_reminders`: Task deadline alerts.
+- `session_reminders`: Scheduled focus session alerts.
+- `review_reminders`: Daily evening review prompts.
+- `goal_alerts`: Goal milestone target date warnings.
+
+### A4. Local Notifications Channel
+`flutter_local_notifications` handles local device alarms offline without backend dependency.
 
 ---
 
-### Phase 3 — Notification Settings Integration
+## 📋 Gate B — Production Ready Deliverables
 
-#### Settings UI Wiring (`frontend/lib/features/settings/presentation/screens/settings_screen.dart`)
-Replace the `(Coming in M11)` badge with active toggle switches:
-- 🔔 **Global Notifications** (`notifications_enabled`)
-- 🔊 **Sound & Haptics** (`sound_enabled`)
-- 📌 **Task Deadline Reminders** (`deadline_reminders`)
-- 🌙 **Daily Evening Review Reminders** (`review_reminders`)
-- 🎯 **Goal Progress Alerts** (`goal_alerts`)
+### B1. Notification History Table (`notification_logs`)
 
-#### Persistence & Dual Sync
-- Store preferences locally in `FlutterSecureStorage` for instant UI access.
-- Sync preferences to backend user profile (`PUT /api/v1/users/profile`).
+| Column | Type | Nullable | Description |
+|---|---|---|---|
+| `id` | `UUID` | No | Primary Key |
+| `user_id` | `UUID` | No | FK (`users.id` CASCADE), Index |
+| `type` | `VARCHAR(50)` | No | (`SESSION`, `DEADLINE`, `REVIEW`, `GOAL`) |
+| `title` | `VARCHAR(255)` | No | Notification title |
+| `body` | `TEXT` | Yes | Notification content body |
+| `sent_at` | `TIMESTAMPTZ` | No | Dispatch timestamp |
+| `status` | `VARCHAR(20)` | No | (`SENT`, `FAILED`, `CANCELLED`) |
+| `error_message` | `TEXT` | Yes | Diagnostic error string on failure |
+
+### B2. Dispatcher Service & Resilient Failure Handling
+- **Failure Resilience**:
+  - Expired / Invalid Device Tokens: Remove invalid token from `device_tokens` table.
+  - Network Failure / Cloud Provider Error: Log error in `notification_logs` with status `FAILED` and `error_message`.
+  - Queue Protection: Errors in individual dispatches NEVER crash the dispatcher loop or block subsequent notifications.
 
 ---
 
 ## 📊 Verification Criteria
 
-1. Backend pytest integration test suite passes 100% across all multi-entity flows.
-2. Frontend Flutter integration test suite passes 100%.
-3. Local notifications trigger offline accurately at scheduled times.
-4. FCM push notification dispatcher delivers alerts within 60 seconds of scheduled time.
-5. Settings screen notification toggles accurately control alert dispatching.
+1. Backend pytest suite passes 100% with full E2E user lifecycle coverage.
+2. Frontend Flutter test suite passes 100%.
+3. Multiple device tokens per user can be registered and unregistered independently.
+4. Scheduled reminders execute through dispatcher, update reminder status to `SENT`, and write audit logs to `notification_logs`.
+5. Settings screen toggles accurately control all 5 notification preferences.

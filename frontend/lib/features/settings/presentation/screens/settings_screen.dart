@@ -10,6 +10,7 @@ import '../../../attachments/data/attachments_repository.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../goals/presentation/controllers/goals_controller.dart';
 import '../../../tasks/presentation/controllers/tasks_controller.dart';
+import '../controllers/notification_settings_controller.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -338,7 +339,7 @@ class SettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
 
-            // 5. Notifications Section (Coming Soon in M11)
+            // 5. Notifications Section (Live M11 Engine)
             _buildSectionHeader('Notifications & Alerts', isDark),
             const SizedBox(height: 10),
             Container(
@@ -352,50 +353,90 @@ class SettingsScreen extends ConsumerWidget {
                       : Colors.black.withValues(alpha: 0.06),
                 ),
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.notifications_active_rounded,
-                      size: 22, color: AppColors.textTertiary),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Push & Cloud Notification Engine',
-                          style: GoogleFonts.inter(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white : AppColors.textPrimary,
+              child: Consumer(
+                builder: (context, ref, child) {
+                  final notifPrefs = ref.watch(notificationSettingsProvider);
+                  final notifNotifier = ref.read(notificationSettingsProvider.notifier);
+
+                  return Column(
+                    children: [
+                      Material(
+                        color: Colors.transparent,
+                        child: SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            'Task Deadline Reminders',
+                            style: GoogleFonts.inter(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : AppColors.textPrimary,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'FCM Cloud alerts & custom sound profiles.',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                          subtitle: Text(
+                            'Alerts for upcoming task deadlines and schedule triggers.',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                            ),
                           ),
+                          value: notifPrefs.deadlineReminders,
+                          activeColor: theme.colorScheme.secondary,
+                          onChanged: (val) => notifNotifier.toggleDeadlineReminders(val),
                         ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFD97706).withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      'Coming in M11',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFFD97706),
                       ),
-                    ),
-                  ),
-                ],
+                      const Divider(height: 16),
+                      Material(
+                        color: Colors.transparent,
+                        child: SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            'Daily Evening Review Reminders',
+                            style: GoogleFonts.inter(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : AppColors.textPrimary,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Evening prompts to review completed tasks and log reflection notes.',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                            ),
+                          ),
+                          value: notifPrefs.reviewReminders,
+                          activeColor: theme.colorScheme.secondary,
+                          onChanged: (val) => notifNotifier.toggleReviewReminders(val),
+                        ),
+                      ),
+                      const Divider(height: 16),
+                      Material(
+                        color: Colors.transparent,
+                        child: SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            'Goal Progress Alerts',
+                            style: GoogleFonts.inter(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : AppColors.textPrimary,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Alerts when milestone deadlines are approaching.',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                            ),
+                          ),
+                          value: notifPrefs.goalAlerts,
+                          activeColor: theme.colorScheme.secondary,
+                          onChanged: (val) => notifNotifier.toggleGoalAlerts(val),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
             const SizedBox(height: 20),

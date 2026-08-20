@@ -54,8 +54,21 @@ class User(BaseDBModel):
         nullable=False,
     )
 
+    # Notification preferences
+    notifications_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    sound_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    deadline_reminders: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    session_reminders: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    review_reminders: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    goal_alerts: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
     attachments: Mapped[list["Attachment"]] = relationship(
         "Attachment",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    device_tokens: Mapped[list["DeviceToken"]] = relationship(
+        "DeviceToken",
         back_populates="user",
         cascade="all, delete-orphan",
     )

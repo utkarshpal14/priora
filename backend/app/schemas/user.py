@@ -17,6 +17,24 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     full_name: str | None = None
     avatar_url: str | None = None
+    notifications_enabled: bool | None = None
+    sound_enabled: bool | None = None
+    deadline_reminders: bool | None = None
+    review_reminders: bool | None = None
+    goal_alerts: bool | None = None
+
+
+class NotificationPreferencesUpdate(BaseModel):
+    notifications_enabled: bool = True
+    sound_enabled: bool = True
+    deadline_reminders: bool = True
+    review_reminders: bool = True
+    goal_alerts: bool = True
+
+
+class DeviceTokenRegister(BaseModel):
+    token: str = Field(min_length=1, description="Push notification token (FCM/APNs)")
+    platform: str = Field(default="android", description="Device platform (android, ios, web)")
 
 
 class UserRead(UserBase):
@@ -24,6 +42,12 @@ class UserRead(UserBase):
     auth_provider: str
     is_email_verified: bool
     is_active: bool
+    storage_used_bytes: int = 0
+    notifications_enabled: bool = True
+    sound_enabled: bool = True
+    deadline_reminders: bool = True
+    review_reminders: bool = True
+    goal_alerts: bool = True
     created_at: datetime
     updated_at: datetime
 

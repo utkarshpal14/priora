@@ -10,6 +10,7 @@ import 'package:frontend/features/auth/domain/user_model.dart';
 import 'package:frontend/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:frontend/features/goals/data/goals_repository.dart';
 import 'package:frontend/features/reminders/data/reminders_repository.dart';
+import 'package:frontend/features/settings/presentation/controllers/notification_settings_controller.dart';
 import 'package:frontend/features/settings/presentation/screens/settings_screen.dart';
 import 'package:frontend/features/tasks/data/tasks_repository.dart';
 import 'package:frontend/shared/widgets/app_empty_view.dart';
@@ -151,6 +152,7 @@ void main() {
             remindersRepositoryProvider.overrideWithValue(FakeRemindersRepository()),
             attachmentsRepositoryProvider.overrideWithValue(FakeAttachmentsRepository()),
             authControllerProvider.overrideWith((ref) => FakeAuthController()),
+            notificationSettingsProvider.overrideWith((ref) => NotificationSettingsController(null)),
           ],
           child: const MaterialApp(
             home: SettingsScreen(),
@@ -167,7 +169,7 @@ void main() {
       expect(find.text('Reduce Motion'), findsOneWidget);
       expect(find.text('Data & Storage Usage'), findsOneWidget);
       expect(find.text('v1.0.0 (Build 100)'), findsOneWidget);
-      expect(find.text('Coming in M11'), findsOneWidget);
+      expect(find.text('Task Deadline Reminders'), findsOneWidget);
       expect(find.text('Log Out'), findsOneWidget);
     });
   });
