@@ -1,6 +1,17 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, categories, goals, health, planner, reminders, review, tasks, users
+from app.api.v1.endpoints import (
+    attachments,
+    auth,
+    categories,
+    goals,
+    health,
+    planner,
+    reminders,
+    review,
+    tasks,
+    users,
+)
 
 api_router = APIRouter()
 api_router.include_router(health.router, tags=["Health"])
@@ -12,5 +23,7 @@ api_router.include_router(reminders.router, prefix="/reminders", tags=["Reminder
 api_router.include_router(planner.router, prefix="/planner", tags=["Planner"])
 api_router.include_router(review.router, prefix="/review", tags=["Review"])
 api_router.include_router(goals.router, prefix="/goals", tags=["Goals"])
+api_router.include_router(attachments.router, prefix="/attachments", tags=["Attachments"])
+
 
 

@@ -9,6 +9,7 @@ from app.core.database import BaseDBModel
 from app.models.category import Category
 
 if TYPE_CHECKING:
+    from app.models.attachment import Attachment
     from app.models.goal import Goal, GoalMilestone
     from app.models.reminder import Reminder
     from app.models.task_session import TaskSession
@@ -84,6 +85,11 @@ class Task(BaseDBModel):
         Integer,
         nullable=True,
     )
+    attachment_count: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        nullable=False,
+    )
     completed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
@@ -101,6 +107,12 @@ class Task(BaseDBModel):
     )
     sessions: Mapped[list["TaskSession"]] = relationship(
         "TaskSession",
+        back_populates="task",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    attachments: Mapped[list["Attachment"]] = relationship(
+        "Attachment",
         back_populates="task",
         cascade="all, delete-orphan",
         lazy="selectin",

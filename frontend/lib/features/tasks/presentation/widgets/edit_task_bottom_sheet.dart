@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../attachments/presentation/widgets/resource_section_widget.dart';
 import '../../../reminders/domain/reminder_model.dart';
 import '../../domain/task_model.dart';
 import '../controllers/tasks_controller.dart';
@@ -619,6 +620,10 @@ class _EditTaskBottomSheetState extends ConsumerState<EditTaskBottomSheet> {
                   ),
                 ),
               ],
+              const SizedBox(height: 16),
+
+              // Resources & Attachments Section
+              ResourceSectionWidget(taskId: widget.task.id),
               const SizedBox(height: 16),
 
               // Description Field

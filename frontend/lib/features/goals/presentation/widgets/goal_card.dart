@@ -172,6 +172,19 @@ class GoalCard extends StatelessWidget {
                               color: AppColors.textSecondary,
                             ),
                           ),
+                          const SizedBox(width: 10),
+                        ],
+                        if (goal.attachmentCount > 0) ...[
+                          const Icon(Icons.attach_file_rounded, size: 13, color: Color(0xFF6366F1)),
+                          const SizedBox(width: 2),
+                          Text(
+                            '${goal.attachmentCount} Resource${goal.attachmentCount > 1 ? 's' : ''}',
+                            style: GoogleFonts.inter(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF6366F1),
+                            ),
+                          ),
                         ],
                       ],
                     ),

@@ -68,6 +68,7 @@ class TaskRead(BaseModel):
     scheduled_start: datetime | None = None
     scheduled_end: datetime | None = None
     estimated_minutes: int | None = None
+    attachment_count: int = 0
     completed_at: datetime | None = None
     created_at: datetime
     updated_at: datetime

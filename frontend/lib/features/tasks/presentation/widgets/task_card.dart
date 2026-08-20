@@ -264,6 +264,36 @@ class TaskCard extends StatelessWidget {
                               ],
                             ),
                           ],
+
+                          // Attachment Counter Badge (if task has attachments)
+                          if (task.attachmentCount > 0) ...[
+                            Text(
+                              '•',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppColors.textSecondary.withValues(alpha: 0.5),
+                              ),
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.attach_file_rounded,
+                                  size: 12.5,
+                                  color: Color(0xFF6366F1),
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  '${task.attachmentCount}',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.5,
+                                    color: const Color(0xFF6366F1),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ],

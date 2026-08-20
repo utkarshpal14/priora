@@ -35,6 +35,7 @@ class GoalMilestoneModel {
   final DateTime? targetDate;
   final bool isCompleted;
   final int orderIndex;
+  final int attachmentCount;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -46,6 +47,7 @@ class GoalMilestoneModel {
     this.targetDate,
     this.isCompleted = false,
     this.orderIndex = 0,
+    this.attachmentCount = 0,
     this.createdAt,
     this.updatedAt,
   });
@@ -66,6 +68,7 @@ class GoalMilestoneModel {
           : null,
       isCompleted: json['is_completed'] as bool? ?? false,
       orderIndex: (json['order_index'] as num?)?.toInt() ?? 0,
+      attachmentCount: (json['attachment_count'] as num?)?.toInt() ?? 0,
       createdAt: json['created_at'] != null
           ? TaskModel.parseUtcDateTime(json['created_at'] as String)
           : null,
@@ -81,6 +84,7 @@ class GoalMilestoneModel {
       'description': description,
       'target_date': targetDate != null ? DateFormat('yyyy-MM-dd').format(targetDate!) : null,
       'order_index': orderIndex,
+      'attachment_count': attachmentCount,
     };
   }
 
@@ -92,6 +96,7 @@ class GoalMilestoneModel {
     DateTime? targetDate,
     bool? isCompleted,
     int? orderIndex,
+    int? attachmentCount,
   }) {
     return GoalMilestoneModel(
       id: id ?? this.id,
@@ -101,6 +106,7 @@ class GoalMilestoneModel {
       targetDate: targetDate ?? this.targetDate,
       isCompleted: isCompleted ?? this.isCompleted,
       orderIndex: orderIndex ?? this.orderIndex,
+      attachmentCount: attachmentCount ?? this.attachmentCount,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
@@ -161,6 +167,7 @@ class GoalModel {
   final int completedMilestonesCount;
   final int tasksCount;
   final int completedTasksCount;
+  final int attachmentCount;
   final List<GoalMilestoneModel> milestones;
   final List<TaskModel> tasks;
   final List<GoalActivityItem> recentActivity;
@@ -183,6 +190,7 @@ class GoalModel {
     this.completedMilestonesCount = 0,
     this.tasksCount = 0,
     this.completedTasksCount = 0,
+    this.attachmentCount = 0,
     this.milestones = const [],
     this.tasks = const [],
     this.recentActivity = const [],
@@ -238,6 +246,7 @@ class GoalModel {
       completedMilestonesCount: (json['completed_milestones_count'] as num?)?.toInt() ?? 0,
       tasksCount: (json['tasks_count'] as num?)?.toInt() ?? 0,
       completedTasksCount: (json['completed_tasks_count'] as num?)?.toInt() ?? 0,
+      attachmentCount: (json['attachment_count'] as num?)?.toInt() ?? 0,
       milestones: rawMilestones
           .map((m) => GoalMilestoneModel.fromJson(m as Map<String, dynamic>))
           .toList(),
@@ -272,6 +281,7 @@ class GoalModel {
     int? completedMilestonesCount,
     int? tasksCount,
     int? completedTasksCount,
+    int? attachmentCount,
     List<GoalMilestoneModel>? milestones,
     List<TaskModel>? tasks,
     List<GoalActivityItem>? recentActivity,
@@ -292,6 +302,7 @@ class GoalModel {
       completedMilestonesCount: completedMilestonesCount ?? this.completedMilestonesCount,
       tasksCount: tasksCount ?? this.tasksCount,
       completedTasksCount: completedTasksCount ?? this.completedTasksCount,
+      attachmentCount: attachmentCount ?? this.attachmentCount,
       milestones: milestones ?? this.milestones,
       tasks: tasks ?? this.tasks,
       recentActivity: recentActivity ?? this.recentActivity,

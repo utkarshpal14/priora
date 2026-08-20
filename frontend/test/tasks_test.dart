@@ -13,8 +13,27 @@ import 'package:frontend/features/tasks/data/tasks_repository.dart';
 import 'package:frontend/features/tasks/domain/category_model.dart';
 import 'package:frontend/features/tasks/domain/task_model.dart';
 import 'package:frontend/features/tasks/domain/tasks_state.dart';
+import 'package:frontend/features/attachments/data/attachments_api.dart';
+import 'package:frontend/features/attachments/data/attachments_repository.dart';
+import 'package:frontend/features/attachments/domain/attachment_model.dart';
 import 'package:frontend/features/tasks/presentation/screens/tasks_screen.dart';
 import 'package:frontend/features/tasks/presentation/widgets/task_card.dart';
+
+import 'package:frontend/features/goals/data/goals_api.dart';
+import 'package:frontend/features/goals/data/goals_repository.dart';
+import 'package:frontend/features/goals/domain/goal_model.dart';
+
+class FakeGoalsRepository extends GoalsRepository {
+  FakeGoalsRepository() : super(GoalsApi(Dio()));
+  @override
+  Future<List<GoalModel>> getGoals({String? status, String? categoryId}) async => [];
+}
+
+class FakeAttachmentsRepository extends AttachmentsRepository {
+  FakeAttachmentsRepository() : super(AttachmentsApi(Dio()));
+  @override
+  Future<List<AttachmentModel>> listAttachments({String? taskId, String? goalId, String? milestoneId, String? tag}) async => [];
+}
 
 class FakeRemindersRepository extends RemindersRepository {
   final List<ReminderModel> _reminders = [];
@@ -216,7 +235,9 @@ void main() {
       ProviderScope(
         overrides: [
           tasksRepositoryProvider.overrideWithValue(fakeRepo),
+          goalsRepositoryProvider.overrideWithValue(FakeGoalsRepository()),
           remindersRepositoryProvider.overrideWithValue(FakeRemindersRepository()),
+          attachmentsRepositoryProvider.overrideWithValue(FakeAttachmentsRepository()),
           authControllerProvider.overrideWith((ref) => FakeAuthController()),
         ],
         child: const MaterialApp(
@@ -242,7 +263,9 @@ void main() {
       ProviderScope(
         overrides: [
           tasksRepositoryProvider.overrideWithValue(fakeRepo),
+          goalsRepositoryProvider.overrideWithValue(FakeGoalsRepository()),
           remindersRepositoryProvider.overrideWithValue(FakeRemindersRepository()),
+          attachmentsRepositoryProvider.overrideWithValue(FakeAttachmentsRepository()),
           authControllerProvider.overrideWith((ref) => FakeAuthController()),
         ],
         child: const MaterialApp(
@@ -272,7 +295,9 @@ void main() {
       ProviderScope(
         overrides: [
           tasksRepositoryProvider.overrideWithValue(fakeRepo),
+          goalsRepositoryProvider.overrideWithValue(FakeGoalsRepository()),
           remindersRepositoryProvider.overrideWithValue(FakeRemindersRepository()),
+          attachmentsRepositoryProvider.overrideWithValue(FakeAttachmentsRepository()),
           authControllerProvider.overrideWith((ref) => FakeAuthController()),
         ],
         child: const MaterialApp(
@@ -317,7 +342,9 @@ void main() {
       ProviderScope(
         overrides: [
           tasksRepositoryProvider.overrideWithValue(fakeRepo),
+          goalsRepositoryProvider.overrideWithValue(FakeGoalsRepository()),
           remindersRepositoryProvider.overrideWithValue(FakeRemindersRepository()),
+          attachmentsRepositoryProvider.overrideWithValue(FakeAttachmentsRepository()),
           authControllerProvider.overrideWith((ref) => FakeAuthController()),
         ],
         child: const MaterialApp(
@@ -362,7 +389,9 @@ void main() {
       ProviderScope(
         overrides: [
           tasksRepositoryProvider.overrideWithValue(fakeRepo),
+          goalsRepositoryProvider.overrideWithValue(FakeGoalsRepository()),
           remindersRepositoryProvider.overrideWithValue(FakeRemindersRepository()),
+          attachmentsRepositoryProvider.overrideWithValue(FakeAttachmentsRepository()),
           authControllerProvider.overrideWith((ref) => FakeAuthController()),
         ],
         child: const MaterialApp(
@@ -396,7 +425,9 @@ void main() {
       ProviderScope(
         overrides: [
           tasksRepositoryProvider.overrideWithValue(fakeRepo),
+          goalsRepositoryProvider.overrideWithValue(FakeGoalsRepository()),
           remindersRepositoryProvider.overrideWithValue(FakeRemindersRepository()),
+          attachmentsRepositoryProvider.overrideWithValue(FakeAttachmentsRepository()),
           authControllerProvider.overrideWith((ref) => FakeAuthController()),
         ],
         child: const MaterialApp(

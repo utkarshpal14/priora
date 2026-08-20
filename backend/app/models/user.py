@@ -1,7 +1,11 @@
-from sqlalchemy import Boolean, String
-from sqlalchemy.orm import Mapped, mapped_column
+from typing import TYPE_CHECKING
+from sqlalchemy import BigInteger, Boolean, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import BaseDBModel
+
+if TYPE_CHECKING:
+    from app.models.attachment import Attachment
 
 
 class User(BaseDBModel):
@@ -43,4 +47,15 @@ class User(BaseDBModel):
         Boolean,
         default=True,
         nullable=False,
+    )
+    storage_used_bytes: Mapped[int] = mapped_column(
+        BigInteger,
+        default=0,
+        nullable=False,
+    )
+
+    attachments: Mapped[list["Attachment"]] = relationship(
+        "Attachment",
+        back_populates="user",
+        cascade="all, delete-orphan",
     )

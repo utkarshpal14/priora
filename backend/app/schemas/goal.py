@@ -40,6 +40,7 @@ class GoalMilestoneRead(GoalMilestoneBase):
     id: uuid.UUID
     goal_id: uuid.UUID
     is_completed: bool
+    attachment_count: int = 0
     created_at: datetime
     updated_at: datetime
 
@@ -90,6 +91,7 @@ class GoalRead(GoalBase):
     completed_milestones_count: int = 0
     tasks_count: int = 0
     completed_tasks_count: int = 0
+    attachment_count: int = 0
     category: CategoryRead | None = None
     created_at: datetime
     updated_at: datetime

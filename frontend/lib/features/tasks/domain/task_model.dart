@@ -59,6 +59,7 @@ class TaskModel {
   final DateTime? scheduledEnd;
   final DateTime? deadline;
   final int? estimatedMinutes;
+  final int attachmentCount;
   final DateTime? completedAt;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -79,6 +80,7 @@ class TaskModel {
     this.scheduledEnd,
     this.deadline,
     this.estimatedMinutes,
+    this.attachmentCount = 0,
     this.completedAt,
     this.createdAt,
     this.updatedAt,
@@ -195,6 +197,7 @@ class TaskModel {
       scheduledEnd: parseUtcDateTime(json['scheduled_end']),
       deadline: parseUtcDateTime(json['deadline']),
       estimatedMinutes: json['estimated_minutes'] as int?,
+      attachmentCount: (json['attachment_count'] as int?) ?? 0,
       completedAt: parseUtcDateTime(json['completed_at']),
       createdAt: parseUtcDateTime(json['created_at']),
       updatedAt: parseUtcDateTime(json['updated_at']),
@@ -219,6 +222,7 @@ class TaskModel {
       'scheduled_end': scheduledEnd?.toUtc().toIso8601String(),
       'deadline': deadline?.toUtc().toIso8601String(),
       'estimated_minutes': estimatedMinutes,
+      'attachment_count': attachmentCount,
     };
   }
 
@@ -237,6 +241,7 @@ class TaskModel {
     DateTime? scheduledEnd,
     DateTime? deadline,
     int? estimatedMinutes,
+    int? attachmentCount,
     DateTime? completedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -257,6 +262,7 @@ class TaskModel {
       scheduledEnd: scheduledEnd ?? this.scheduledEnd,
       deadline: deadline ?? this.deadline,
       estimatedMinutes: estimatedMinutes ?? this.estimatedMinutes,
+      attachmentCount: attachmentCount ?? this.attachmentCount,
       completedAt: completedAt ?? this.completedAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

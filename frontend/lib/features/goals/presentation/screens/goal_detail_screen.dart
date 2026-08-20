@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:frontend/core/constants/app_colors.dart';
+import 'package:frontend/features/attachments/presentation/widgets/resource_section_widget.dart';
 import 'package:frontend/features/goals/domain/goal_model.dart';
 import 'package:frontend/features/goals/presentation/controllers/goals_controller.dart';
 import 'package:frontend/features/goals/presentation/widgets/add_milestone_bottom_sheet.dart';
@@ -284,6 +285,12 @@ class _GoalDetailScreenState extends ConsumerState<GoalDetailScreen>
                         ],
                       ],
                     ),
+                  const SizedBox(height: 16),
+                  const Divider(height: 1),
+                  const SizedBox(height: 16),
+
+                  // Embedded Resources & Attachments Section for this Goal
+                  ResourceSectionWidget(goalId: widget.goalId),
                 ],
               ),
             ),

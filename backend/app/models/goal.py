@@ -8,6 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import BaseDBModel
 
 if TYPE_CHECKING:
+    from app.models.attachment import Attachment
     from app.models.category import Category
     from app.models.task import Task
     from app.models.user import User
@@ -42,6 +43,11 @@ class Goal(BaseDBModel):
     )
     color: Mapped[str | None] = mapped_column(String(50), default="#6366F1", nullable=True)
     icon: Mapped[str | None] = mapped_column(String(50), default="flag_rounded", nullable=True)
+    attachment_count: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        nullable=False,
+    )
 
     # Relationships
     user: Mapped["User"] = relationship("User")
@@ -55,6 +61,12 @@ class Goal(BaseDBModel):
     tasks: Mapped[list["Task"]] = relationship(
         "Task",
         back_populates="goal",
+    )
+    attachments: Mapped[list["Attachment"]] = relationship(
+        "Attachment",
+        back_populates="goal",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )
 
 
@@ -81,4 +93,10 @@ class GoalMilestone(BaseDBModel):
     tasks: Mapped[list["Task"]] = relationship(
         "Task",
         back_populates="milestone",
+    )
+    attachments: Mapped[list["Attachment"]] = relationship(
+        "Attachment",
+        back_populates="milestone",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )
