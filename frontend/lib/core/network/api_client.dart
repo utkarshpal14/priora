@@ -29,7 +29,45 @@ final dioProvider = Provider<Dio>((ref) {
         }
         return handler.next(options);
       },
-      onError: (DioException error, handler) {
+      onError: (DioException error, handler) async {
+        // Automatically refresh expired access token on 401 Unauthorized
+        if (error.response?.statusCode == 401 &&
+            !error.requestOptions.path.contains('/auth/login') &&
+            !error.requestOptions.path.contains('/auth/register') &&
+            !error.requestOptions.path.contains('/auth/refresh')) {
+          final refreshToken = await authStorage.getRefreshToken();
+          if (refreshToken != null && refreshToken.isNotEmpty) {
+            try {
+              final tokenDio = Dio(
+                BaseOptions(
+                  baseUrl: ApiEndpoints.baseUrl,
+                  headers: {'Content-Type': 'application/json'},
+                ),
+              );
+              final response = await tokenDio.post(
+                ApiEndpoints.refresh,
+                data: {'refresh_token': refreshToken},
+              );
+
+              final responseData = response.data['data'] as Map<String, dynamic>;
+              final newAccessToken = responseData['access_token'] as String;
+              final newRefreshToken = responseData['refresh_token'] as String;
+
+              await authStorage.saveTokens(
+                accessToken: newAccessToken,
+                refreshToken: newRefreshToken,
+              );
+
+              // Retry original failed request with updated access token
+              final opts = error.requestOptions;
+              opts.headers['Authorization'] = 'Bearer $newAccessToken';
+              final cloneReq = await dio.fetch(opts);
+              return handler.resolve(cloneReq);
+            } catch (_) {
+              await authStorage.clearTokens();
+            }
+          }
+        }
         return handler.next(error);
       },
     ),

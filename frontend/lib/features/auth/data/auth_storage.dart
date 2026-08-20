@@ -16,6 +16,7 @@ class AuthStorage {
       : _storage = storage ??
             const FlutterSecureStorage(
               aOptions: AndroidOptions(encryptedSharedPreferences: true),
+              webOptions: WebOptions(dbName: 'priora_db'),
             );
 
   Future<void> saveTokens({
