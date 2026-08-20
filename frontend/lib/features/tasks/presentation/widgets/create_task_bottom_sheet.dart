@@ -31,6 +31,8 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
 
   TaskPriority _selectedPriority = TaskPriority.medium;
   String? _selectedCategoryId;
+  String? _selectedGoalId;
+  String? _selectedMilestoneId;
   DateTime? _selectedDeadline;
   ReminderPreset _selectedReminderPreset = ReminderPreset.none;
   DateTime? _customReminderTime;
@@ -143,6 +145,8 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
               : null,
           priority: _selectedPriority,
           categoryId: catId,
+          goalId: _selectedGoalId,
+          milestoneId: _selectedMilestoneId,
           deadline: _selectedDeadline,
           remindAt: _getEffectiveRemindAt(),
         );

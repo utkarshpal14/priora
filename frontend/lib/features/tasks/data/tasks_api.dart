@@ -52,6 +52,8 @@ class TasksApi {
     String? description,
     TaskPriority priority = TaskPriority.medium,
     String? categoryId,
+    String? goalId,
+    String? milestoneId,
     DateTime? deadline,
     DateTime? scheduledStart,
     DateTime? scheduledEnd,
@@ -65,6 +67,12 @@ class TasksApi {
     }
     if (categoryId != null) {
       payload['category_id'] = categoryId;
+    }
+    if (goalId != null) {
+      payload['goal_id'] = goalId;
+    }
+    if (milestoneId != null) {
+      payload['milestone_id'] = milestoneId;
     }
     if (deadline != null) {
       payload['deadline'] = deadline.toUtc().toIso8601String();
@@ -92,6 +100,8 @@ class TasksApi {
     TaskPriority? priority,
     TaskStatus? status,
     String? categoryId,
+    String? goalId,
+    String? milestoneId,
     DateTime? deadline,
     DateTime? scheduledStart,
     DateTime? scheduledEnd,
@@ -102,6 +112,8 @@ class TasksApi {
     if (priority != null) payload['priority'] = priority.apiValue;
     if (status != null) payload['status'] = status.apiValue;
     if (categoryId != null) payload['category_id'] = categoryId;
+    if (goalId != null) payload['goal_id'] = goalId;
+    if (milestoneId != null) payload['milestone_id'] = milestoneId;
     if (deadline != null) payload['deadline'] = deadline.toUtc().toIso8601String();
     if (scheduledStart != null) payload['scheduled_start'] = scheduledStart.toUtc().toIso8601String();
     if (scheduledEnd != null) payload['scheduled_end'] = scheduledEnd.toUtc().toIso8601String();
