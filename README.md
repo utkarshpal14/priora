@@ -72,27 +72,23 @@ Priora is an intelligent, full-stack productivity platform built to help users s
 
 ---
 
-## 📑 System Architecture & Milestone Directory
+## 📑 Canonical System Documentation
 
-- 🚀 **v1.0.0 Release Notes**: [`docs/RELEASE_NOTES_v1.0.0.md`](file:///docs/RELEASE_NOTES_v1.0.0.md)
-- 📐 **Frozen System Architecture v1.0.0**: [`docs/ARCHITECTURE_v1.0.0.md`](file:///docs/ARCHITECTURE_v1.0.0.md)
+- 📘 **Project Overview**: [`docs/PROJECT_OVERVIEW.md`](docs/PROJECT_OVERVIEW.md)
+- 🏗️ **System Architecture**: [`docs/SYSTEM_ARCHITECTURE.md`](docs/SYSTEM_ARCHITECTURE.md)
+- 🗄️ **Database Schema**: [`docs/DATABASE_SCHEMA.md`](docs/DATABASE_SCHEMA.md)
+- 🔌 **API Specification**: [`docs/API_SPECIFICATION.md`](docs/API_SPECIFICATION.md)
+- 🎨 **UI/UX Specification**: [`docs/UI_UX_SPECIFICATION.md`](docs/UI_UX_SPECIFICATION.md)
+- 🛠️ **Engineering Guidelines**: [`docs/ENGINEERING_GUIDELINES.md`](docs/ENGINEERING_GUIDELINES.md)
+- 🗺️ **Product Roadmap**: [`docs/ROADMAP.md`](docs/ROADMAP.md)
+- 🔮 **Future Vision & Backlog**: [`docs/FUTURE_VISION.md`](docs/FUTURE_VISION.md)
+- 📜 **Changelog**: [`docs/CHANGELOG.md`](docs/CHANGELOG.md)
 
-### Detailed Milestone Specifications
-
-| Milestone | Specification Document | Key Features Covered |
-|---|---|---|
-| **M0** | [`M0_Setup.md`](file:///docs/milestones/M0_Setup.md) | FastAPI, Flutter, SQLAlchemy base setup & architecture |
-| **M1** | [`M1_Authentication.md`](file:///docs/milestones/M1_Authentication.md) | JWT auth, bcrypt password hashing, user isolation |
-| **M2** | [`M2_Task_Management.md`](file:///docs/milestones/M2_Task_Management.md) | Task CRUD, status lifecycle, categories |
-| **M3** | [`M3_Deadlines_and_Priorities.md`](file:///docs/milestones/M3_Deadlines_and_Priorities.md) | Priority matrix, overdue banner, composite ranking |
-| **M4** | [`M4_Reminder_System.md`](file:///docs/milestones/M4_Reminder_System.md) | Preset offsets, FCM & local notification triggers |
-| **M5** | [`M5_Planner.md`](file:///docs/milestones/M5_Planner.md) | Timezone-aware auto-placement, timeline schedule |
-| **M6** | [`M6_Review.md`](file:///docs/milestones/M6_Review.md) | Evening review workflow, reflection, celebration stats |
-| **M7** | [`M7_Goals.md`](file:///docs/milestones/M7_Goals.md) | High-level goals, sub-milestones, progress bars |
-| **M8** | [`M8_Attachments.md`](file:///docs/milestones/M8_Attachments.md) | Multi-entity attachments, files, links, notes, tags, thumbnails |
-| **M9** | [`M9_Analytics.md`](file:///docs/milestones/M9_Analytics.md) | Productive streaks, personal records, goal stats, focus time, velocity, heatmap |
-| **M10** | [`M10_UI_Polish_and_Themes.md`](file:///docs/milestones/M10_UI_Polish_and_Themes.md) | Dynamic theme engine (light/dark/system), 5 accent colors, reduce motion, settings |
-| **M11** | [`M11_Integration_Testing_and_Notifications.md`](file:///docs/milestones/M11_Integration_Testing_and_Notifications.md) | End-to-end integration testing suite, push notification engine, settings integration |
+### Release Specifics
+- 📦 **v1.0.0 Release Notes**: [`docs/v1.0.0/RELEASE_NOTES_V1.0.0.md`](docs/v1.0.0/RELEASE_NOTES_V1.0.0.md)
+- 📋 **v1.0.0 Product Requirements**: [`docs/v1.0.0/PRODUCT_REQUIREMENTS.md`](docs/v1.0.0/PRODUCT_REQUIREMENTS.md)
+- 🧪 **v1.0.0 Test Report & Matrix**: [`docs/v1.0.0/TEST_REPORT_V1.md`](docs/v1.0.0/TEST_REPORT_V1.md)
+- 🏛️ **Historical Milestone Specs**: [`docs/archive/milestones/`](docs/archive/milestones/)
 
 ---
 
