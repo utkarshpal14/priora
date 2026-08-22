@@ -7,8 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.frontend"
-    compileSdk = 36
-    ndkVersion = flutter.ndkVersion
+    compileSdk = flutter.compileSdkVersion
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
@@ -42,6 +41,17 @@ android {
             )
         }
     }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+            keepDebugSymbols.add("**/*.so")
+        }
+    }
+}
+
+tasks.matching { it.name.startsWith("strip") && it.name.endsWith("DebugSymbols") }.configureEach {
+    enabled = false
 }
 
 dependencies {

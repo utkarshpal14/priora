@@ -35,6 +35,8 @@ htmlcov/
 # Environment & Secrets (Never commit credentials)
 .env
 *.env
+.env.production
+*.env.production
 !.env.example
 *.pem
 *.key
