@@ -14,7 +14,7 @@ class NotificationSettingsController extends StateNotifier<NotificationPreferenc
   Future<void> _fetchPreferences() async {
     if (_apiClient == null) return;
     try {
-      final response = await _apiClient.get('/api/v1/users/notification-preferences');
+      final response = await _apiClient.get('/users/notification-preferences');
       if (response.data != null && response.data['data'] != null) {
         state = NotificationPreferencesModel.fromJson(response.data['data']);
       }
@@ -57,7 +57,7 @@ class NotificationSettingsController extends StateNotifier<NotificationPreferenc
     if (_apiClient == null) return;
     try {
       await _apiClient.put(
-        '/api/v1/users/notification-preferences',
+        '/users/notification-preferences',
         data: state.toJson(),
       );
     } catch (_) {
@@ -69,7 +69,7 @@ class NotificationSettingsController extends StateNotifier<NotificationPreferenc
     if (_apiClient == null) return false;
     try {
       await _apiClient.post(
-        '/api/v1/users/device-token',
+        '/users/device-token',
         data: {'token': token, 'platform': platform},
       );
       return true;

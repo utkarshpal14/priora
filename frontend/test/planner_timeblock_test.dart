@@ -93,6 +93,7 @@ void main() {
                 selectedDate: DateTime(2026, 8, 20),
                 onDeleteSession: (id) => deletedSessionId = id,
                 onToggleTaskComplete: (t) => completedTask = t,
+                onStartTask: (t) {},
               ),
             ),
           ),

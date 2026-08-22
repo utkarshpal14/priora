@@ -45,12 +45,15 @@ class ReminderService:
         if remind_at.tzinfo is None:
             remind_at = remind_at.replace(tzinfo=UTC)
 
-        # Validate future time
-        if remind_at < now - timedelta(minutes=1):
+        # Validate future time (allow 5-minute grace window for clock skew & quick test entry)
+        if remind_at < now - timedelta(minutes=5):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Reminder time must be in the future.",
             )
+        elif remind_at < now:
+            remind_at = now + timedelta(seconds=10)
+            reminder_in.remind_at = remind_at
 
         # Enforce Pre-Deadline Constraint: cannot set reminder after task deadline
         if task.deadline is not None:

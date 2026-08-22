@@ -10,12 +10,70 @@ import '../../../attachments/data/attachments_repository.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../goals/presentation/controllers/goals_controller.dart';
 import '../../../tasks/presentation/controllers/tasks_controller.dart';
+import '../../../../core/services/local_notification_service.dart';
 import '../controllers/notification_settings_controller.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
-  void _showLogoutDialog(BuildContext context, WidgetRef ref) {
+  @override
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> with WidgetsBindingObserver {
+  bool? _isBatteryIgnored;
+  bool? _canExactAlarm;
+  bool _isChecking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _refreshHealthStatus();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      debugPrint('[SettingsScreen] App resumed from system settings -> Refreshing UX-003 battery & alarm health...');
+      _refreshHealthStatus();
+    }
+  }
+
+  Future<void> _refreshHealthStatus() async {
+    if (_isChecking) return;
+    if (mounted) setState(() => _isChecking = true);
+
+    try {
+      final notifService = ref.read(localNotificationServiceProvider);
+      final isIgnored = await notifService
+          .isBatteryOptimizationIgnored()
+          .timeout(const Duration(milliseconds: 300), onTimeout: () => false);
+      final canExact = await notifService
+          .canScheduleExactAlarms()
+          .timeout(const Duration(milliseconds: 300), onTimeout: () => true);
+
+      debugPrint('[UX-003] Live PowerManager.isIgnoringBatteryOptimizations -> $isIgnored | exactAlarms -> $canExact');
+
+      if (mounted) {
+        setState(() {
+          _isBatteryIgnored = isIgnored;
+          _canExactAlarm = canExact;
+          _isChecking = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isChecking = false);
+    }
+  }
+
+  void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -50,7 +108,7 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final themeState = ref.watch(themeControllerProvider);
@@ -434,6 +492,152 @@ class SettingsScreen extends ConsumerWidget {
                           onChanged: (val) => notifNotifier.toggleGoalAlerts(val),
                         ),
                       ),
+                      const Divider(height: 16),
+                      const SizedBox(height: 4),
+                      Text(
+                        'UX-003 System Health & Battery Diagnostics',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  _isBatteryIgnored == true ? Icons.check_circle_rounded : Icons.warning_amber_rounded,
+                                  size: 16,
+                                  color: _isBatteryIgnored == true ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'PowerManager.isIgnoringBatteryOptimizations:',
+                                    style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: _isBatteryIgnored == true ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    _isBatteryIgnored == true ? 'TRUE (Unrestricted)' : 'FALSE (Optimizing)',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: _isBatteryIgnored == true ? const Color(0xFF15803D) : const Color(0xFFB45309),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Icon(
+                                  _canExactAlarm == true ? Icons.check_circle_rounded : Icons.warning_amber_rounded,
+                                  size: 16,
+                                  color: _canExactAlarm == true ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Exact Alarm Capability:',
+                                    style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: _canExactAlarm == true ? const Color(0xFFDBEAFE) : const Color(0xFFFEE2E2),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    _canExactAlarm == true ? 'GRANTED ✅' : 'DISABLED ❌',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: _canExactAlarm == true ? const Color(0xFF1D4ED8) : const Color(0xFF991B1B),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              key: const Key('test_notification_btn'),
+                              onPressed: () async {
+                                final notifService = ref.read(localNotificationServiceProvider);
+                                await notifService.sendTestNotification();
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('🧪 5-sec custom chime alert scheduled! Check notification bar.'),
+                                      backgroundColor: Color(0xFF16A34A),
+                                    ),
+                                  );
+                                }
+                              },
+                              icon: const Icon(Icons.notifications_active_rounded, size: 16),
+                              label: Text(
+                                'Test Alert (5s)',
+                                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: theme.colorScheme.secondary,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          OutlinedButton.icon(
+                            onPressed: () async {
+                              await ref.read(localNotificationServiceProvider).openBatteryOptimizationPrompt();
+                              await _refreshHealthStatus();
+                            },
+                            icon: const Icon(Icons.battery_saver_rounded, size: 15),
+                            label: Text(
+                              'Battery Prompt',
+                              style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w600),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          IconButton(
+                            onPressed: _refreshHealthStatus,
+                            icon: _isChecking
+                                ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                                : const Icon(Icons.refresh_rounded, size: 18),
+                            tooltip: 'Refresh Health Diagnostics',
+                          ),
+                        ],
+                      ),
                     ],
                   );
                 },
@@ -505,7 +709,7 @@ class SettingsScreen extends ConsumerWidget {
               width: double.infinity,
               height: 48,
               child: OutlinedButton.icon(
-                onPressed: () => _showLogoutDialog(context, ref),
+                onPressed: () => _showLogoutDialog(context),
                 icon: const Icon(Icons.logout_rounded, size: 18, color: Color(0xFFDC2626)),
                 label: Text(
                   'Log Out',

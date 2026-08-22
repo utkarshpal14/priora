@@ -23,6 +23,26 @@ import 'package:frontend/features/reminders/data/reminders_api.dart';
 import 'package:frontend/features/reminders/data/reminders_repository.dart';
 import 'package:frontend/features/reminders/domain/reminder_model.dart';
 
+import 'package:frontend/features/auth/data/auth_api.dart';
+import 'package:frontend/features/auth/data/auth_repository.dart';
+import 'package:frontend/features/auth/data/auth_storage.dart';
+import 'package:frontend/features/auth/domain/user_model.dart';
+
+class FakeAuthStorage extends AuthStorage {
+  @override
+  Future<String?> getToken() async => null;
+  @override
+  Future<void> saveToken(String token) async {}
+  @override
+  Future<void> clearToken() async {}
+}
+
+class FakeAuthRepository extends AuthRepository {
+  FakeAuthRepository() : super(AuthApi(Dio()), FakeAuthStorage());
+  @override
+  Future<UserModel?> restoreSession() async => null;
+}
+
 class FakeRemindersRepository extends RemindersRepository {
   FakeRemindersRepository() : super(RemindersApi(Dio()));
   @override
@@ -216,6 +236,7 @@ void main() {
       final key = const EntityKey(taskId: 'task-1');
       final container = ProviderContainer(
         overrides: [
+          authRepositoryProvider.overrideWithValue(FakeAuthRepository()),
           attachmentsRepositoryProvider.overrideWithValue(fakeRepo),
           tasksRepositoryProvider.overrideWithValue(FakeTasksRepository()),
           goalsRepositoryProvider.overrideWithValue(FakeGoalsRepository()),

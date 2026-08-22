@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import 'package:frontend/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:frontend/features/planner/data/planner_repository.dart';
 import 'package:frontend/features/planner/domain/planner_model.dart';
 import 'package:frontend/features/tasks/data/tasks_repository.dart';
@@ -50,6 +51,7 @@ class PlannerState {
 
 final plannerControllerProvider =
     StateNotifierProvider<PlannerController, PlannerState>((ref) {
+  ref.watch(authControllerProvider);
   final plannerRepo = ref.watch(plannerRepositoryProvider);
   final tasksRepo = ref.watch(tasksRepositoryProvider);
   final tasksNotifier = ref.read(tasksControllerProvider.notifier);
@@ -177,12 +179,14 @@ class PlannerController extends StateNotifier<PlannerState> {
 
   Future<bool> updateSession({
     required String sessionId,
+    String? taskId,
     DateTime? scheduledStart,
     DateTime? scheduledEnd,
   }) async {
     try {
       await _plannerRepository.updateSession(
         sessionId: sessionId,
+        taskId: taskId,
         scheduledStart: scheduledStart,
         scheduledEnd: scheduledEnd,
       );

@@ -519,6 +519,27 @@ Low
 
 ---
 
+# 16. ENH-004 — Custom Reminder Audio Playback
+
+## Status
+
+Deferred (Post-v1.0.0 Backlog)
+
+## Priority
+
+Low
+
+---
+
+## Features
+
+- 5-second custom reminder sound playback
+- Optional 10-second strong alert
+- User-configurable reminder alert intensity (Silent, Standard, Enhanced 5s, Strong 10s)
+- Custom audio asset chooser
+
+---
+
 # MVP Boundary (Locked)
 
 The following are NOT required before Play Store launch:

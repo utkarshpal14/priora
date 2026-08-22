@@ -174,12 +174,20 @@ class _ScheduleTimeSlotDialogState extends ConsumerState<ScheduleTimeSlotDialog>
     final plannerNotifier = ref.read(plannerControllerProvider.notifier);
 
     bool success;
-    if (widget.sessionToEdit != null) {
+    if (widget.sessionToEdit != null && !widget.sessionToEdit!.id.startsWith('auto_')) {
       success = await plannerNotifier.updateSession(
         sessionId: widget.sessionToEdit!.id,
+        taskId: widget.task.id,
         scheduledStart: startDt,
         scheduledEnd: endDt,
       );
+      if (!success) {
+        success = await plannerNotifier.createSession(
+          taskId: widget.task.id,
+          scheduledStart: startDt,
+          scheduledEnd: endDt,
+        );
+      }
     } else {
       success = await plannerNotifier.createSession(
         taskId: widget.task.id,

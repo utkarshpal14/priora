@@ -1,5 +1,115 @@
 package com.example.frontend
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.os.PowerManager
+import android.provider.Settings
 import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugins.GeneratedPluginRegistrant
 
-class MainActivity : FlutterActivity()
+class MainActivity : FlutterActivity() {
+    private val CHANNEL = "com.example.frontend/system_settings"
+
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+        GeneratedPluginRegistrant.registerWith(flutterEngine)
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "openNotificationSettings" -> {
+                    try {
+                        val intent = Intent().apply {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                action = Settings.ACTION_APP_NOTIFICATION_SETTINGS
+                                putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                            } else {
+                                action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                                data = Uri.fromParts("package", packageName, null)
+                            }
+                        }
+                        startActivity(intent)
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("UNAVAILABLE", e.message, null)
+                    }
+                }
+                "openExactAlarmSettings" -> {
+                    try {
+                        val intent = Intent().apply {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                action = Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
+                                data = Uri.fromParts("package", packageName, null)
+                            } else {
+                                action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                                data = Uri.fromParts("package", packageName, null)
+                            }
+                        }
+                        startActivity(intent)
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("UNAVAILABLE", e.message, null)
+                    }
+                }
+                "openBatteryOptimizationPrompt" -> {
+                    try {
+                        val intent = Intent().apply {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                action = Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+                                data = Uri.parse("package:$packageName")
+                            } else {
+                                action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                                data = Uri.fromParts("package", packageName, null)
+                            }
+                        }
+                        startActivity(intent)
+                        result.success(true)
+                    } catch (e: Exception) {
+                        // Fallback to app details settings if direct prompt fails
+                        try {
+                            val fallbackIntent = Intent().apply {
+                                action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                                data = Uri.fromParts("package", packageName, null)
+                            }
+                            startActivity(fallbackIntent)
+                            result.success(true)
+                        } catch (err: Exception) {
+                            result.error("UNAVAILABLE", err.message, null)
+                        }
+                    }
+                }
+                "openAppDetailsSettings" -> {
+                    try {
+                        val intent = Intent().apply {
+                            action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                            data = Uri.fromParts("package", packageName, null)
+                        }
+                        startActivity(intent)
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("UNAVAILABLE", e.message, null)
+                    }
+                }
+                "isBatteryOptimizationIgnored" -> {
+                    try {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+                            val isIgnoring = pm.isIgnoringBatteryOptimizations(packageName)
+                            android.util.Log.i("PrioraBattery", "[MainActivity] isIgnoringBatteryOptimizations for $packageName -> $isIgnoring")
+                            result.success(isIgnoring)
+                        } else {
+                            result.success(true)
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("PrioraBattery", "[MainActivity] Error checking battery optimization: ${e.message}")
+                        result.success(false)
+                    }
+                }
+                else -> result.notImplemented()
+            }
+        }
+    }
+}

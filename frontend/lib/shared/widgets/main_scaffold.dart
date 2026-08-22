@@ -15,19 +15,19 @@ class MainScaffold extends StatelessWidget {
   });
 
   int _calculateSelectedIndex(String loc) {
-    if (loc.startsWith('/planner')) return 1;
+    if (loc.startsWith('/tasks')) return 1;
     if (loc.startsWith('/goals')) return 2;
     if (loc.startsWith('/analytics')) return 3;
-    return 0; // /tasks, /dashboard, etc.
+    return 0; // /planner, /dashboard, etc.
   }
 
   void _onItemTapped(int index, BuildContext context) {
     switch (index) {
       case 0:
-        context.go('/tasks');
+        context.go('/planner');
         break;
       case 1:
-        context.go('/planner');
+        context.go('/tasks');
         break;
       case 2:
         context.go('/goals');
@@ -73,14 +73,14 @@ class MainScaffold extends StatelessWidget {
           type: BottomNavigationBarType.fixed,
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.check_circle_outline_rounded),
-              activeIcon: Icon(Icons.check_circle_rounded),
-              label: 'Tasks',
-            ),
-            BottomNavigationBarItem(
               icon: Icon(Icons.calendar_today_outlined),
               activeIcon: Icon(Icons.calendar_today_rounded),
               label: 'Planner',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.check_circle_outline_rounded),
+              activeIcon: Icon(Icons.check_circle_rounded),
+              label: 'Tasks',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.flag_outlined),

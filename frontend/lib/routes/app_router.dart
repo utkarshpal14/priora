@@ -20,7 +20,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authControllerProvider);
 
   return GoRouter(
-    initialLocation: '/dashboard',
+    initialLocation: '/planner',
     routes: [
       // Public Routes
       GoRoute(
@@ -53,19 +53,24 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
         routes: [
           GoRoute(
-            path: '/dashboard',
-            name: 'dashboard',
-            builder: (context, state) => const TasksScreen(),
+            path: '/',
+            name: 'root',
+            builder: (context, state) => const PlannerScreen(),
           ),
           GoRoute(
-            path: '/tasks',
-            name: 'tasks',
-            builder: (context, state) => const TasksScreen(),
+            path: '/dashboard',
+            name: 'dashboard',
+            builder: (context, state) => const PlannerScreen(),
           ),
           GoRoute(
             path: '/planner',
             name: 'planner',
             builder: (context, state) => const PlannerScreen(),
+          ),
+          GoRoute(
+            path: '/tasks',
+            name: 'tasks',
+            builder: (context, state) => const TasksScreen(),
           ),
           GoRoute(
             path: '/goals',
@@ -116,9 +121,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/login';
       }
 
-      // 2. Authenticated users on /login or /register go to /dashboard
-      if (isAuthenticated && isPublicRoute) {
-        return '/dashboard';
+      // 2. Authenticated users on /login, /register, or / go to /planner
+      if (isAuthenticated && (isPublicRoute || location == '/')) {
+        return '/planner';
       }
 
       return null;

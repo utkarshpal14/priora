@@ -247,17 +247,17 @@ class _EditTaskBottomSheetState extends ConsumerState<EditTaskBottomSheet> {
                 style: GoogleFonts.inter(
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
                 decoration: InputDecoration(
                   labelText: 'Task Title',
-                  labelStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.textSecondary),
+                  labelStyle: GoogleFonts.inter(fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: Theme.of(context).colorScheme.surface,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.1)),
+                    borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12)),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),

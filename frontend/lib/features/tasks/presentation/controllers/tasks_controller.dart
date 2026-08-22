@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/services/local_notification_service.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../reminders/data/reminders_repository.dart';
 import '../../../reminders/domain/reminder_model.dart';
 import '../../data/tasks_repository.dart';
@@ -12,6 +13,7 @@ import '../../domain/tasks_state.dart';
 
 final tasksControllerProvider =
     StateNotifierProvider<TasksController, TasksState>((ref) {
+  ref.watch(authControllerProvider);
   final repository = ref.watch(tasksRepositoryProvider);
   final remindersRepo = ref.watch(remindersRepositoryProvider);
   final notificationService = ref.watch(localNotificationServiceProvider);
@@ -49,6 +51,8 @@ class TasksController extends StateNotifier<TasksState> {
         tasks: taskData.tasks,
         metrics: taskData.metrics,
       );
+
+      _syncLocalNotifications(taskData.tasks);
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -66,10 +70,51 @@ class TasksController extends StateNotifier<TasksState> {
         tasks: taskData.tasks,
         metrics: taskData.metrics,
       );
+      _syncLocalNotifications(taskData.tasks);
     } catch (e) {
       state = state.copyWith(
         errorMessage: _extractError(e, 'Failed to refresh tasks.'),
       );
+    }
+  }
+
+  Future<void> _syncLocalNotifications(List<TaskModel> tasks) async {
+    try {
+      final now = DateTime.now();
+      for (final task in tasks) {
+        // 1. Sync active reminders (BUG-006)
+        if (task.reminders != null) {
+          for (final rem in task.reminders!) {
+            if (rem.remindAt.isAfter(now)) {
+              await _notificationService.scheduleNotification(
+                notificationId: rem.notificationId ?? rem.id.hashCode,
+                title: '⏰ Reminder: ${task.title}',
+                body: task.deadline != null
+                    ? 'Deadline approaching: ${task.formattedDeadline}'
+                    : 'Task reminder: ${task.title}',
+                scheduledDate: rem.remindAt,
+              );
+            }
+          }
+        }
+
+        // 2. Sync upcoming overdue deadline notification (BUG-007)
+        if (task.deadline != null &&
+            task.status != TaskStatus.completed &&
+            task.status != TaskStatus.cancelled) {
+          if (task.deadline!.isAfter(now)) {
+            final overdueNotifId = (task.id.hashCode + 9999).abs() % 100000;
+            await _notificationService.scheduleNotification(
+              notificationId: overdueNotifId,
+              title: '⚠️ Task Overdue: ${task.title}',
+              body: 'The deadline for "${task.title}" has passed.',
+              scheduledDate: task.deadline!,
+            );
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[TasksController] Sync notifications notice: $e');
     }
   }
 

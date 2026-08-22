@@ -14,6 +14,7 @@ class HourlyTimelineSection extends StatelessWidget {
   final DateTime selectedDate;
   final Function(String sessionId) onDeleteSession;
   final Function(TaskModel task) onToggleTaskComplete;
+  final Function(TaskModel task) onStartTask;
 
   const HourlyTimelineSection({
     super.key,
@@ -23,6 +24,7 @@ class HourlyTimelineSection extends StatelessWidget {
     required this.selectedDate,
     required this.onDeleteSession,
     required this.onToggleTaskComplete,
+    required this.onStartTask,
   });
 
   Widget _buildCurrentTimeIndicator() {
@@ -244,42 +246,83 @@ class HourlyTimelineSection extends StatelessWidget {
               ),
             ),
 
-            // Actions (Edit / Delete)
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert_rounded, size: 18, color: AppColors.textSecondary),
-              padding: EdgeInsets.zero,
-              onSelected: (val) {
-                if (val == 'edit' && task != null) {
-                  ScheduleTimeSlotDialog.show(
-                    context,
-                    task: task,
-                    initialDate: selectedDate,
-                    sessionToEdit: session,
-                  );
-                } else if (val == 'delete') {
-                  onDeleteSession(session.id);
-                }
-              },
-              itemBuilder: (ctx) => [
-                const PopupMenuItem(
-                  value: 'edit',
-                  child: Row(
-                    children: [
-                      Icon(Icons.edit_outlined, size: 16),
-                      SizedBox(width: 8),
-                      Text('Edit Slot', style: TextStyle(fontSize: 13)),
-                    ],
+            // Actions (Focus Start / Edit / Delete)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (task != null && !isCompleted) ...[
+                  GestureDetector(
+                    onTap: () {
+                      onStartTask(task);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Focus session started for "${task.title}"! ⏱️'),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.play_arrow_rounded, size: 14, color: AppColors.primary),
+                          const SizedBox(width: 2),
+                          Text(
+                            'Focus',
+                            style: GoogleFonts.inter(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete_outline_rounded, size: 16, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Remove Slot', style: TextStyle(fontSize: 13, color: Colors.red)),
-                    ],
-                  ),
+                  const SizedBox(width: 4),
+                ],
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert_rounded, size: 18, color: AppColors.textSecondary),
+                  padding: EdgeInsets.zero,
+                  onSelected: (val) {
+                    if (val == 'edit' && task != null) {
+                      ScheduleTimeSlotDialog.show(
+                        context,
+                        task: task,
+                        initialDate: selectedDate,
+                        sessionToEdit: session,
+                      );
+                    } else if (val == 'delete') {
+                      onDeleteSession(session.id);
+                    }
+                  },
+                  itemBuilder: (ctx) => [
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit_outlined, size: 16),
+                          SizedBox(width: 8),
+                          Text('Edit Slot', style: TextStyle(fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete_outline_rounded, size: 16, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Remove Slot', style: TextStyle(fontSize: 13, color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

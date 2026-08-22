@@ -88,9 +88,11 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
             pickedTime.hour,
             pickedTime.minute,
           );
-          // Recalculate preset reminder time if preset is active
-          if (_selectedReminderPreset != ReminderPreset.none &&
-              _selectedReminderPreset != ReminderPreset.custom) {
+          // Auto-enable 15-minute reminder preset if no preset is selected yet
+          if (_selectedReminderPreset == ReminderPreset.none) {
+            _selectedReminderPreset = ReminderPreset.fifteenMinutes;
+          }
+          if (_selectedReminderPreset != ReminderPreset.custom) {
             _customReminderTime =
                 _selectedReminderPreset.calculateRemindAt(_selectedDeadline);
           }
@@ -230,23 +232,23 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
               TextFormField(
                 controller: _titleController,
                 autofocus: true,
-                style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500),
+                style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface),
                 decoration: InputDecoration(
                   hintText: 'What needs to be done?',
                   hintStyle: GoogleFonts.inter(
-                    color: AppColors.textSecondary.withValues(alpha: 0.7),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     fontSize: 15,
                   ),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: Theme.of(context).colorScheme.surface,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.1)),
+                    borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12)),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.1)),
+                    borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),

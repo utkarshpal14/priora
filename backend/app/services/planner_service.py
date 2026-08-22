@@ -62,9 +62,12 @@ class PlannerService:
             else:
                 return 8
 
-    def _format_time_range(self, start_dt: datetime, end_dt: datetime) -> str:
-        s_str = start_dt.strftime("%I:%M %p").lstrip("0")
-        e_str = end_dt.strftime("%I:%M %p").lstrip("0")
+    def _format_time_range(self, start_dt: datetime, end_dt: datetime, tz_offset_minutes: int = 0) -> str:
+        offset_delta = timedelta(minutes=tz_offset_minutes)
+        start_local = start_dt + offset_delta
+        end_local = end_dt + offset_delta
+        s_str = start_local.strftime("%I:%M %p").lstrip("0")
+        e_str = end_local.strftime("%I:%M %p").lstrip("0")
         return f"{s_str} – {e_str}"
 
     def _detect_conflicts_for_blocks(self, blocks: list[TaskSessionRead]) -> dict[uuid.UUID, list[str]]:
@@ -161,7 +164,7 @@ class PlannerService:
             start_utc = _to_utc(s.scheduled_start) or s.scheduled_start
             end_utc = _to_utc(s.scheduled_end) or s.scheduled_end
             dur_mins = max(1, int((end_utc - start_utc).total_seconds() / 60))
-            range_str = self._format_time_range(start_utc, end_utc)
+            range_str = self._format_time_range(start_utc, end_utc, tz_offset_minutes=tz_offset_minutes)
             task_read = TaskRead.model_validate(s.task) if s.task else None
             scheduled_task_ids.add(s.task_id)
 
@@ -193,7 +196,7 @@ class PlannerService:
                 dur_mins = t.estimated_minutes if (t.estimated_minutes and t.estimated_minutes > 0) else 60
                 session_start = max(start_of_day, deadline_utc - timedelta(minutes=dur_mins))
                 session_end = max(session_start + timedelta(minutes=15), deadline_utc)
-                range_str = self._format_time_range(session_start, session_end)
+                range_str = self._format_time_range(session_start, session_end, tz_offset_minutes=tz_offset_minutes)
                 auto_id = uuid.uuid5(uuid.NAMESPACE_DNS, f"auto_{t.id}_{target_date}")
                 task_read = TaskRead.model_validate(t)
                 scheduled_task_ids.add(t.id)
@@ -411,6 +414,10 @@ class PlannerService:
         session = task_session_repository.create(
             db, session_in.task_id, session_in.scheduled_start, session_in.scheduled_end
         )
+        task.scheduled_start = session.scheduled_start
+        task.scheduled_end = session.scheduled_end
+        db.add(task)
+        db.commit()
 
         start_utc = _to_utc(session.scheduled_start) or session.scheduled_start
         end_utc = _to_utc(session.scheduled_end) or session.scheduled_end
@@ -439,6 +446,13 @@ class PlannerService:
         """Update a scheduled focus block time window."""
         session = task_session_repository.get_by_id(db, session_id, user_id)
         if not session:
+            if session_in.task_id and session_in.scheduled_start and session_in.scheduled_end:
+                create_payload = TaskSessionCreate(
+                    task_id=session_in.task_id,
+                    scheduled_start=session_in.scheduled_start,
+                    scheduled_end=session_in.scheduled_end,
+                )
+                return self.create_session(db, user_id, create_payload)
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Session not found.",
@@ -454,6 +468,12 @@ class PlannerService:
             )
 
         updated = task_session_repository.update(db, session, session_in.scheduled_start, session_in.scheduled_end)
+        if updated.task:
+            updated.task.scheduled_start = updated.scheduled_start
+            updated.task.scheduled_end = updated.scheduled_end
+            db.add(updated.task)
+            db.commit()
+
         start_utc = _to_utc(updated.scheduled_start) or updated.scheduled_start
         end_utc = _to_utc(updated.scheduled_end) or updated.scheduled_end
         dur_mins = max(1, int((end_utc - start_utc).total_seconds() / 60))

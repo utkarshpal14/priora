@@ -93,10 +93,12 @@ class PlannerApi {
 
   Future<TaskSessionModel> updateSession({
     required String sessionId,
+    String? taskId,
     DateTime? scheduledStart,
     DateTime? scheduledEnd,
   }) async {
     final payload = <String, dynamic>{};
+    if (taskId != null) payload['task_id'] = taskId;
     if (scheduledStart != null) {
       payload['scheduled_start'] = scheduledStart.toUtc().toIso8601String();
     }

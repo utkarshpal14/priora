@@ -126,6 +126,27 @@ class AppTheme {
         type: BottomNavigationBarType.fixed,
         elevation: 8,
       ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        labelStyle: GoogleFonts.inter(color: AppColors.textSecondary, fontSize: 14),
+        hintStyle: GoogleFonts.inter(color: AppColors.textTertiary, fontSize: 14),
+        suffixIconColor: AppColors.textSecondary,
+        prefixIconColor: AppColors.textSecondary,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.1)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.1)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: accentColor, width: 1.5),
+        ),
+      ),
     );
   }
 
@@ -219,6 +240,27 @@ class AppTheme {
         unselectedItemColor: darkTextSecondary,
         type: BottomNavigationBarType.fixed,
         elevation: 8,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: darkSurface,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        labelStyle: GoogleFonts.inter(color: darkTextSecondary, fontSize: 14),
+        hintStyle: GoogleFonts.inter(color: darkTextSecondary.withValues(alpha: 0.6), fontSize: 14),
+        suffixIconColor: darkTextSecondary,
+        prefixIconColor: darkTextSecondary,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: accentColor, width: 1.5),
+        ),
       ),
     );
   }

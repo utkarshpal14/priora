@@ -19,6 +19,7 @@ class TaskSessionCreate(BaseModel):
 
 
 class TaskSessionUpdate(BaseModel):
+    task_id: uuid.UUID | None = None
     scheduled_start: datetime | None = None
     scheduled_end: datetime | None = None
 

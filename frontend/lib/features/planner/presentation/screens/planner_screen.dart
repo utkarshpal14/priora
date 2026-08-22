@@ -75,7 +75,17 @@ class PlannerScreen extends ConsumerWidget {
             tooltip: 'Refresh Plan',
             onPressed: () => plannerNotifier.loadData(),
           ),
-          const SizedBox(width: 8),
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, color: AppColors.textPrimary),
+            tooltip: 'Settings & Diagnostics',
+            onPressed: () => context.go('/settings'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout_rounded, color: Color(0xFFDC2626)),
+            tooltip: 'Log Out',
+            onPressed: () => _showLogoutDialog(context, ref),
+          ),
+          const SizedBox(width: 4),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -112,20 +122,7 @@ class PlannerScreen extends ConsumerWidget {
                   ),
                 )
               else ...[
-                // 2. Progress Summary
-                if (summary != null)
-                  PlannerProgressSummary(
-                    summary: summary,
-                    isViewingToday: plannerState.isViewingToday,
-                  ),
-
-                // Evening Review Banner (inviting end-of-day wrap-up)
-                if (plannerState.isViewingToday)
-                  EveningReviewBanner(
-                    incompleteCount: summary?.pending ?? 0,
-                  ),
-
-                // 3. Overdue Alert (if overdue tasks exist)
+                // 2. Overdue Alert (if overdue tasks exist)
                 if (overdueTasks.isNotEmpty)
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -155,16 +152,7 @@ class PlannerScreen extends ConsumerWidget {
 
                 const SizedBox(height: 6),
 
-                // 4. Top 3 Smart Focus
-                SmartFocusSection(
-                  focusTasks: focusTasks,
-                  onToggleComplete: (task) => plannerNotifier.toggleTaskCompletion(task),
-                  onStartTask: (task) => plannerNotifier.startTask(task),
-                ),
-
-                const SizedBox(height: 10),
-
-                // 5. Hourly Timeline Schedule with Time Blocks & Unscheduled Tasks
+                // 3. Hourly Timeline Schedule with Time Blocks & Unscheduled Tasks
                 HourlyTimelineSection(
                   timeBlocks: timeBlocks,
                   unscheduledTasks: unscheduledTasks,
@@ -172,11 +160,33 @@ class PlannerScreen extends ConsumerWidget {
                   selectedDate: plannerState.selectedDate,
                   onDeleteSession: (sessionId) => plannerNotifier.deleteSession(sessionId),
                   onToggleTaskComplete: (task) => plannerNotifier.toggleTaskCompletion(task),
+                  onStartTask: (task) => plannerNotifier.startTask(task),
+                ),
+
+                const SizedBox(height: 10),
+
+                // 4. Top 3 Smart Focus Priorities
+                SmartFocusSection(
+                  focusTasks: focusTasks,
+                  onToggleComplete: (task) => plannerNotifier.toggleTaskCompletion(task),
+                  onStartTask: (task) => plannerNotifier.startTask(task),
                 ),
 
                 const SizedBox(height: 14),
 
-                // 6. Weekly Preview
+                // 5. Daily Progress Summary & Evening Review
+                if (summary != null)
+                  PlannerProgressSummary(
+                    summary: summary,
+                    isViewingToday: plannerState.isViewingToday,
+                  ),
+
+                if (plannerState.isViewingToday)
+                  EveningReviewBanner(
+                    incompleteCount: summary?.pending ?? 0,
+                  ),
+
+                // 6. Weekly Overview
                 if (weeklyPlan != null)
                   WeeklyPreviewSection(
                     weeklyPlan: weeklyPlan,
@@ -188,6 +198,40 @@ class PlannerScreen extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Log Out of Priora?',
+          style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          'Are you sure you want to sign out? Your tasks and preferences will remain securely saved.',
+          style: GoogleFonts.inter(fontSize: 13, color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await ref.read(authControllerProvider.notifier).logout();
+              if (context.mounted) {
+                context.go('/login');
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+            child: const Text('Log Out', style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
     );
   }

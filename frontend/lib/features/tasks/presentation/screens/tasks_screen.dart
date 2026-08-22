@@ -105,19 +105,19 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               child: Container(
                 height: 44,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+                  border: Border.all(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12)),
                 ),
                 child: TextField(
                   controller: _searchController,
                   onChanged: (val) => tasksNotifier.setSearchQuery(val),
-                  style: GoogleFonts.inter(fontSize: 14),
+                  style: GoogleFonts.inter(fontSize: 14, color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w500),
                   decoration: InputDecoration(
                     hintText: 'Search tasks...',
                     hintStyle: GoogleFonts.inter(
                       fontSize: 14,
-                      color: AppColors.textSecondary.withValues(alpha: 0.7),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                     prefixIcon: const Icon(
                       Icons.search_rounded,

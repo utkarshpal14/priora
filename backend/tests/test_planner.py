@@ -373,3 +373,58 @@ def test_auto_placement_and_earlier_incomplete_tasks(client: TestClient):
     assert any(b["task_id"] == future_task["id"] for b in time_blocks)
 
 
+def test_focus_session_creation_update_and_persistence(client: TestClient):
+    headers, _ = _get_auth_context(client, "session_persistence@priora.app")
+    now = datetime.now(UTC)
+    today = now.date()
+    today_str = today.strftime("%Y-%m-%d")
+
+    # 1. Create task "Sleep" with deadline at 5:46 AM today
+    deadline_dt = datetime(today.year, today.month, today.day, 5, 46, tzinfo=UTC)
+    task_res = client.post(
+        "/api/v1/tasks",
+        headers=headers,
+        json={"title": "Sleep", "priority": "HIGH", "deadline": deadline_dt.strftime("%Y-%m-%dT%H:%M:%SZ")},
+    )
+    assert task_res.status_code == 201
+    task = task_res.json()["data"]
+
+    # 2. Schedule focus session (4:45 AM to 5:46 AM)
+    start_dt = datetime(today.year, today.month, today.day, 4, 45, tzinfo=UTC)
+    end_dt = datetime(today.year, today.month, today.day, 5, 46, tzinfo=UTC)
+    create_res = client.post(
+        "/api/v1/planner/sessions",
+        headers=headers,
+        json={
+            "task_id": task["id"],
+            "scheduled_start": start_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "scheduled_end": end_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        },
+    )
+    assert create_res.status_code == 201
+    session = create_res.json()["data"]
+    assert session["task_id"] == task["id"]
+
+    # 3. Update session to 5:26 AM to 5:46 AM
+    new_start_dt = datetime(today.year, today.month, today.day, 5, 26, tzinfo=UTC)
+    update_res = client.put(
+        f"/api/v1/planner/sessions/{session['id']}",
+        headers=headers,
+        json={
+            "scheduled_start": new_start_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "scheduled_end": end_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        },
+    )
+    assert update_res.status_code == 200
+    updated_session = update_res.json()["data"]
+    assert updated_session["duration_minutes"] == 20
+
+    # 4. Verify daily plan returns persisted session
+    plan_res = client.get(f"/api/v1/planner/day?date={today_str}&tz_offset=330", headers=headers)
+    assert plan_res.status_code == 200
+    blocks = plan_res.json()["data"]["time_blocks"]
+    persisted = next(b for b in blocks if b["task_id"] == task["id"])
+    assert persisted["id"] == session["id"]
+    assert persisted["duration_minutes"] == 20
+
+

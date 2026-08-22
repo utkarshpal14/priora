@@ -44,11 +44,13 @@ class PlannerRepository {
 
   Future<TaskSessionModel> updateSession({
     required String sessionId,
+    String? taskId,
     DateTime? scheduledStart,
     DateTime? scheduledEnd,
   }) async {
     return _api.updateSession(
       sessionId: sessionId,
+      taskId: taskId,
       scheduledStart: scheduledStart,
       scheduledEnd: scheduledEnd,
     );
