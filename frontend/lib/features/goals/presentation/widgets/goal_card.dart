@@ -16,18 +16,22 @@ class GoalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final progress = (goal.progressPercentage / 100.0).clamp(0.0, 1.0);
     final daysRemaining = goal.daysRemaining;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: isDark ? Colors.black.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.02),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -64,7 +68,7 @@ class GoalCard extends StatelessWidget {
                           style: GoogleFonts.inter(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textSecondary,
+                            color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                           ),
                         ),
                       ],
@@ -72,7 +76,7 @@ class GoalCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: goal.status.color.withValues(alpha: 0.1),
+                        color: goal.status.color.withValues(alpha: isDark ? 0.2 : 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -94,7 +98,7 @@ class GoalCard extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 15.5,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
                   ),
                 ),
 
@@ -107,7 +111,7 @@ class GoalCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
                       fontSize: 12.5,
-                      color: AppColors.textSecondary,
+                      color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                       height: 1.3,
                     ),
                   ),
@@ -124,7 +128,7 @@ class GoalCard extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: progress,
                           minHeight: 7,
-                          backgroundColor: const Color(0xFFF1F5F9),
+                          backgroundColor: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
                           valueColor: AlwaysStoppedAnimation<Color>(goal.displayColor),
                         ),
                       ),
@@ -135,7 +139,7 @@ class GoalCard extends StatelessWidget {
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
+                        color: isDark ? Colors.white : AppColors.textPrimary,
                       ),
                     ),
                   ],
@@ -149,27 +153,27 @@ class GoalCard extends StatelessWidget {
                     Row(
                       children: [
                         if (goal.milestonesCount > 0) ...[
-                          const Icon(Icons.flag_rounded, size: 13, color: AppColors.textSecondary),
+                          Icon(Icons.flag_rounded, size: 13, color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
                           const SizedBox(width: 3),
                           Text(
                             '${goal.completedMilestonesCount}/${goal.milestonesCount}',
                             style: GoogleFonts.inter(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textSecondary,
+                              color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                             ),
                           ),
                           const SizedBox(width: 10),
                         ],
                         if (goal.tasksCount > 0) ...[
-                          const Icon(Icons.check_box_outlined, size: 13, color: AppColors.textSecondary),
+                          Icon(Icons.check_box_outlined, size: 13, color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
                           const SizedBox(width: 3),
                           Text(
                             '${goal.completedTasksCount}/${goal.tasksCount}',
                             style: GoogleFonts.inter(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textSecondary,
+                              color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -196,7 +200,7 @@ class GoalCard extends StatelessWidget {
                             size: 12,
                             color: daysRemaining != null && daysRemaining < 0
                                 ? const Color(0xFFDC2626)
-                                : AppColors.textSecondary,
+                                : (isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -212,7 +216,7 @@ class GoalCard extends StatelessWidget {
                               fontWeight: FontWeight.w600,
                               color: daysRemaining != null && daysRemaining < 0
                                   ? const Color(0xFFDC2626)
-                                  : AppColors.textSecondary,
+                                  : (isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
                             ),
                           ),
                         ],

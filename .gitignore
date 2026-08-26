@@ -66,3 +66,6 @@ desktop.ini
 # Backend Uploads
 backend/uploads/*
 !backend/uploads/.gitkeep
+
+# Android Binary Outputs
+*.apk

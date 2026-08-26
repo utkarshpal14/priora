@@ -21,6 +21,8 @@ class ReviewTaskActionCard extends StatelessWidget {
   });
 
   Future<void> _pickCustomDate(BuildContext context) async {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final now = DateTime.now();
     final pickedDate = await showDatePicker(
       context: context,
@@ -29,12 +31,20 @@ class ReviewTaskActionCard extends StatelessWidget {
       lastDate: now.add(const Duration(days: 365)),
       builder: (context, child) {
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primary,
-              onPrimary: Colors.white,
-              onSurface: AppColors.textPrimary,
-            ),
+          data: theme.copyWith(
+            colorScheme: isDark
+                ? ColorScheme.dark(
+                    primary: theme.colorScheme.secondary,
+                    onPrimary: Colors.white,
+                    surface: const Color(0xFF1E293B),
+                    onSurface: Colors.white,
+                  )
+                : const ColorScheme.light(
+                    primary: AppColors.primary,
+                    onPrimary: Colors.white,
+                    surface: Colors.white,
+                    onSurface: AppColors.textPrimary,
+                  ),
           ),
           child: child!,
         );
@@ -55,9 +65,13 @@ class ReviewTaskActionCard extends StatelessWidget {
     required IconData icon,
     required RescheduleAction action,
     required bool isSelected,
-    Color activeColor = AppColors.primary,
+    Color? activeColor,
     VoidCallback? customTap,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final effectiveActiveColor = activeColor ?? (isDark ? theme.colorScheme.secondary : AppColors.primary);
+
     return GestureDetector(
       onTap: customTap ?? () {
         if (isSelected) {
@@ -70,10 +84,10 @@ class ReviewTaskActionCard extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? activeColor : const Color(0xFFF1F5F9),
+          color: isSelected ? effectiveActiveColor : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? activeColor : Colors.black.withValues(alpha: 0.04),
+            color: isSelected ? effectiveActiveColor : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.04)),
           ),
         ),
         child: Row(
@@ -82,7 +96,7 @@ class ReviewTaskActionCard extends StatelessWidget {
             Icon(
               icon,
               size: 13,
-              color: isSelected ? Colors.white : AppColors.textSecondary,
+              color: isSelected ? Colors.white : (isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
             ),
             const SizedBox(width: 4),
             Text(
@@ -90,7 +104,7 @@ class ReviewTaskActionCard extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 11.5,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? Colors.white : AppColors.textPrimary,
+                color: isSelected ? Colors.white : (isDark ? const Color(0xFF94A3B8) : AppColors.textPrimary),
               ),
             ),
           ],
@@ -101,23 +115,25 @@ class ReviewTaskActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final selectedAction = stagedAction?.action;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: selectedAction != null
-              ? AppColors.primary.withValues(alpha: 0.4)
-              : (task.isOverdue ? const Color(0xFFFCA5A5) : Colors.black.withValues(alpha: 0.06)),
+              ? (isDark ? theme.colorScheme.secondary.withValues(alpha: 0.5) : AppColors.primary.withValues(alpha: 0.4))
+              : (task.isOverdue ? const Color(0xFFFCA5A5) : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06))),
           width: selectedAction != null || task.isOverdue ? 1.5 : 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: isDark ? Colors.black.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.02),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -139,7 +155,7 @@ class ReviewTaskActionCard extends StatelessWidget {
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                        color: isDark ? Colors.white : AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -161,17 +177,17 @@ class ReviewTaskActionCard extends StatelessWidget {
                             task.formattedDeadline,
                             style: GoogleFonts.inter(
                               fontSize: 11,
-                              color: AppColors.textSecondary,
+                              color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                             ),
                           ),
                         ],
                         if (task.formattedDuration != null) ...[
-                          Text(' • ', style: GoogleFonts.inter(color: AppColors.textSecondary)),
+                          Text(' • ', style: GoogleFonts.inter(color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary)),
                           Text(
                             task.formattedDuration!,
                             style: GoogleFonts.inter(
                               fontSize: 11,
-                              color: AppColors.textSecondary,
+                              color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -235,7 +251,7 @@ class ReviewTaskActionCard extends StatelessWidget {
                 icon: Icons.check_circle_outline_rounded,
                 action: RescheduleAction.complete,
                 isSelected: selectedAction == RescheduleAction.complete,
-                activeColor: AppColors.accent,
+                activeColor: isDark ? theme.colorScheme.secondary : AppColors.accent,
               ),
               _buildActionChip(
                 context: context,

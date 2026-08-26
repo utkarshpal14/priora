@@ -46,11 +46,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final authState = ref.watch(authControllerProvider);
     final isLoading = authState.isLoading;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -69,7 +70,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: AppColors.primary,
+                          color: isDark ? theme.colorScheme.secondary : AppColors.primary,
                           borderRadius: BorderRadius.circular(14),
                         ),
                         alignment: Alignment.center,
@@ -92,7 +93,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.5,
-                        color: AppColors.textPrimary,
+                        color: isDark ? Colors.white : AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -102,7 +103,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
                         fontSize: 14,
-                        color: AppColors.textSecondary,
+                        color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -117,18 +118,26 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     // Divider
                     Row(
                       children: [
-                        const Expanded(child: Divider()),
+                        Expanded(
+                          child: Divider(
+                            color: isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.border,
+                          ),
+                        ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
                           child: Text(
                             'or register with email',
                             style: GoogleFonts.inter(
                               fontSize: 12,
-                              color: AppColors.textTertiary,
+                              color: isDark ? const Color(0xFF64748B) : AppColors.textTertiary,
                             ),
                           ),
                         ),
-                        const Expanded(child: Divider()),
+                        Expanded(
+                          child: Divider(
+                            color: isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.border,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 24),
@@ -166,7 +175,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     AuthTextField(
                       controller: _fullNameController,
                       label: 'Full Name (Optional)',
-                      hintText: 'Utkarsh Pal',
+                      hintText: 'Enter your full name',
                       prefixIcon: Icons.person_outline,
                       keyboardType: TextInputType.name,
                     ),
@@ -216,7 +225,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       child: ElevatedButton(
                         onPressed: isLoading ? null : _handleRegister,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: isDark ? theme.colorScheme.secondary : AppColors.primary,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -252,7 +261,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           'Already have an account? ',
                           style: GoogleFonts.inter(
                             fontSize: 14,
-                            color: AppColors.textSecondary,
+                            color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                           ),
                         ),
                         GestureDetector(
@@ -262,7 +271,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.accent,
+                              color: isDark ? theme.colorScheme.secondary : AppColors.accent,
                             ),
                           ),
                         ),

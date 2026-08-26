@@ -109,11 +109,16 @@ class TaskService:
                     detail="scheduled_end must be strictly after scheduled_start.",
                 )
 
+        old_status = task.status
         updated_task = task_repository.update(db, task, task_in)
 
         # Auto-cancel scheduled reminders if status transitioned to CANCELLED or COMPLETED
         if task_in.status in (TaskStatus.CANCELLED, TaskStatus.COMPLETED):
             reminder_repository.cancel_task_reminders(db, task_id, user_id)
+
+        # Recurring Task Engine: generate next occurrence if task marked completed
+        if task_in.status == TaskStatus.COMPLETED and old_status != "COMPLETED":
+            self._handle_recurrence_on_completion(db, updated_task)
 
         return updated_task
 
@@ -125,7 +130,135 @@ class TaskService:
         completed_task = task_repository.complete(db, task)
         # Auto-Cancel Rule: clear all scheduled reminders for finished tasks
         reminder_repository.cancel_task_reminders(db, task_id, user_id)
+        # Recurring Task Engine: generate next occurrence if repeat_type != none
+        self._handle_recurrence_on_completion(db, task)
         return completed_task
+
+    def _handle_recurrence_on_completion(self, db: Session, task: Task) -> Task | None:
+        """
+        Recurring Task Engine (TS-003, TS-004):
+        When a recurring task is completed, automatically instantiate the next occurrence
+        and copy any active reminders with the appropriate time offset.
+        """
+        repeat_type = (task.repeat_type or "none").lower()
+        if repeat_type == "none":
+            return None
+
+        interval = task.repeat_interval or 1
+        now = datetime.now(UTC)
+
+        # 1. Compute Next Deadline
+        next_deadline: datetime | None = None
+        base_deadline = task.deadline or now
+        base_deadline_utc = base_deadline if base_deadline.tzinfo else base_deadline.replace(tzinfo=UTC)
+
+        if repeat_type == "daily":
+            next_deadline = base_deadline_utc + timedelta(days=1 * interval)
+        elif repeat_type == "weekly":
+            next_deadline = base_deadline_utc + timedelta(weeks=1 * interval)
+        elif repeat_type == "monthly":
+            month = base_deadline_utc.month + interval
+            year = base_deadline_utc.year + (month - 1) // 12
+            month = ((month - 1) % 12) + 1
+            day = min(base_deadline_utc.day, 28)
+            next_deadline = base_deadline_utc.replace(year=year, month=month, day=day)
+        else:
+            return None
+
+        # Check repeat_end_date
+        if task.repeat_end_date:
+            end_date_utc = task.repeat_end_date if task.repeat_end_date.tzinfo else task.repeat_end_date.replace(tzinfo=UTC)
+            if next_deadline > end_date_utc:
+                return None
+
+        # 2. Compute Next Scheduled Start/End
+        next_start: datetime | None = None
+        next_end: datetime | None = None
+        if task.scheduled_start:
+            start_utc = task.scheduled_start if task.scheduled_start.tzinfo else task.scheduled_start.replace(tzinfo=UTC)
+            if repeat_type == "daily":
+                next_start = start_utc + timedelta(days=1 * interval)
+            elif repeat_type == "weekly":
+                next_start = start_utc + timedelta(weeks=1 * interval)
+            elif repeat_type == "monthly":
+                month = start_utc.month + interval
+                year = start_utc.year + (month - 1) // 12
+                month = ((month - 1) % 12) + 1
+                day = min(start_utc.day, 28)
+                next_start = start_utc.replace(year=year, month=month, day=day)
+
+        if task.scheduled_end:
+            end_utc = task.scheduled_end if task.scheduled_end.tzinfo else task.scheduled_end.replace(tzinfo=UTC)
+            if repeat_type == "daily":
+                next_end = end_utc + timedelta(days=1 * interval)
+            elif repeat_type == "weekly":
+                next_end = end_utc + timedelta(weeks=1 * interval)
+            elif repeat_type == "monthly":
+                month = end_utc.month + interval
+                year = end_utc.year + (month - 1) // 12
+                month = ((month - 1) % 12) + 1
+                day = min(end_utc.day, 28)
+                next_end = end_utc.replace(year=year, month=month, day=day)
+
+        # 3. Create Next Task Occurrence
+        next_task = Task(
+            user_id=task.user_id,
+            category_id=task.category_id,
+            goal_id=task.goal_id,
+            milestone_id=task.milestone_id,
+            title=task.title,
+            description=task.description,
+            priority=task.priority,
+            status="PENDING",
+            deadline=next_deadline,
+            scheduled_start=next_start,
+            scheduled_end=next_end,
+            estimated_minutes=task.estimated_minutes,
+            repeat_type=task.repeat_type,
+            repeat_interval=task.repeat_interval,
+            repeat_end_date=task.repeat_end_date,
+        )
+        db.add(next_task)
+        db.commit()
+        db.refresh(next_task)
+
+        # 4. Auto-create session if both start and end times provided
+        if next_start and next_end:
+            from app.models.task_session import TaskSession
+            session = TaskSession(
+                task_id=next_task.id,
+                scheduled_start=next_start,
+                scheduled_end=next_end,
+            )
+            db.add(session)
+            db.commit()
+
+        # 5. Clone Reminders (TS-004 Recurring Reminders)
+        if task.reminders:
+            from app.models.reminder import Reminder
+            for orig_r in task.reminders:
+                if orig_r.status != "CANCELLED":
+                    if task.deadline and orig_r.remind_at and next_deadline:
+                        orig_dl_utc = task.deadline if task.deadline.tzinfo else task.deadline.replace(tzinfo=UTC)
+                        orig_r_utc = orig_r.remind_at if orig_r.remind_at.tzinfo else orig_r.remind_at.replace(tzinfo=UTC)
+                        offset = orig_dl_utc - orig_r_utc
+                        next_remind_at = next_deadline - offset
+                    elif next_deadline:
+                        next_remind_at = next_deadline - timedelta(minutes=15)
+                    else:
+                        next_remind_at = None
+
+                    if next_remind_at and next_remind_at > now:
+                        new_r = Reminder(
+                            user_id=task.user_id,
+                            task_id=next_task.id,
+                            remind_at=next_remind_at,
+                            status="SCHEDULED",
+                        )
+                        db.add(new_r)
+            db.commit()
+
+        return next_task
 
     def reopen_task(
         self, db: Session, task_id: uuid.UUID, user_id: uuid.UUID

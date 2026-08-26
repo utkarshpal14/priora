@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/local_notification_service.dart';
 import '../../domain/notification_preferences_model.dart';
+import '../../domain/reminder_sound_model.dart';
 
 class NotificationSettingsController extends StateNotifier<NotificationPreferencesModel> {
   final ApiClient? _apiClient;
@@ -50,6 +52,12 @@ class NotificationSettingsController extends StateNotifier<NotificationPreferenc
 
   Future<void> toggleGoalAlerts(bool value) async {
     state = state.copyWith(goalAlerts: value);
+    await _syncPreferences();
+  }
+
+  Future<void> setReminderSound(ReminderSound sound) async {
+    state = state.copyWith(reminderSound: sound);
+    await LocalNotificationService().setActiveReminderSound(sound);
     await _syncPreferences();
   }
 

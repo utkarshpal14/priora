@@ -16,18 +16,26 @@ class PlannerProgressSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final progress = summary.completionPercentage / 100.0;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : Colors.black.withValues(alpha: 0.06),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.15)
+                : Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -47,7 +55,7 @@ class PlannerProgressSummary extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                      color: isDark ? Colors.white : AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -56,7 +64,7 @@ class PlannerProgressSummary extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.textSecondary,
+                      color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -65,20 +73,20 @@ class PlannerProgressSummary extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: AppColors.accent.withValues(alpha: 0.08),
+                    color: theme.colorScheme.secondary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.timer_outlined, size: 14, color: AppColors.accent),
+                      Icon(Icons.timer_outlined, size: 14, color: theme.colorScheme.secondary),
                       const SizedBox(width: 4),
                       Text(
                         summary.formattedTotalDuration,
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.accent,
+                          color: theme.colorScheme.secondary,
                         ),
                       ),
                     ],
@@ -94,8 +102,8 @@ class PlannerProgressSummary extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress.clamp(0.0, 1.0),
               minHeight: 8,
-              backgroundColor: const Color(0xFFF1F5F9),
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accent),
+              backgroundColor: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+              valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.secondary),
             ),
           ),
           const SizedBox(height: 6),
@@ -108,7 +116,7 @@ class PlannerProgressSummary extends StatelessWidget {
                 style: GoogleFonts.inter(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.textSecondary,
+                  color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                 ),
               ),
               Text(
@@ -116,7 +124,7 @@ class PlannerProgressSummary extends StatelessWidget {
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
                 ),
               ),
             ],

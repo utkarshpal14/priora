@@ -172,5 +172,60 @@ void main() {
       expect(find.text('Task Deadline Reminders'), findsOneWidget);
       expect(find.text('Log Out'), findsOneWidget);
     });
+
+    testWidgets('Tapping Dark theme chip triggers ThemeController and applies dark mode', (tester) async {
+      tester.view.physicalSize = const Size(800, 1800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final container = ProviderContainer(
+        overrides: [
+          tasksRepositoryProvider.overrideWithValue(FakeTasksRepository()),
+          goalsRepositoryProvider.overrideWithValue(FakeGoalsRepository()),
+          remindersRepositoryProvider.overrideWithValue(FakeRemindersRepository()),
+          attachmentsRepositoryProvider.overrideWithValue(FakeAttachmentsRepository()),
+          authControllerProvider.overrideWith((ref) => FakeAuthController()),
+          notificationSettingsProvider.overrideWith((ref) => NotificationSettingsController(null)),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: Consumer(
+            builder: (context, ref, child) {
+              final themeState = ref.watch(themeControllerProvider);
+              return MaterialApp(
+                theme: AppTheme.lightTheme(themeState.accent),
+                darkTheme: AppTheme.darkTheme(themeState.accent),
+                themeMode: themeState.mode,
+                home: const SettingsScreen(),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Tap Dark theme button
+      final darkFinder = find.text('Dark');
+      expect(darkFinder, findsOneWidget);
+      await tester.tap(darkFinder);
+      await tester.pumpAndSettle();
+
+      // State is updated to Dark
+      expect(container.read(themeControllerProvider).mode, ThemeMode.dark);
+
+      // Tap Light theme button
+      final lightFinder = find.text('Light');
+      expect(lightFinder, findsOneWidget);
+      await tester.tap(lightFinder);
+      await tester.pumpAndSettle();
+
+      // State is updated to Light
+      expect(container.read(themeControllerProvider).mode, ThemeMode.light);
+    });
   });
 }

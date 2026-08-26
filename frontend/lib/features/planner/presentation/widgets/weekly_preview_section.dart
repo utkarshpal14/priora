@@ -19,6 +19,8 @@ class WeeklyPreviewSection extends StatelessWidget {
     if (weeklyPlan.days.isEmpty) {
       return const SizedBox.shrink();
     }
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -30,14 +32,14 @@ class WeeklyPreviewSection extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.date_range_rounded, size: 18, color: AppColors.accent),
+                  Icon(Icons.date_range_rounded, size: 18, color: theme.colorScheme.secondary),
                   const SizedBox(width: 6),
                   Text(
                     "Weekly Overview",
                     style: GoogleFonts.inter(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                      color: isDark ? Colors.white : AppColors.textPrimary,
                     ),
                   ),
                 ],
@@ -47,7 +49,7 @@ class WeeklyPreviewSection extends StatelessWidget {
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
+                  color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                 ),
               ),
             ],
@@ -73,17 +75,17 @@ class WeeklyPreviewSection extends StatelessWidget {
                 width: 100,
                 margin: const EdgeInsets.symmetric(horizontal: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: day.hasCritical
-                        ? const Color(0xFFFCA5A5)
-                        : Colors.black.withValues(alpha: 0.06),
+                        ? (isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFCA5A5))
+                        : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06)),
                     width: day.hasCritical ? 1.5 : 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.02),
+                      color: isDark ? Colors.black.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.02),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -107,7 +109,7 @@ class WeeklyPreviewSection extends StatelessWidget {
                                 style: GoogleFonts.inter(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
+                                  color: isDark ? Colors.white : AppColors.textPrimary,
                                 ),
                               ),
                               if (day.hasCritical)
@@ -126,7 +128,7 @@ class WeeklyPreviewSection extends StatelessWidget {
                             day.date.split('-').sublist(1).join('/'),
                             style: GoogleFonts.inter(
                               fontSize: 10,
-                              color: AppColors.textSecondary,
+                              color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                             ),
                           ),
                           const Spacer(),
@@ -136,7 +138,7 @@ class WeeklyPreviewSection extends StatelessWidget {
                                 'Due: ',
                                 style: GoogleFonts.inter(
                                   fontSize: 11,
-                                  color: AppColors.textSecondary,
+                                  color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                                 ),
                               ),
                               Text(
@@ -144,7 +146,7 @@ class WeeklyPreviewSection extends StatelessWidget {
                                 style: GoogleFonts.inter(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w700,
-                                  color: day.dueCount > 0 ? AppColors.accent : AppColors.textSecondary,
+                                  color: day.dueCount > 0 ? theme.colorScheme.secondary : (isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
                                 ),
                               ),
                             ],
@@ -153,7 +155,7 @@ class WeeklyPreviewSection extends StatelessWidget {
                             'Done: ${day.completedCount}',
                             style: GoogleFonts.inter(
                               fontSize: 10.5,
-                              color: AppColors.textSecondary,
+                              color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                               fontWeight: FontWeight.w500,
                             ),
                           ),

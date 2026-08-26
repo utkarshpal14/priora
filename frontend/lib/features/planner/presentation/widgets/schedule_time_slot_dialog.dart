@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/features/planner/domain/planner_model.dart';
@@ -98,12 +97,6 @@ class _ScheduleTimeSlotDialogState extends ConsumerState<ScheduleTimeSlotDialog>
     final picked = await showTimePicker(
       context: context,
       initialTime: _startTime,
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(primary: AppColors.primary),
-        ),
-        child: child!,
-      ),
     );
     if (picked != null) {
       setState(() {
@@ -124,12 +117,6 @@ class _ScheduleTimeSlotDialogState extends ConsumerState<ScheduleTimeSlotDialog>
     final picked = await showTimePicker(
       context: context,
       initialTime: _endTime,
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(primary: AppColors.primary),
-        ),
-        child: child!,
-      ),
     );
     if (picked != null) {
       setState(() {
@@ -170,49 +157,47 @@ class _ScheduleTimeSlotDialogState extends ConsumerState<ScheduleTimeSlotDialog>
       return;
     }
 
-    setState(() => _isSaving = true);
+    final navigator = Navigator.of(context);
+    // Dismiss focus block modal instantly for ultra-fluid UI response
+    navigator.pop();
+
     final plannerNotifier = ref.read(plannerControllerProvider.notifier);
 
-    bool success;
     if (widget.sessionToEdit != null && !widget.sessionToEdit!.id.startsWith('auto_')) {
-      success = await plannerNotifier.updateSession(
+      final success = await plannerNotifier.updateSession(
         sessionId: widget.sessionToEdit!.id,
         taskId: widget.task.id,
         scheduledStart: startDt,
         scheduledEnd: endDt,
       );
       if (!success) {
-        success = await plannerNotifier.createSession(
+        await plannerNotifier.createSession(
           taskId: widget.task.id,
           scheduledStart: startDt,
           scheduledEnd: endDt,
         );
       }
     } else {
-      success = await plannerNotifier.createSession(
+      await plannerNotifier.createSession(
         taskId: widget.task.id,
         scheduledStart: startDt,
         scheduledEnd: endDt,
       );
     }
-
-    if (success && mounted) {
-      Navigator.pop(context);
-    } else {
-      setState(() => _isSaving = false);
-    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final plannerState = ref.watch(plannerControllerProvider);
     final conflicts = _detectLocalConflicts(plannerState.dailyPlan);
     final isEditing = widget.sessionToEdit != null;
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.only(
         left: 20,
@@ -236,7 +221,7 @@ class _ScheduleTimeSlotDialogState extends ConsumerState<ScheduleTimeSlotDialog>
                     style: GoogleFonts.inter(
                       fontSize: 16.5,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                      color: isDark ? Colors.white : AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -245,13 +230,13 @@ class _ScheduleTimeSlotDialogState extends ConsumerState<ScheduleTimeSlotDialog>
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.primary,
+                      color: isDark ? theme.colorScheme.secondary : AppColors.primary,
                     ),
                   ),
                 ],
               ),
               IconButton(
-                icon: const Icon(Icons.close_rounded, size: 20),
+                icon: Icon(Icons.close_rounded, size: 20, color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
                 onPressed: () => Navigator.pop(context),
               ),
             ],
@@ -269,9 +254,9 @@ class _ScheduleTimeSlotDialogState extends ConsumerState<ScheduleTimeSlotDialog>
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+                      border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.08)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,20 +266,20 @@ class _ScheduleTimeSlotDialogState extends ConsumerState<ScheduleTimeSlotDialog>
                           style: GoogleFonts.inter(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.textSecondary,
+                            color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            const Icon(Icons.schedule_rounded, size: 16, color: AppColors.primary),
+                            Icon(Icons.schedule_rounded, size: 16, color: isDark ? theme.colorScheme.secondary : AppColors.primary),
                             const SizedBox(width: 6),
                             Text(
                               _startTime.format(context),
                               style: GoogleFonts.inter(
                                 fontSize: 14.5,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
+                                color: isDark ? Colors.white : AppColors.textPrimary,
                               ),
                             ),
                           ],
@@ -305,7 +290,7 @@ class _ScheduleTimeSlotDialogState extends ConsumerState<ScheduleTimeSlotDialog>
                 ),
               ),
               const SizedBox(width: 10),
-              const Icon(Icons.arrow_forward_rounded, size: 16, color: AppColors.textSecondary),
+              Icon(Icons.arrow_forward_rounded, size: 16, color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
               const SizedBox(width: 10),
 
               // End Time Card
@@ -316,9 +301,9 @@ class _ScheduleTimeSlotDialogState extends ConsumerState<ScheduleTimeSlotDialog>
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+                      border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.08)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -328,20 +313,20 @@ class _ScheduleTimeSlotDialogState extends ConsumerState<ScheduleTimeSlotDialog>
                           style: GoogleFonts.inter(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.textSecondary,
+                            color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            const Icon(Icons.timer_outlined, size: 16, color: AppColors.accent),
+                            Icon(Icons.timer_outlined, size: 16, color: theme.colorScheme.secondary),
                             const SizedBox(width: 6),
                             Text(
                               _endTime.format(context),
                               style: GoogleFonts.inter(
                                 fontSize: 14.5,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
+                                color: isDark ? Colors.white : AppColors.textPrimary,
                               ),
                             ),
                           ],
@@ -364,13 +349,15 @@ class _ScheduleTimeSlotDialogState extends ConsumerState<ScheduleTimeSlotDialog>
                 style: GoogleFonts.inter(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
+                  color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: _durationMinutes > 0 ? const Color(0xFFE0E7FF) : const Color(0xFFFEE2E2),
+                  color: _durationMinutes > 0
+                      ? (isDark ? theme.colorScheme.secondary.withValues(alpha: 0.15) : const Color(0xFFE0E7FF))
+                      : (isDark ? const Color(0xFF7F1D1D).withValues(alpha: 0.4) : const Color(0xFFFEE2E2)),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -378,7 +365,9 @@ class _ScheduleTimeSlotDialogState extends ConsumerState<ScheduleTimeSlotDialog>
                   style: GoogleFonts.inter(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,
-                    color: _durationMinutes > 0 ? AppColors.primary : const Color(0xFFDC2626),
+                    color: _durationMinutes > 0
+                        ? (isDark ? theme.colorScheme.secondary : AppColors.primary)
+                        : const Color(0xFFDC2626),
                   ),
                 ),
               ),
@@ -390,9 +379,16 @@ class _ScheduleTimeSlotDialogState extends ConsumerState<ScheduleTimeSlotDialog>
             children: [30, 60, 90, 120, 180].map((mins) {
               return ActionChip(
                 label: Text(mins < 60 ? '${mins}m' : '${mins ~/ 60}h${mins % 60 != 0 ? ' ${mins % 60}m' : ''}'),
-                labelStyle: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w600),
-                backgroundColor: const Color(0xFFF1F5F9),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                labelStyle: GoogleFonts.inter(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
+                ),
+                backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: BorderSide(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.transparent),
+                ),
                 onPressed: () => _applyDurationPreset(mins),
               );
             }).toList(),
@@ -404,9 +400,9 @@ class _ScheduleTimeSlotDialogState extends ConsumerState<ScheduleTimeSlotDialog>
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF2F2),
+                color: isDark ? const Color(0xFF450A0A) : const Color(0xFFFEF2F2),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFFCA5A5)),
+                border: Border.all(color: isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFCA5A5)),
               ),
               child: Row(
                 children: [
@@ -418,7 +414,7 @@ class _ScheduleTimeSlotDialogState extends ConsumerState<ScheduleTimeSlotDialog>
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF991B1B),
+                        color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B),
                       ),
                     ),
                   ),
@@ -433,9 +429,9 @@ class _ScheduleTimeSlotDialogState extends ConsumerState<ScheduleTimeSlotDialog>
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF3C7),
+                color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.4) : const Color(0xFFFEF3C7),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFFCD34D)),
+                border: Border.all(color: isDark ? const Color(0xFFD97706) : const Color(0xFFFCD34D)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -448,7 +444,7 @@ class _ScheduleTimeSlotDialogState extends ConsumerState<ScheduleTimeSlotDialog>
                       style: GoogleFonts.inter(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF92400E),
+                        color: isDark ? const Color(0xFFFCD34D) : const Color(0xFF92400E),
                       ),
                     ),
                   ),
@@ -466,7 +462,7 @@ class _ScheduleTimeSlotDialogState extends ConsumerState<ScheduleTimeSlotDialog>
             child: ElevatedButton(
               onPressed: _isSaving ? null : _submit,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: isDark ? theme.colorScheme.secondary : AppColors.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 0,

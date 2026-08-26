@@ -165,6 +165,9 @@ class TaskRepository:
             scheduled_start=task_in.scheduled_start,
             scheduled_end=task_in.scheduled_end,
             estimated_minutes=task_in.estimated_minutes,
+            repeat_type=task_in.repeat_type.lower() if task_in.repeat_type else "none",
+            repeat_interval=task_in.repeat_interval or 1,
+            repeat_end_date=task_in.repeat_end_date,
         )
         db.add(task)
         db.commit()
@@ -212,6 +215,12 @@ class TaskRepository:
             task.scheduled_end = task_in.scheduled_end
         if task_in.estimated_minutes is not None:
             task.estimated_minutes = task_in.estimated_minutes
+        if task_in.repeat_type is not None:
+            task.repeat_type = task_in.repeat_type.lower()
+        if task_in.repeat_interval is not None:
+            task.repeat_interval = task_in.repeat_interval
+        if task_in.repeat_end_date is not None:
+            task.repeat_end_date = task_in.repeat_end_date
 
         db.add(task)
         db.commit()

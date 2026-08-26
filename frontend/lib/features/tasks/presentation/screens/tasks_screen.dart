@@ -32,6 +32,8 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final tasksState = ref.watch(tasksControllerProvider);
     final tasksNotifier = ref.read(tasksControllerProvider.notifier);
     final authState = ref.watch(authControllerProvider);
@@ -40,9 +42,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     final userName = authState.user?.fullName?.split(' ').first ?? 'there';
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
         elevation: 0,
         scrolledUnderElevation: 0,
         title: Column(
@@ -53,7 +53,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: isDark ? Colors.white : AppColors.textPrimary,
               ),
             ),
             Text(
@@ -61,19 +61,19 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary,
+                color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
               ),
             ),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_outlined, color: AppColors.textSecondary, size: 22),
+            icon: Icon(Icons.settings_outlined, color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary, size: 22),
             tooltip: 'Settings & Preferences',
             onPressed: () => context.push('/settings'),
           ),
           IconButton(
-            icon: const Icon(Icons.logout_rounded, color: AppColors.textSecondary, size: 20),
+            icon: Icon(Icons.logout_rounded, color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary, size: 20),
             tooltip: 'Log out',
             onPressed: () => ref.read(authControllerProvider.notifier).logout(),
           ),
@@ -82,7 +82,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => CreateTaskBottomSheet.show(context),
-        backgroundColor: AppColors.primary,
+        backgroundColor: isDark ? theme.colorScheme.secondary : AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 2,
         icon: const Icon(Icons.add_rounded, size: 20),
@@ -93,7 +93,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: () => tasksNotifier.loadData(),
-        color: AppColors.accent,
+        color: theme.colorScheme.secondary,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -222,15 +222,16 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
   }
 
   Widget _buildSmartBanner(BuildContext context, TasksState state, TasksController notifier) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (state.metrics.overdue > 0) {
       final count = state.metrics.overdue;
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFFFEE2E2),
+          color: isDark ? const Color(0xFF450A0A) : const Color(0xFFFEE2E2),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFFCA5A5)),
+          border: Border.all(color: isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFCA5A5)),
         ),
         child: Row(
           children: [
@@ -242,7 +243,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF991B1B),
+                  color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B),
                 ),
               ),
             ),
@@ -273,9 +274,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFFFEF3C7),
+          color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.4) : const Color(0xFFFEF3C7),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFFDE68A)),
+          border: Border.all(color: isDark ? const Color(0xFFD97706) : const Color(0xFFFDE68A)),
         ),
         child: Row(
           children: [
@@ -287,7 +288,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF92400E),
+                  color: isDark ? const Color(0xFFFCD34D) : const Color(0xFF92400E),
                 ),
               ),
             ),

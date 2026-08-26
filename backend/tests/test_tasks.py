@@ -282,3 +282,84 @@ def test_overdue_due_today_and_composite_ranking(client: TestClient):
     assert tasks[2]["priority"] == "LOW"
 
 
+def test_recurring_task_lifecycle_and_next_instance_generation(client: TestClient):
+    headers = _get_auth_headers(client, "user_recur@priora.app")
+
+    # 1. Create a daily recurring task
+    now = datetime.now(UTC)
+    deadline = (now + timedelta(hours=4)).isoformat()
+    create_res = client.post(
+        "/api/v1/tasks",
+        headers=headers,
+        json={
+            "title": "Daily DSA Practice",
+            "description": "LeetCode Daily Challenge",
+            "priority": "HIGH",
+            "deadline": deadline,
+            "repeat_type": "daily",
+            "repeat_interval": 1,
+        },
+    )
+    assert create_res.status_code == 201
+    task_data = create_res.json()["data"]
+    task_id = task_data["id"]
+    assert task_data["repeat_type"] == "daily"
+    assert task_data["repeat_interval"] == 1
+
+    # 2. Complete the task
+    complete_res = client.patch(f"/api/v1/tasks/{task_id}/complete", headers=headers)
+    assert complete_res.status_code == 200
+    assert complete_res.json()["data"]["status"] == "COMPLETED"
+
+    # 3. Verify next occurrence was generated
+    list_res = client.get("/api/v1/tasks", headers=headers)
+    assert list_res.status_code == 200
+    all_tasks = list_res.json()["data"]["tasks"]
+    
+    # We should have 2 tasks: 1 COMPLETED (original) and 1 PENDING (next occurrence)
+    pending_tasks = [t for t in all_tasks if t["status"] == "PENDING"]
+    assert len(pending_tasks) == 1
+    next_task = pending_tasks[0]
+    assert next_task["title"] == "Daily DSA Practice"
+    assert next_task["repeat_type"] == "daily"
+    assert next_task["id"] != task_id
+
+    # Verify next deadline is ~1 day after original deadline
+    orig_dt = datetime.fromisoformat(task_data["deadline"].replace("Z", "+00:00"))
+    next_dt = datetime.fromisoformat(next_task["deadline"].replace("Z", "+00:00"))
+    assert (next_dt - orig_dt).total_seconds() == 86400  # Exactly 1 day
+
+
+def test_recurring_task_respects_repeat_end_date(client: TestClient):
+    headers = _get_auth_headers(client, "user_recur_end@priora.app")
+
+    # Create task whose next occurrence will exceed repeat_end_date
+    now = datetime.now(UTC)
+    deadline = (now + timedelta(hours=2)).isoformat()
+    end_date = (now + timedelta(hours=10)).isoformat()  # +1 day will exceed 10 hours
+
+    create_res = client.post(
+        "/api/v1/tasks",
+        headers=headers,
+        json={
+            "title": "One-Week Sprint Task",
+            "priority": "MEDIUM",
+            "deadline": deadline,
+            "repeat_type": "daily",
+            "repeat_interval": 1,
+            "repeat_end_date": end_date,
+        },
+    )
+    assert create_res.status_code == 201
+    task_id = create_res.json()["data"]["id"]
+
+    # Complete the task
+    client.patch(f"/api/v1/tasks/{task_id}/complete", headers=headers)
+
+    # Verify NO next occurrence generated because next deadline > repeat_end_date
+    list_res = client.get("/api/v1/tasks", headers=headers)
+    pending_tasks = [t for t in list_res.json()["data"]["tasks"] if t["status"] == "PENDING"]
+    assert len(pending_tasks) == 0
+
+
+

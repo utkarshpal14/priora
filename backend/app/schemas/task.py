@@ -34,6 +34,9 @@ class TaskBase(BaseModel):
     scheduled_start: datetime | None = None
     scheduled_end: datetime | None = None
     estimated_minutes: int | None = Field(default=None, ge=1, le=1440)
+    repeat_type: str = "none"  # none, daily, weekly, monthly
+    repeat_interval: int = Field(default=1, ge=1, le=365)
+    repeat_end_date: datetime | None = None
 
 
 class TaskCreate(TaskBase):
@@ -52,6 +55,9 @@ class TaskUpdate(BaseModel):
     scheduled_start: datetime | None = None
     scheduled_end: datetime | None = None
     estimated_minutes: int | None = Field(default=None, ge=1, le=1440)
+    repeat_type: str | None = None
+    repeat_interval: int | None = Field(default=None, ge=1, le=365)
+    repeat_end_date: datetime | None = None
 
 
 class TaskRead(BaseModel):
@@ -69,6 +75,9 @@ class TaskRead(BaseModel):
     scheduled_start: datetime | None = None
     scheduled_end: datetime | None = None
     estimated_minutes: int | None = None
+    repeat_type: str = "none"
+    repeat_interval: int = 1
+    repeat_end_date: datetime | None = None
     attachment_count: int = Field(default=0)
     completed_at: datetime | None = None
     created_at: datetime
@@ -87,7 +96,16 @@ class TaskRead(BaseModel):
         except (ValueError, TypeError):
             return 0
 
-    @field_serializer("deadline", "scheduled_start", "scheduled_end", "completed_at", "created_at", "updated_at", when_used="json")
+    @field_serializer(
+        "deadline",
+        "scheduled_start",
+        "scheduled_end",
+        "repeat_end_date",
+        "completed_at",
+        "created_at",
+        "updated_at",
+        when_used="json",
+    )
     def serialize_datetime_utc(self, dt: datetime | None) -> str | None:
         if dt is None:
             return None

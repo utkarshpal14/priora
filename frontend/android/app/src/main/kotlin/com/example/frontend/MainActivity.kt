@@ -2,6 +2,8 @@ package com.example.frontend
 
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
+import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
@@ -13,6 +15,7 @@ import io.flutter.plugins.GeneratedPluginRegistrant
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.example.frontend/system_settings"
+    private var mediaPlayer: MediaPlayer? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -20,6 +23,44 @@ class MainActivity : FlutterActivity() {
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
+                "playSoundPreview" -> {
+                    try {
+                        val soundName = call.argument<String>("soundName") ?: "priora_chime"
+                        val resId = resources.getIdentifier(soundName, "raw", packageName)
+                        if (resId != 0) {
+                            mediaPlayer?.stop()
+                            mediaPlayer?.release()
+                            mediaPlayer = MediaPlayer.create(context, resId)?.apply {
+                                setAudioAttributes(
+                                    AudioAttributes.Builder()
+                                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                                        .build()
+                                )
+                                setOnCompletionListener {
+                                    it.release()
+                                    mediaPlayer = null
+                                }
+                                start()
+                            }
+                            result.success(true)
+                        } else {
+                            result.success(false)
+                        }
+                    } catch (e: Exception) {
+                        result.error("PLAYBACK_ERROR", e.message, null)
+                    }
+                }
+                "stopSoundPreview" -> {
+                    try {
+                        mediaPlayer?.stop()
+                        mediaPlayer?.release()
+                        mediaPlayer = null
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.success(false)
+                    }
+                }
                 "openNotificationSettings" -> {
                     try {
                         val intent = Intent().apply {

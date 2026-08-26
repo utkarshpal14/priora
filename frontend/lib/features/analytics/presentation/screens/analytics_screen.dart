@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/shared/widgets/app_empty_view.dart';
 import 'package:frontend/shared/widgets/app_error_view.dart';
 import 'package:frontend/features/analytics/presentation/controllers/analytics_controller.dart';
@@ -17,31 +18,34 @@ class AnalyticsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final state = ref.watch(analyticsControllerProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Analytics & Insights',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : AppColors.textPrimary,
+          ),
         ),
-        backgroundColor: const Color(0xFF0F172A),
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded),
+            icon: Icon(Icons.refresh_rounded, color: isDark ? Colors.white : AppColors.textSecondary),
             onPressed: () => ref.read(analyticsControllerProvider.notifier).refresh(),
           ),
         ],
       ),
       body: RefreshIndicator(
         onRefresh: () => ref.read(analyticsControllerProvider.notifier).refresh(),
-        color: const Color(0xFF6366F1),
-        backgroundColor: const Color(0xFF1E293B),
+        color: theme.colorScheme.secondary,
+        backgroundColor: theme.colorScheme.surface,
         child: state.isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: Color(0xFF6366F1)),
+            ? Center(
+                child: CircularProgressIndicator(color: theme.colorScheme.secondary),
               )
             : state.errorMessage != null
                 ? AppErrorView(

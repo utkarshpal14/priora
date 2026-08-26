@@ -94,6 +94,20 @@ class Task(BaseDBModel):
         DateTime(timezone=True),
         nullable=True,
     )
+    repeat_type: Mapped[str] = mapped_column(
+        String(20),
+        default="none",
+        nullable=False,
+    )  # none, daily, weekly, monthly
+    repeat_interval: Mapped[int] = mapped_column(
+        Integer,
+        default=1,
+        nullable=False,
+    )
+    repeat_end_date: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
 
     # Relationships
     category: Mapped[Category | None] = relationship("Category", lazy="joined")

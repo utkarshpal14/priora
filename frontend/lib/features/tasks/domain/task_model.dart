@@ -63,6 +63,9 @@ class TaskModel {
   final DateTime? completedAt;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final String repeatType;
+  final int repeatInterval;
+  final DateTime? repeatEndDate;
   final List<ReminderModel> reminders;
 
   const TaskModel({
@@ -80,6 +83,9 @@ class TaskModel {
     this.scheduledEnd,
     this.deadline,
     this.estimatedMinutes,
+    this.repeatType = 'none',
+    this.repeatInterval = 1,
+    this.repeatEndDate,
     this.attachmentCount = 0,
     this.completedAt,
     this.createdAt,
@@ -90,6 +96,21 @@ class TaskModel {
   bool get isCompleted => status == TaskStatus.completed;
 
   bool get hasActiveReminder => reminders.any((r) => r.isScheduled);
+
+  bool get isRecurring => repeatType.isNotEmpty && repeatType.toLowerCase() != 'none';
+
+  String get repeatLabel {
+    switch (repeatType.toLowerCase()) {
+      case 'daily':
+        return repeatInterval > 1 ? 'Every $repeatInterval days' : 'Daily';
+      case 'weekly':
+        return repeatInterval > 1 ? 'Every $repeatInterval weeks' : 'Weekly';
+      case 'monthly':
+        return repeatInterval > 1 ? 'Every $repeatInterval months' : 'Monthly';
+      default:
+        return 'Never';
+    }
+  }
 
   String? get formattedTimeRange {
     if (scheduledStart == null || scheduledEnd == null) return null;
@@ -197,6 +218,9 @@ class TaskModel {
       scheduledEnd: parseUtcDateTime(json['scheduled_end']),
       deadline: parseUtcDateTime(json['deadline']),
       estimatedMinutes: json['estimated_minutes'] as int?,
+      repeatType: (json['repeat_type'] ?? 'none') as String,
+      repeatInterval: (json['repeat_interval'] as int?) ?? 1,
+      repeatEndDate: parseUtcDateTime(json['repeat_end_date']),
       attachmentCount: (json['attachment_count'] as int?) ?? 0,
       completedAt: parseUtcDateTime(json['completed_at']),
       createdAt: parseUtcDateTime(json['created_at']),
@@ -222,6 +246,9 @@ class TaskModel {
       'scheduled_end': scheduledEnd?.toUtc().toIso8601String(),
       'deadline': deadline?.toUtc().toIso8601String(),
       'estimated_minutes': estimatedMinutes,
+      'repeat_type': repeatType,
+      'repeat_interval': repeatInterval,
+      'repeat_end_date': repeatEndDate?.toUtc().toIso8601String(),
       'attachment_count': attachmentCount,
     };
   }
@@ -241,6 +268,9 @@ class TaskModel {
     DateTime? scheduledEnd,
     DateTime? deadline,
     int? estimatedMinutes,
+    String? repeatType,
+    int? repeatInterval,
+    DateTime? repeatEndDate,
     int? attachmentCount,
     DateTime? completedAt,
     DateTime? createdAt,
@@ -262,6 +292,9 @@ class TaskModel {
       scheduledEnd: scheduledEnd ?? this.scheduledEnd,
       deadline: deadline ?? this.deadline,
       estimatedMinutes: estimatedMinutes ?? this.estimatedMinutes,
+      repeatType: repeatType ?? this.repeatType,
+      repeatInterval: repeatInterval ?? this.repeatInterval,
+      repeatEndDate: repeatEndDate ?? this.repeatEndDate,
       attachmentCount: attachmentCount ?? this.attachmentCount,
       completedAt: completedAt ?? this.completedAt,
       createdAt: createdAt ?? this.createdAt,

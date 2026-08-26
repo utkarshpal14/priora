@@ -153,6 +153,9 @@ class TasksController extends StateNotifier<TasksState> {
     DateTime? scheduledStart,
     DateTime? scheduledEnd,
     DateTime? remindAt,
+    String? repeatType,
+    int? repeatInterval,
+    DateTime? repeatEndDate,
   }) async {
     state = state.copyWith(isCreating: true, clearError: true);
     try {
@@ -166,6 +169,9 @@ class TasksController extends StateNotifier<TasksState> {
         deadline: deadline,
         scheduledStart: scheduledStart,
         scheduledEnd: scheduledEnd,
+        repeatType: repeatType,
+        repeatInterval: repeatInterval,
+        repeatEndDate: repeatEndDate,
       );
 
       // If user selected a reminder, schedule local notification and persist on backend
@@ -262,9 +268,14 @@ class TasksController extends StateNotifier<TasksState> {
     TaskPriority? priority,
     TaskStatus? status,
     String? categoryId,
+    String? goalId,
+    String? milestoneId,
     DateTime? deadline,
     DateTime? scheduledStart,
     DateTime? scheduledEnd,
+    String? repeatType,
+    int? repeatInterval,
+    DateTime? repeatEndDate,
   }) async {
     final originalTasks = [...state.tasks];
     final originalMetrics = state.metrics;
@@ -288,9 +299,14 @@ class TasksController extends StateNotifier<TasksState> {
         status: status ?? oldTask.status,
         categoryId: categoryId ?? oldTask.categoryId,
         category: updatedCategory,
+        goalId: goalId ?? oldTask.goalId,
+        milestoneId: milestoneId ?? oldTask.milestoneId,
         deadline: deadline ?? oldTask.deadline,
         scheduledStart: scheduledStart ?? oldTask.scheduledStart,
         scheduledEnd: scheduledEnd ?? oldTask.scheduledEnd,
+        repeatType: repeatType ?? oldTask.repeatType,
+        repeatInterval: repeatInterval ?? oldTask.repeatInterval,
+        repeatEndDate: repeatEndDate ?? oldTask.repeatEndDate,
         updatedAt: DateTime.now(),
       );
 
@@ -307,9 +323,14 @@ class TasksController extends StateNotifier<TasksState> {
         priority: priority,
         status: status,
         categoryId: categoryId,
+        goalId: goalId,
+        milestoneId: milestoneId,
         deadline: deadline,
         scheduledStart: scheduledStart,
         scheduledEnd: scheduledEnd,
+        repeatType: repeatType,
+        repeatInterval: repeatInterval,
+        repeatEndDate: repeatEndDate,
       );
       final finalTasks = state.tasks.map((t) => t.id == taskId ? updated : t).toList();
       state = state.copyWith(tasks: finalTasks);
@@ -329,13 +350,17 @@ class TasksController extends StateNotifier<TasksState> {
     final originalMetrics = state.metrics;
     final willComplete = !task.isCompleted;
 
-    // Optimistic state update for fluid UI response
-    final updatedTask = task.copyWith(
-      status: willComplete ? TaskStatus.completed : TaskStatus.pending,
-      completedAt: willComplete ? DateTime.now() : null,
-    );
+    // Optimistic UI state update
+    final updatedTasks = state.tasks.map((t) {
+      if (t.id == task.id) {
+        return t.copyWith(
+          status: willComplete ? TaskStatus.completed : TaskStatus.pending,
+          completedAt: willComplete ? DateTime.now() : null,
+        );
+      }
+      return t;
+    }).toList();
 
-    final updatedTasks = state.tasks.map((t) => t.id == task.id ? updatedTask : t).toList();
     final overdueCount = updatedTasks.where((t) => t.isOverdue).length;
     final dueTodayCount = updatedTasks.where((t) => t.isDueToday).length;
     final updatedMetrics = TaskMetricsModel(
@@ -366,6 +391,9 @@ class TasksController extends StateNotifier<TasksState> {
     try {
       if (willComplete) {
         await _repository.completeTask(task.id);
+        if (task.isRecurring) {
+          await refreshTasks();
+        }
       } else {
         await _repository.reopenTask(task.id);
       }

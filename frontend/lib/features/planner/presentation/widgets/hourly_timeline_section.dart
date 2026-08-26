@@ -67,23 +67,27 @@ class HourlyTimelineSection extends StatelessWidget {
   }
 
   Widget _buildTimeBlockCard(BuildContext context, TaskSessionModel session) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final task = session.task;
     final isCompleted = task?.isCompleted ?? false;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: session.hasConflict
               ? const Color(0xFFFCD34D)
-              : (isCompleted ? const Color(0xFF86EFAC) : Colors.black.withValues(alpha: 0.06)),
+              : (isCompleted
+                  ? const Color(0xFF86EFAC)
+                  : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06))),
           width: session.hasConflict || isCompleted ? 1.5 : 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: isDark ? Colors.black.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.02),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -99,7 +103,9 @@ class HourlyTimelineSection extends StatelessWidget {
               width: 82,
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               decoration: BoxDecoration(
-                color: session.hasConflict ? const Color(0xFFFEF3C7) : const Color(0xFFF1F5F9),
+                color: session.hasConflict
+                    ? (isDark ? const Color(0xFF78350F).withValues(alpha: 0.4) : const Color(0xFFFEF3C7))
+                    : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Column(
@@ -110,13 +116,13 @@ class HourlyTimelineSection extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                      color: isDark ? Colors.white : AppColors.textPrimary,
                     ),
                   ),
                   Container(
                     width: 1,
                     height: 8,
-                    color: AppColors.textSecondary.withValues(alpha: 0.3),
+                    color: isDark ? const Color(0xFF64748B) : AppColors.textSecondary.withValues(alpha: 0.3),
                     margin: const EdgeInsets.symmetric(vertical: 2),
                   ),
                   Text(
@@ -124,7 +130,7 @@ class HourlyTimelineSection extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textSecondary,
+                      color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -133,7 +139,7 @@ class HourlyTimelineSection extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
+                      color: isDark ? theme.colorScheme.secondary : AppColors.primary,
                     ),
                   ),
                 ],
@@ -156,10 +162,10 @@ class HourlyTimelineSection extends StatelessWidget {
                             height: 18,
                             margin: const EdgeInsets.only(right: 8),
                             decoration: BoxDecoration(
-                              color: isCompleted ? AppColors.accent : Colors.white,
+                              color: isCompleted ? theme.colorScheme.secondary : (isDark ? const Color(0xFF1E293B) : Colors.white),
                               borderRadius: BorderRadius.circular(5),
                               border: Border.all(
-                                color: isCompleted ? AppColors.accent : Colors.black.withValues(alpha: 0.25),
+                                color: isCompleted ? theme.colorScheme.secondary : (isDark ? const Color(0xFF64748B) : Colors.black.withValues(alpha: 0.25)),
                                 width: 1.5,
                               ),
                             ),
@@ -174,7 +180,9 @@ class HourlyTimelineSection extends StatelessWidget {
                           style: GoogleFonts.inter(
                             fontSize: 13.5,
                             fontWeight: FontWeight.w700,
-                            color: isCompleted ? AppColors.textSecondary : AppColors.textPrimary,
+                            color: isCompleted
+                                ? (isDark ? const Color(0xFF64748B) : AppColors.textSecondary)
+                                : (isDark ? Colors.white : AppColors.textPrimary),
                             decoration: isCompleted ? TextDecoration.lineThrough : null,
                           ),
                         ),
@@ -192,7 +200,7 @@ class HourlyTimelineSection extends StatelessWidget {
                           style: GoogleFonts.inter(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textSecondary,
+                            color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                           ),
                         ),
                         const SizedBox(width: 6),
@@ -222,7 +230,7 @@ class HourlyTimelineSection extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFEF3C7),
+                        color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.4) : const Color(0xFFFEF3C7),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
@@ -235,7 +243,7 @@ class HourlyTimelineSection extends StatelessWidget {
                             style: GoogleFonts.inter(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
-                              color: const Color(0xFF92400E),
+                              color: isDark ? const Color(0xFFFCD34D) : const Color(0xFF92400E),
                             ),
                           ),
                         ],
@@ -264,20 +272,20 @@ class HourlyTimelineSection extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
+                        color: isDark ? theme.colorScheme.secondary.withValues(alpha: 0.15) : AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.play_arrow_rounded, size: 14, color: AppColors.primary),
+                          Icon(Icons.play_arrow_rounded, size: 14, color: isDark ? theme.colorScheme.secondary : AppColors.primary),
                           const SizedBox(width: 2),
                           Text(
                             'Focus',
                             style: GoogleFonts.inter(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.primary,
+                              color: isDark ? theme.colorScheme.secondary : AppColors.primary,
                             ),
                           ),
                         ],
@@ -287,7 +295,7 @@ class HourlyTimelineSection extends StatelessWidget {
                   const SizedBox(width: 4),
                 ],
                 PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert_rounded, size: 18, color: AppColors.textSecondary),
+                  icon: Icon(Icons.more_vert_rounded, size: 18, color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
                   padding: EdgeInsets.zero,
                   onSelected: (val) {
                     if (val == 'edit' && task != null) {
@@ -334,6 +342,9 @@ class HourlyTimelineSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -345,14 +356,14 @@ class HourlyTimelineSection extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.schedule_rounded, size: 18, color: AppColors.primary),
+                  Icon(Icons.schedule_rounded, size: 18, color: isDark ? theme.colorScheme.secondary : AppColors.primary),
                   const SizedBox(width: 6),
                   Text(
                     'Hourly Schedule',
                     style: GoogleFonts.inter(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                      color: isDark ? Colors.white : AppColors.textPrimary,
                     ),
                   ),
                 ],
@@ -361,7 +372,7 @@ class HourlyTimelineSection extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE0E7FF),
+                    color: isDark ? theme.colorScheme.secondary.withValues(alpha: 0.15) : const Color(0xFFE0E7FF),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -369,7 +380,7 @@ class HourlyTimelineSection extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                      color: isDark ? theme.colorScheme.secondary : AppColors.primary,
                     ),
                   ),
                 ),
@@ -386,9 +397,9 @@ class HourlyTimelineSection extends StatelessWidget {
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+              border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05)),
             ),
             child: Center(
               child: Text(
@@ -396,7 +407,7 @@ class HourlyTimelineSection extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
                   fontSize: 12.5,
-                  color: AppColors.textSecondary,
+                  color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                   height: 1.4,
                 ),
               ),
@@ -412,14 +423,14 @@ class HourlyTimelineSection extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           child: Row(
             children: [
-              const Icon(Icons.format_list_bulleted_rounded, size: 16, color: AppColors.textSecondary),
+              Icon(Icons.format_list_bulleted_rounded, size: 16, color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
               const SizedBox(width: 6),
               Text(
                 'Ready to Schedule (${unscheduledTasks.length})',
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
                 ),
               ),
             ],
@@ -433,7 +444,7 @@ class HourlyTimelineSection extends StatelessWidget {
               'All tasks for today have been assigned focus slots! 🚀',
               style: GoogleFonts.inter(
                 fontSize: 12,
-                color: AppColors.accent,
+                color: theme.colorScheme.secondary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -443,9 +454,9 @@ class HourlyTimelineSection extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
+                  border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.04)),
                 ),
                 child: Row(
                   children: [
@@ -458,7 +469,7 @@ class HourlyTimelineSection extends StatelessWidget {
                             style: GoogleFonts.inter(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                              color: isDark ? Colors.white : AppColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -468,17 +479,17 @@ class HourlyTimelineSection extends StatelessWidget {
                                 t.formattedDeadline,
                                 style: GoogleFonts.inter(
                                   fontSize: 11,
-                                  color: t.isOverdue ? const Color(0xFFDC2626) : AppColors.textSecondary,
+                                  color: t.isOverdue ? const Color(0xFFDC2626) : (isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
                                   fontWeight: t.isOverdue ? FontWeight.w600 : FontWeight.w400,
                                 ),
                               ),
                               if (t.formattedDuration != null) ...[
-                                Text(' • ', style: GoogleFonts.inter(color: AppColors.textSecondary)),
+                                Text(' • ', style: GoogleFonts.inter(color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary)),
                                 Text(
                                   t.formattedDuration!,
                                   style: GoogleFonts.inter(
                                     fontSize: 11,
-                                    color: AppColors.textSecondary,
+                                    color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -497,7 +508,7 @@ class HourlyTimelineSection extends StatelessWidget {
                       icon: const Icon(Icons.access_time_rounded, size: 14),
                       label: const Text('Schedule'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: isDark ? theme.colorScheme.secondary : AppColors.primary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

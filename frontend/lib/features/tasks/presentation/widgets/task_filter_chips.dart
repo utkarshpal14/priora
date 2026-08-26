@@ -30,6 +30,9 @@ class TaskFilterChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -39,18 +42,20 @@ class TaskFilterChips extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: isDark ? const Color(0xFF1E293B) : Colors.black.withValues(alpha: 0.04),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
                 _buildTabButton(
+                  context: context,
                   title: 'Pending',
                   count: metrics.pending,
                   isSelected: currentTab == TaskTabFilter.pending,
                   onTap: () => onTabChanged(TaskTabFilter.pending),
                 ),
                 _buildTabButton(
+                  context: context,
                   title: 'Overdue',
                   count: metrics.overdue,
                   isSelected: currentTab == TaskTabFilter.overdue,
@@ -59,12 +64,14 @@ class TaskFilterChips extends StatelessWidget {
                   onTap: () => onTabChanged(TaskTabFilter.overdue),
                 ),
                 _buildTabButton(
+                  context: context,
                   title: 'Completed',
                   count: metrics.completed,
                   isSelected: currentTab == TaskTabFilter.completed,
                   onTap: () => onTabChanged(TaskTabFilter.completed),
                 ),
                 _buildTabButton(
+                  context: context,
                   title: 'All',
                   count: metrics.total,
                   isSelected: currentTab == TaskTabFilter.all,
@@ -85,13 +92,13 @@ class TaskFilterChips extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   decoration: BoxDecoration(
                     color: currentCategoryId != null
-                        ? AppColors.accent.withValues(alpha: 0.1)
-                        : Colors.white,
+                        ? theme.colorScheme.secondary.withValues(alpha: 0.15)
+                        : (isDark ? const Color(0xFF1E293B) : Colors.white),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: currentCategoryId != null
-                          ? AppColors.accent
-                          : Colors.black.withValues(alpha: 0.08),
+                          ? theme.colorScheme.secondary
+                          : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.08)),
                       width: currentCategoryId != null ? 1.5 : 1,
                     ),
                   ),
@@ -99,17 +106,18 @@ class TaskFilterChips extends StatelessWidget {
                     child: DropdownButton<String?>(
                       value: currentCategoryId,
                       isDense: true,
-                      icon: const Icon(
+                      dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      icon: Icon(
                         Icons.keyboard_arrow_down_rounded,
                         size: 16,
-                        color: AppColors.textSecondary,
+                        color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                       ),
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: currentCategoryId != null
-                            ? AppColors.accent
-                            : AppColors.textSecondary,
+                            ? theme.colorScheme.secondary
+                            : (isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
                       ),
                       items: [
                         const DropdownMenuItem<String?>(
@@ -137,6 +145,7 @@ class TaskFilterChips extends StatelessWidget {
                   child: Row(
                     children: [
                       _buildPriorityChip(
+                        context: context,
                         label: 'All Priorities',
                         isSelected: currentPriority == null,
                         onTap: () => onPriorityChanged(null),
@@ -147,6 +156,7 @@ class TaskFilterChips extends StatelessWidget {
                         return Padding(
                           padding: const EdgeInsets.only(right: 6),
                           child: _buildPriorityChip(
+                            context: context,
                             label: p.label,
                             color: p.color,
                             isSelected: isSelected,
@@ -166,6 +176,7 @@ class TaskFilterChips extends StatelessWidget {
   }
 
   Widget _buildTabButton({
+    required BuildContext context,
     required String title,
     required int count,
     required bool isSelected,
@@ -173,12 +184,15 @@ class TaskFilterChips extends StatelessWidget {
     Color? badgeTextColor,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     final effectiveBadgeColor = badgeColor ??
         (isSelected
-            ? AppColors.accent.withValues(alpha: 0.12)
-            : Colors.black.withValues(alpha: 0.05));
+            ? theme.colorScheme.secondary.withValues(alpha: 0.18)
+            : (isDark ? const Color(0xFF0F172A) : Colors.black.withValues(alpha: 0.05)));
     final effectiveTextColor = badgeTextColor ??
-        (isSelected ? AppColors.accent : AppColors.textSecondary);
+        (isSelected ? theme.colorScheme.secondary : (isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary));
 
     return Expanded(
       child: GestureDetector(
@@ -187,12 +201,12 @@ class TaskFilterChips extends StatelessWidget {
           duration: const Duration(milliseconds: 150),
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
+            color: isSelected ? (isDark ? const Color(0xFF334155) : Colors.white) : Colors.transparent,
             borderRadius: BorderRadius.circular(9),
             boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
+                    color: isDark ? Colors.black.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.04),
                     blurRadius: 4,
                     offset: const Offset(0, 1),
                   )
@@ -208,7 +222,7 @@ class TaskFilterChips extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: isSelected ? AppColors.textPrimary : AppColors.textSecondary,
+                    color: isSelected ? (isDark ? Colors.white : AppColors.textPrimary) : (isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -236,22 +250,26 @@ class TaskFilterChips extends StatelessWidget {
   }
 
   Widget _buildPriorityChip({
+    required BuildContext context,
     required String label,
     Color? color,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    final activeColor = color ?? AppColors.textPrimary;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final activeColor = color ?? (isDark ? Colors.white : AppColors.textPrimary);
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? activeColor.withValues(alpha: 0.1) : Colors.white,
+          color: isSelected ? activeColor.withValues(alpha: 0.15) : (isDark ? const Color(0xFF1E293B) : Colors.white),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? activeColor : Colors.black.withValues(alpha: 0.08),
+            color: isSelected ? activeColor : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.08)),
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -274,7 +292,7 @@ class TaskFilterChips extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? activeColor : AppColors.textSecondary,
+                color: isSelected ? activeColor : (isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
               ),
             ),
           ],

@@ -43,11 +43,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final authState = ref.watch(authControllerProvider);
     final isLoading = authState.isLoading;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -66,7 +67,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: AppColors.primary,
+                          color: isDark ? theme.colorScheme.secondary : AppColors.primary,
                           borderRadius: BorderRadius.circular(14),
                         ),
                         alignment: Alignment.center,
@@ -89,7 +90,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.5,
-                        color: AppColors.textPrimary,
+                        color: isDark ? Colors.white : AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -99,7 +100,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
                         fontSize: 14,
-                        color: AppColors.textSecondary,
+                        color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -114,18 +115,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     // Divider: "or continue with email"
                     Row(
                       children: [
-                        const Expanded(child: Divider()),
+                        Expanded(
+                          child: Divider(
+                            color: isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.border,
+                          ),
+                        ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
                           child: Text(
                             'or continue with email',
                             style: GoogleFonts.inter(
                               fontSize: 12,
-                              color: AppColors.textTertiary,
+                              color: isDark ? const Color(0xFF64748B) : AppColors.textTertiary,
                             ),
                           ),
                         ),
-                        const Expanded(child: Divider()),
+                        Expanded(
+                          child: Divider(
+                            color: isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.border,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 24),
@@ -200,7 +209,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: ElevatedButton(
                         onPressed: isLoading ? null : _handleEmailLogin,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: isDark ? theme.colorScheme.secondary : AppColors.primary,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -236,7 +245,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           "Don't have an account? ",
                           style: GoogleFonts.inter(
                             fontSize: 14,
-                            color: AppColors.textSecondary,
+                            color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                           ),
                         ),
                         GestureDetector(
@@ -246,7 +255,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.accent,
+                              color: isDark ? theme.colorScheme.secondary : AppColors.accent,
                             ),
                           ),
                         ),

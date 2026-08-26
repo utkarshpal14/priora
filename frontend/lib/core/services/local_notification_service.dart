@@ -7,6 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../features/settings/domain/reminder_sound_model.dart';
+import 'audio_preview_service.dart';
+
 @pragma('vm:entry-point')
 void notificationTapBackground(NotificationResponse notificationResponse) {
   debugPrint('[LocalNotificationService] Background notification tapped: ${notificationResponse.payload}');
@@ -19,11 +22,44 @@ class LocalNotificationService {
 
   final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
   bool _isInitialized = false;
+  ReminderSound _activeSound = ReminderSound.chime;
   static const MethodChannel _systemSettingsChannel = MethodChannel('com.example.frontend/system_settings');
 
-  static const String _channelId = 'priora_reminders_v5';
+  static const String _channelId = 'priora_reminders';
   static const String _channelName = 'Reminders & Task Alerts';
-  static const String _channelDesc = 'High priority notifications with vibration and floating heads-up banner alerts.';
+  static const String _channelDesc = 'High priority notifications with custom audio chime and floating heads-up banner alerts.';
+
+  String get _currentChannelId => _channelId;
+
+  /// Update active notification sound and register channel
+  Future<void> setActiveReminderSound(ReminderSound sound) async {
+    _activeSound = sound;
+    try {
+      final androidImplementation = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+
+      if (androidImplementation != null) {
+        final soundResource = sound.resourceName != null
+            ? RawResourceAndroidNotificationSound(sound.resourceName!)
+            : const RawResourceAndroidNotificationSound('priora_chime');
+
+        final androidChannel = AndroidNotificationChannel(
+          _channelId,
+          _channelName,
+          description: _channelDesc,
+          importance: Importance.max,
+          playSound: true,
+          sound: soundResource,
+          enableVibration: true,
+          vibrationPattern: kIsWeb ? null : Int64List.fromList([0, 800, 400, 800]),
+        );
+        await androidImplementation.createNotificationChannel(androidChannel);
+        debugPrint('[LocalNotificationService] Updated priora_reminders sound to: ${sound.name}');
+      }
+    } catch (e) {
+      debugPrint('[LocalNotificationService] Error setting active reminder sound: $e');
+    }
+  }
 
   /// Initialize local notification engine, channels, and timezone data
   Future<void> initialize() async {
@@ -57,29 +93,30 @@ class LocalNotificationService {
       );
       debugPrint('[LocalNotificationService] _notificationsPlugin.initialize result: $initSuccess');
 
-      // Create High Importance Notification Channel on Android
+      // Create High Importance Notification Channel on Android (priora_reminders)
       final androidImplementation = _notificationsPlugin
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 
       if (androidImplementation != null) {
-        try {
-          await androidImplementation.deleteNotificationChannel('priora_reminders');
-        } catch (_) {}
+        final soundResource = _activeSound.resourceName != null
+            ? RawResourceAndroidNotificationSound(_activeSound.resourceName!)
+            : const RawResourceAndroidNotificationSound('priora_chime');
 
-        const androidChannel = AndroidNotificationChannel(
+        final defaultChan = AndroidNotificationChannel(
           _channelId,
           _channelName,
           description: _channelDesc,
           importance: Importance.max,
           playSound: true,
+          sound: soundResource,
           enableVibration: true,
+          vibrationPattern: kIsWeb ? null : Int64List.fromList([0, 800, 400, 800]),
         );
-        await androidImplementation.createNotificationChannel(androidChannel);
-        debugPrint('[LocalNotificationService] Created notification channel $_channelId (Importance.max)');
+        await androidImplementation.createNotificationChannel(defaultChan);
       }
 
       _isInitialized = true;
-      debugPrint('[LocalNotificationService] Successfully initialized native notification engine.');
+      debugPrint('[LocalNotificationService] Successfully initialized native notification engine on channel: $_channelId');
     } catch (e, stack) {
       debugPrint('[LocalNotificationService] Initialization error: $e\n$stack');
     }
@@ -180,8 +217,12 @@ class LocalNotificationService {
       debugPrint('[LocalNotificationService] ⏰ SCHEDULED_TZ: $scheduledTz');
       debugPrint('[LocalNotificationService] ⏰ NOTIF_ID: $id');
 
+      final soundResource = _activeSound.resourceName != null
+          ? RawResourceAndroidNotificationSound(_activeSound.resourceName!)
+          : null;
+
       final androidDetails = AndroidNotificationDetails(
-        _channelId,
+        _currentChannelId,
         _channelName,
         channelDescription: _channelDesc,
         importance: Importance.max,
@@ -191,15 +232,17 @@ class LocalNotificationService {
         category: AndroidNotificationCategory.reminder,
         audioAttributesUsage: AudioAttributesUsage.notification,
         playSound: true,
+        sound: soundResource,
         enableVibration: true,
-        vibrationPattern: Int64List.fromList([0, 1000, 500, 1000, 500, 1000]),
+        vibrationPattern: kIsWeb ? null : Int64List.fromList([0, 800, 400, 800]),
         ticker: 'Priora Task Alert',
       );
 
-      const darwinDetails = DarwinNotificationDetails(
+      final darwinDetails = DarwinNotificationDetails(
         presentAlert: true,
         presentBadge: true,
         presentSound: true,
+        sound: _activeSound.resourceName != null ? '${_activeSound.resourceName}.wav' : null,
       );
 
       final notificationDetails = NotificationDetails(
@@ -209,6 +252,7 @@ class LocalNotificationService {
       );
 
       try {
+        print('Inside scheduleNotification - calling _notificationsPlugin.zonedSchedule for #$id at $scheduledTz');
         await _notificationsPlugin.zonedSchedule(
           id,
           title,
@@ -220,6 +264,7 @@ class LocalNotificationService {
               UILocalNotificationDateInterpretation.wallClockTime,
           payload: payload,
         );
+        print('Inside scheduleNotification - successfully scheduled #$id');
       } catch (exactErr) {
         debugPrint('[LocalNotificationService] exactAllowWhileIdle failed ($exactErr), retrying with inexactAllowWhileIdle.');
         await _notificationsPlugin.zonedSchedule(
@@ -254,8 +299,16 @@ class LocalNotificationService {
 
     final id = notificationId ?? (DateTime.now().millisecondsSinceEpoch.remainder(100000));
 
+    if (kIsWeb) {
+      AudioPreviewService.playPreview(_activeSound);
+    }
+
+    final soundResource = _activeSound.resourceName != null
+        ? RawResourceAndroidNotificationSound(_activeSound.resourceName!)
+        : null;
+
     final androidDetails = AndroidNotificationDetails(
-      _channelId,
+      _currentChannelId,
       _channelName,
       channelDescription: _channelDesc,
       importance: Importance.max,
@@ -265,15 +318,17 @@ class LocalNotificationService {
       category: AndroidNotificationCategory.reminder,
       audioAttributesUsage: AudioAttributesUsage.notification,
       playSound: true,
+      sound: soundResource,
       enableVibration: true,
-      vibrationPattern: Int64List.fromList([0, 1000, 500, 1000, 500, 1000]),
+      vibrationPattern: kIsWeb ? null : Int64List.fromList([0, 800, 400, 800]),
       ticker: 'Priora Task Alert',
     );
 
-    const darwinDetails = DarwinNotificationDetails(
+    final darwinDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      sound: _activeSound.resourceName != null ? '${_activeSound.resourceName}.wav' : null,
     );
 
     final notificationDetails = NotificationDetails(
@@ -283,6 +338,7 @@ class LocalNotificationService {
     );
 
     try {
+      print('Inside showImmediateNotification - calling _notificationsPlugin.show for #$id ($title)');
       await _notificationsPlugin.show(
         id,
         title,
@@ -290,8 +346,10 @@ class LocalNotificationService {
         notificationDetails,
         payload: payload,
       );
+      print('Inside showImmediateNotification - successfully displayed #$id');
       debugPrint('[LocalNotificationService] ✅ Immediate notification #$id displayed successfully ($title)');
     } catch (e, stack) {
+      print('Inside showImmediateNotification - ERROR: $e');
       debugPrint('[LocalNotificationService] ❌ Immediate notification #$id error: $e\n$stack');
     }
   }
@@ -325,6 +383,7 @@ class LocalNotificationService {
 
   /// Get list of pending scheduled notification requests (Diagnostic Check #5)
   Future<List<PendingNotificationRequest>> getPendingNotifications() async {
+    if (kIsWeb) return [];
     await initialize();
     try {
       final list = await _notificationsPlugin.pendingNotificationRequests();
@@ -357,10 +416,12 @@ class LocalNotificationService {
 
   /// Trigger immediate test notification & schedule 5-second test alarm (Diagnostic Checks #3, #5, #6)
   Future<int> sendTestNotification() async {
+    print('Inside showTestNotification');
     await initialize();
     await requestPermissions();
 
     final id = DateTime.now().millisecondsSinceEpoch.remainder(100000);
+    print('Inside showTestNotification - preparing immediate alert (#$id) and 5s scheduled alarm (#${id + 1})');
     debugPrint('[LocalNotificationService] 🧪 Executing Test Notification Diagnostic...');
 
     // 1. Show immediate test alert

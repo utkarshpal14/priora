@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/features/analytics/domain/analytics_model.dart';
 
 class CategoryBreakdownWidget extends StatelessWidget {
@@ -8,25 +9,30 @@ class CategoryBreakdownWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF334155)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : Colors.black.withValues(alpha: 0.06),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.pie_chart_rounded, color: Color(0xFF8B5CF6), size: 22),
-              SizedBox(width: 8),
+              const Icon(Icons.pie_chart_rounded, color: Color(0xFF8B5CF6), size: 22),
+              const SizedBox(width: 8),
               Text(
                 'Category Distribution 🎨',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -35,19 +41,22 @@ class CategoryBreakdownWidget extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           if (breakdown.categories.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
-              child: Text('No categories data available', style: TextStyle(color: Colors.white54)),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Text(
+                'No categories data available',
+                style: TextStyle(color: isDark ? Colors.white54 : AppColors.textSecondary),
+              ),
             )
           else
             Column(
-              children: breakdown.categories.map((cat) => _buildCategoryRow(cat)).toList(),
+              children: breakdown.categories.map((cat) => _buildCategoryRow(context, cat)).toList(),
             ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'Tasks Completed by Priority',
             style: TextStyle(
-              color: Colors.white70,
+              color: isDark ? Colors.white70 : AppColors.textSecondary,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
@@ -77,7 +86,10 @@ class CategoryBreakdownWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryRow(CategoryBreakdownItemModel cat) {
+  Widget _buildCategoryRow(BuildContext context, CategoryBreakdownItemModel cat) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: Column(
@@ -98,13 +110,20 @@ class CategoryBreakdownWidget extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     cat.name,
-                    style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                      color: isDark ? Colors.white : AppColors.textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
               Text(
                 '${cat.count} tasks (${cat.percentage.toStringAsFixed(1)}%)',
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
+                style: TextStyle(
+                  color: isDark ? Colors.white70 : AppColors.textSecondary,
+                  fontSize: 12,
+                ),
               ),
             ],
           ),
@@ -114,7 +133,7 @@ class CategoryBreakdownWidget extends StatelessWidget {
             child: LinearProgressIndicator(
               value: (cat.percentage / 100.0).clamp(0.0, 1.0),
               minHeight: 6,
-              backgroundColor: const Color(0xFF0F172A),
+              backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
               valueColor: AlwaysStoppedAnimation<Color>(cat.color),
             ),
           ),

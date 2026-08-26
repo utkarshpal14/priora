@@ -39,10 +39,14 @@ class _PrioraAppState extends ConsumerState<PrioraApp> {
     super.initState();
     // Restore user session and initialize native notifications on app startup
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      ref.read(authControllerProvider.notifier).initialize();
-      final notifService = ref.read(localNotificationServiceProvider);
-      await notifService.initialize();
-      await notifService.requestPermissions();
+      try {
+        await ref.read(authControllerProvider.notifier).initialize();
+        final notifService = ref.read(localNotificationServiceProvider);
+        await notifService.initialize();
+        await notifService.requestPermissions();
+      } catch (e, stack) {
+        debugPrint("Startup initialization notice: $e\n$stack");
+      }
     });
   }
 

@@ -118,6 +118,9 @@ class FakeTasksRepository extends TasksRepository {
     DateTime? deadline,
     DateTime? scheduledStart,
     DateTime? scheduledEnd,
+    String? repeatType,
+    int? repeatInterval,
+    DateTime? repeatEndDate,
   }) async {
     final newTask = TaskModel(
       id: 'task-${_tasks.length + 1}',
@@ -132,6 +135,9 @@ class FakeTasksRepository extends TasksRepository {
       deadline: deadline,
       scheduledStart: scheduledStart,
       scheduledEnd: scheduledEnd,
+      repeatType: repeatType ?? 'none',
+      repeatInterval: repeatInterval ?? 1,
+      repeatEndDate: repeatEndDate,
     );
     _tasks.add(newTask);
     return newTask;
@@ -172,6 +178,9 @@ class FakeTasksRepository extends TasksRepository {
     DateTime? deadline,
     DateTime? scheduledStart,
     DateTime? scheduledEnd,
+    String? repeatType,
+    int? repeatInterval,
+    DateTime? repeatEndDate,
   }) async {
     final index = _tasks.indexWhere((t) => t.id == taskId);
     final old = _tasks[index];
@@ -189,9 +198,14 @@ class FakeTasksRepository extends TasksRepository {
       status: status ?? old.status,
       categoryId: categoryId ?? old.categoryId,
       category: category,
+      goalId: goalId ?? old.goalId,
+      milestoneId: milestoneId ?? old.milestoneId,
       deadline: deadline ?? old.deadline,
       scheduledStart: scheduledStart ?? old.scheduledStart,
       scheduledEnd: scheduledEnd ?? old.scheduledEnd,
+      repeatType: repeatType ?? old.repeatType,
+      repeatInterval: repeatInterval ?? old.repeatInterval,
+      repeatEndDate: repeatEndDate ?? old.repeatEndDate,
       updatedAt: DateTime.now(),
     );
     _tasks[index] = updated;
@@ -212,7 +226,7 @@ class FakeAuthController extends StateNotifier<AuthState> implements AuthControl
             user: UserModel(
               id: 'user-1',
               email: 'test@priora.app',
-              fullName: 'Utkarsh Pal',
+              fullName: 'Priora Tester',
             ),
           ),
         );
@@ -522,6 +536,62 @@ void main() {
     // Verify reminder active bell icon is displayed
     expect(find.byIcon(Icons.notifications_active_rounded), findsOneWidget);
     expect(find.text('Task with Active Reminder'), findsOneWidget);
+  });
+
+  test('TaskModel accurately parses recurring fields and computes recurrence properties', () {
+    final recurringJson = {
+      'id': 'rec-1',
+      'user_id': 'user-1',
+      'title': 'Daily Standup',
+      'priority': 'HIGH',
+      'status': 'PENDING',
+      'repeat_type': 'daily',
+      'repeat_interval': 1,
+      'repeat_end_date': '2026-12-31T23:59:59Z',
+    };
+
+    final task = TaskModel.fromJson(recurringJson);
+    expect(task.isRecurring, isTrue);
+    expect(task.repeatType, equals('daily'));
+    expect(task.repeatInterval, equals(1));
+    expect(task.repeatLabel, equals('Daily'));
+    expect(task.repeatEndDate, isNotNull);
+
+    final weeklyTask = task.copyWith(repeatType: 'weekly', repeatInterval: 2);
+    expect(weeklyTask.repeatLabel, equals('Every 2 weeks'));
+
+    final nonRecurringTask = task.copyWith(repeatType: 'none');
+    expect(nonRecurringTask.isRecurring, isFalse);
+    expect(nonRecurringTask.repeatLabel, equals('Never'));
+  });
+
+  testWidgets('TaskCard displays recurring badge and repeat icon for recurring tasks', (WidgetTester tester) async {
+    final task = TaskModel(
+      id: 'task-recur-1',
+      userId: 'user-1',
+      title: 'Daily Code Review',
+      priority: TaskPriority.high,
+      status: TaskStatus.pending,
+      repeatType: 'daily',
+      repeatInterval: 1,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: TaskCard(
+            task: task,
+            onToggleComplete: (_) {},
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Verify repeat icon and Daily badge are displayed
+    expect(find.byIcon(Icons.repeat_rounded), findsOneWidget);
+    expect(find.text('Daily'), findsOneWidget);
+    expect(find.text('Daily Code Review'), findsOneWidget);
   });
 }
 

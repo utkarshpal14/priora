@@ -20,6 +20,8 @@ class PlannerScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final plannerState = ref.watch(plannerControllerProvider);
     final plannerNotifier = ref.read(plannerControllerProvider.notifier);
     final authState = ref.watch(authControllerProvider);
@@ -42,9 +44,7 @@ class PlannerScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
         elevation: 0,
         scrolledUnderElevation: 0,
         title: Column(
@@ -57,26 +57,26 @@ class PlannerScreen extends ConsumerWidget {
               style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: isDark ? Colors.white : AppColors.textPrimary,
               ),
             ),
             Text(
               'Welcome, $userName 👋',
               style: GoogleFonts.inter(
                 fontSize: 12,
-                color: AppColors.textSecondary,
+                color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
               ),
             ),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: AppColors.textPrimary),
+            icon: Icon(Icons.refresh_rounded, color: isDark ? Colors.white : AppColors.textPrimary),
             tooltip: 'Refresh Plan',
             onPressed: () => plannerNotifier.loadData(),
           ),
           IconButton(
-            icon: const Icon(Icons.settings_outlined, color: AppColors.textPrimary),
+            icon: Icon(Icons.settings_outlined, color: isDark ? Colors.white : AppColors.textPrimary),
             tooltip: 'Settings & Diagnostics',
             onPressed: () => context.go('/settings'),
           ),
@@ -90,7 +90,7 @@ class PlannerScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => CreateTaskBottomSheet.show(context),
-        backgroundColor: AppColors.primary,
+        backgroundColor: isDark ? theme.colorScheme.secondary : AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 2,
         icon: const Icon(Icons.add_task_rounded, size: 20),
@@ -101,7 +101,7 @@ class PlannerScreen extends ConsumerWidget {
       ),
       body: RefreshIndicator(
         onRefresh: () => plannerNotifier.loadData(),
-        color: AppColors.accent,
+        color: theme.colorScheme.secondary,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
@@ -128,9 +128,9 @@ class PlannerScreen extends ConsumerWidget {
                     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEF2F2),
+                      color: isDark ? const Color(0xFF450A0A) : const Color(0xFFFEF2F2),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFFCA5A5)),
+                      border: Border.all(color: isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFCA5A5)),
                     ),
                     child: Row(
                       children: [
@@ -142,7 +142,7 @@ class PlannerScreen extends ConsumerWidget {
                             style: GoogleFonts.inter(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: const Color(0xFF991B1B),
+                              color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B),
                             ),
                           ),
                         ),

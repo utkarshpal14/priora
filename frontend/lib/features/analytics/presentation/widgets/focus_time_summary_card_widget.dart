@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/features/analytics/domain/analytics_model.dart';
 
 class FocusTimeSummaryCardWidget extends StatelessWidget {
@@ -17,25 +18,30 @@ class FocusTimeSummaryCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF334155)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : Colors.black.withValues(alpha: 0.06),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.schedule_rounded, color: Color(0xFF10B981), size: 22),
-              SizedBox(width: 8),
+              const Icon(Icons.schedule_rounded, color: Color(0xFF10B981), size: 22),
+              const SizedBox(width: 8),
               Text(
                 'Focus Time Analytics ⏱️',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -47,6 +53,7 @@ class FocusTimeSummaryCardWidget extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildFocusTile(
+                  context: context,
                   title: 'Today',
                   timeText: _formatHoursAndMinutes(focusTime.todayMinutes),
                   color: const Color(0xFF10B981),
@@ -55,6 +62,7 @@ class FocusTimeSummaryCardWidget extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildFocusTile(
+                  context: context,
                   title: 'This Week',
                   timeText: _formatHoursAndMinutes(focusTime.weekMinutes),
                   color: const Color(0xFF06B6D4),
@@ -63,6 +71,7 @@ class FocusTimeSummaryCardWidget extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildFocusTile(
+                  context: context,
                   title: 'This Month',
                   timeText: _formatHoursAndMinutes(focusTime.monthMinutes),
                   color: const Color(0xFF6366F1),
@@ -76,14 +85,18 @@ class FocusTimeSummaryCardWidget extends StatelessWidget {
   }
 
   Widget _buildFocusTile({
+    required BuildContext context,
     required String title,
     required String timeText,
     required Color color,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
+        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: color.withOpacity(0.3)),
       ),
@@ -92,8 +105,8 @@ class FocusTimeSummaryCardWidget extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              color: Colors.white70,
+            style: TextStyle(
+              color: isDark ? Colors.white70 : AppColors.textSecondary,
               fontSize: 12,
             ),
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/features/analytics/domain/analytics_model.dart';
 
 class PersonalRecordsCardWidget extends StatelessWidget {
@@ -17,25 +18,30 @@ class PersonalRecordsCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF334155)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : Colors.black.withValues(alpha: 0.06),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.emoji_events_rounded, color: Color(0xFFF59E0B), size: 22),
-              SizedBox(width: 8),
+              const Icon(Icons.emoji_events_rounded, color: Color(0xFFF59E0B), size: 22),
+              const SizedBox(width: 8),
               Text(
                 'Personal Best Records 🏆',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -47,6 +53,7 @@ class PersonalRecordsCardWidget extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildRecordItem(
+                  context: context,
                   icon: Icons.task_alt_rounded,
                   title: 'Best Day',
                   value: '${records.bestDayTasks} tasks',
@@ -56,6 +63,7 @@ class PersonalRecordsCardWidget extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildRecordItem(
+                  context: context,
                   icon: Icons.timer_rounded,
                   title: 'Peak Focus',
                   value: _formatMinutes(records.bestDayFocusMinutes),
@@ -65,6 +73,7 @@ class PersonalRecordsCardWidget extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildRecordItem(
+                  context: context,
                   icon: Icons.local_fire_department_rounded,
                   title: 'Max Streak',
                   value: '${records.longestStreak} days',
@@ -79,15 +88,19 @@ class PersonalRecordsCardWidget extends StatelessWidget {
   }
 
   Widget _buildRecordItem({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String value,
     required Color color,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
+        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color.withOpacity(0.3)),
       ),
@@ -98,16 +111,16 @@ class PersonalRecordsCardWidget extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             title,
-            style: const TextStyle(
-              color: Colors.white70,
+            style: TextStyle(
+              color: isDark ? Colors.white70 : AppColors.textSecondary,
               fontSize: 11,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             value,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: isDark ? Colors.white : AppColors.textPrimary,
               fontSize: 14,
               fontWeight: FontWeight.bold,
             ),

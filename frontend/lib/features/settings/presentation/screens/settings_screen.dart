@@ -11,6 +11,8 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../goals/presentation/controllers/goals_controller.dart';
 import '../../../tasks/presentation/controllers/tasks_controller.dart';
 import '../../../../core/services/local_notification_service.dart';
+import '../../../../core/services/audio_preview_service.dart';
+import '../../domain/reminder_sound_model.dart';
 import '../controllers/notification_settings_controller.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -493,6 +495,105 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with WidgetsBin
                         ),
                       ),
                       const Divider(height: 16),
+                      // Reminder Sound Palette Selection
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Reminder Sound Alert',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.white : AppColors.textPrimary,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.secondary.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  notifPrefs.reminderSound.name,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? theme.colorScheme.secondary : AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Choose a distinct audio chime for upcoming task reminders and alerts.',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: ReminderSound.values.map((sound) {
+                                final isSelected = notifPrefs.reminderSound == sound;
+                                final accentColor = theme.colorScheme.secondary;
+
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(10),
+                                    onTap: () {
+                                      print('SOUND CHIP TAPPED: ${sound.name} (${sound.resourceName})');
+                                      notifNotifier.setReminderSound(sound);
+                                      AudioPreviewService.playPreview(sound);
+                                      // Trigger immediate preview test notification with selected sound
+                                      LocalNotificationService().showImmediateNotification(
+                                        title: '${sound.icon} Sound Selected: ${sound.name}',
+                                        body: sound.description,
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? accentColor.withValues(alpha: 0.15)
+                                            : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: isSelected ? accentColor : Colors.transparent,
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Text(sound.icon, style: const TextStyle(fontSize: 14)),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            sound.name,
+                                            style: GoogleFonts.inter(
+                                              fontSize: 12.5,
+                                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                              color: isSelected
+                                                  ? (isDark ? accentColor : AppColors.primary)
+                                                  : (isDark ? const Color(0xFF94A3B8) : AppColors.textPrimary),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 16),
                       const SizedBox(height: 4),
                       Text(
                         'UX-003 System Health & Battery Diagnostics',
@@ -587,6 +688,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with WidgetsBin
                             child: ElevatedButton.icon(
                               key: const Key('test_notification_btn'),
                               onPressed: () async {
+                                print('TEST ALERT PRESSED');
+                                print('Calling notification service');
                                 final notifService = ref.read(localNotificationServiceProvider);
                                 await notifService.sendTestNotification();
                                 if (context.mounted) {

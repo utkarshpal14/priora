@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/features/analytics/domain/analytics_model.dart';
 
 class GoalAnalyticsCardWidget extends StatelessWidget {
@@ -8,25 +9,30 @@ class GoalAnalyticsCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF334155)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : Colors.black.withValues(alpha: 0.06),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.flag_rounded, color: Color(0xFF6366F1), size: 22),
-              SizedBox(width: 8),
+              const Icon(Icons.flag_rounded, color: Color(0xFF6366F1), size: 22),
+              const SizedBox(width: 8),
               Text(
                 'Goals & Milestones Progression 🎯',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -38,6 +44,7 @@ class GoalAnalyticsCardWidget extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildStatBadge(
+                  context: context,
                   label: 'Active Goals',
                   value: '${goals.activeGoals}',
                   color: const Color(0xFF3B82F6),
@@ -46,6 +53,7 @@ class GoalAnalyticsCardWidget extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildStatBadge(
+                  context: context,
                   label: 'Completed',
                   value: '${goals.completedGoals}',
                   color: const Color(0xFF10B981),
@@ -54,6 +62,7 @@ class GoalAnalyticsCardWidget extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildStatBadge(
+                  context: context,
                   label: 'Milestones Done',
                   value: '${goals.completedMilestones} / ${goals.totalMilestones}',
                   color: const Color(0xFF8B5CF6),
@@ -63,12 +72,14 @@ class GoalAnalyticsCardWidget extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _buildProgressBar(
+            context: context,
             label: 'Goals Completion',
             percentage: goals.goalCompletionRate,
             color: const Color(0xFF3B82F6),
           ),
           const SizedBox(height: 10),
           _buildProgressBar(
+            context: context,
             label: 'Milestones Completion',
             percentage: goals.milestoneCompletionRate,
             color: const Color(0xFF8B5CF6),
@@ -79,10 +90,14 @@ class GoalAnalyticsCardWidget extends StatelessWidget {
   }
 
   Widget _buildStatBadge({
+    required BuildContext context,
     required String label,
     required String value,
     required Color color,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
       decoration: BoxDecoration(
@@ -103,8 +118,8 @@ class GoalAnalyticsCardWidget extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(
-              color: Colors.white70,
+            style: TextStyle(
+              color: isDark ? Colors.white70 : AppColors.textSecondary,
               fontSize: 11,
             ),
             textAlign: TextAlign.center,
@@ -115,10 +130,14 @@ class GoalAnalyticsCardWidget extends StatelessWidget {
   }
 
   Widget _buildProgressBar({
+    required BuildContext context,
     required String label,
     required double percentage,
     required Color color,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -127,7 +146,7 @@ class GoalAnalyticsCardWidget extends StatelessWidget {
           children: [
             Text(
               label,
-              style: const TextStyle(color: Colors.white70, fontSize: 12),
+              style: TextStyle(color: isDark ? Colors.white70 : AppColors.textSecondary, fontSize: 12),
             ),
             Text(
               '${percentage.toStringAsFixed(1)}%',
@@ -145,7 +164,7 @@ class GoalAnalyticsCardWidget extends StatelessWidget {
           child: LinearProgressIndicator(
             value: (percentage / 100.0).clamp(0.0, 1.0),
             minHeight: 8,
-            backgroundColor: const Color(0xFF0F172A),
+            backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
             valueColor: AlwaysStoppedAnimation<Color>(color),
           ),
         ),

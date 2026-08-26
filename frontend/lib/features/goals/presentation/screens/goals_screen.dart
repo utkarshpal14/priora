@@ -20,21 +20,25 @@ class GoalsScreen extends ConsumerWidget {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final selectedColor = isDark ? theme.colorScheme.secondary : AppColors.primary;
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white,
+          color: isSelected ? selectedColor : (isDark ? const Color(0xFF1E293B) : Colors.white),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.black.withValues(alpha: 0.08),
+            color: isSelected ? selectedColor : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.08)),
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.2),
+                    color: selectedColor.withValues(alpha: 0.2),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   )
@@ -46,7 +50,7 @@ class GoalsScreen extends ConsumerWidget {
           style: GoogleFonts.inter(
             fontSize: 12.5,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            color: isSelected ? Colors.white : AppColors.textPrimary,
+            color: isSelected ? Colors.white : (isDark ? const Color(0xFF94A3B8) : AppColors.textPrimary),
           ),
         ),
       ),
@@ -55,14 +59,14 @@ class GoalsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final goalsState = ref.watch(goalsControllerProvider);
     final goalsNotifier = ref.read(goalsControllerProvider.notifier);
     final filteredGoals = goalsState.filteredGoals;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
         elevation: 0,
         scrolledUnderElevation: 0,
         title: Text(
@@ -70,12 +74,12 @@ class GoalsScreen extends ConsumerWidget {
           style: GoogleFonts.inter(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+            color: isDark ? Colors.white : AppColors.textPrimary,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: AppColors.textSecondary, size: 20),
+            icon: Icon(Icons.refresh_rounded, color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary, size: 20),
             tooltip: 'Refresh',
             onPressed: () => goalsNotifier.loadGoals(),
           ),
@@ -84,7 +88,7 @@ class GoalsScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => CreateGoalBottomSheet.show(context),
-        backgroundColor: AppColors.primary,
+        backgroundColor: isDark ? theme.colorScheme.secondary : AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 2,
         icon: const Icon(Icons.add_rounded, size: 20),
@@ -95,7 +99,7 @@ class GoalsScreen extends ConsumerWidget {
       ),
       body: RefreshIndicator(
         onRefresh: () => goalsNotifier.loadGoals(),
-        color: AppColors.accent,
+        color: theme.colorScheme.secondary,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.only(bottom: 80),

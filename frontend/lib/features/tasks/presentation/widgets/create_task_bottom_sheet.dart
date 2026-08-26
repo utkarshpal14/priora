@@ -9,14 +9,28 @@ import '../../domain/task_model.dart';
 import '../controllers/tasks_controller.dart';
 
 class CreateTaskBottomSheet extends ConsumerStatefulWidget {
-  const CreateTaskBottomSheet({super.key});
+  final String? goalId;
+  final String? milestoneId;
 
-  static Future<void> show(BuildContext context) {
+  const CreateTaskBottomSheet({
+    super.key,
+    this.goalId,
+    this.milestoneId,
+  });
+
+  static Future<void> show(
+    BuildContext context, {
+    String? goalId,
+    String? milestoneId,
+  }) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const CreateTaskBottomSheet(),
+      builder: (context) => CreateTaskBottomSheet(
+        goalId: goalId,
+        milestoneId: milestoneId,
+      ),
     );
   }
 
@@ -36,11 +50,15 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
   DateTime? _selectedDeadline;
   ReminderPreset _selectedReminderPreset = ReminderPreset.none;
   DateTime? _customReminderTime;
+  String _selectedRepeatType = 'none';
   bool _showDescriptionField = false;
 
   @override
   void initState() {
     super.initState();
+    _selectedGoalId = widget.goalId;
+    _selectedMilestoneId = widget.milestoneId;
+
     // Default deadline: Today 6:00 PM (if before 6 PM) or Tomorrow 6:00 PM
     final now = DateTime.now();
     if (now.hour >= 18) {
@@ -137,10 +155,14 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
   Future<void> _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final navigator = Navigator.of(context);
     final categories = ref.read(tasksControllerProvider).categories;
     final catId = _selectedCategoryId ?? (categories.isNotEmpty ? categories.first.id : null);
 
-    final success = await ref.read(tasksControllerProvider.notifier).createTask(
+    // Dismiss bottom sheet instantly for ultra-fluid UI response
+    navigator.pop();
+
+    await ref.read(tasksControllerProvider.notifier).createTask(
           title: _titleController.text.trim(),
           description: _showDescriptionField && _descController.text.trim().isNotEmpty
               ? _descController.text.trim()
@@ -151,23 +173,14 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
           milestoneId: _selectedMilestoneId,
           deadline: _selectedDeadline,
           remindAt: _getEffectiveRemindAt(),
+          repeatType: _selectedRepeatType,
         );
-
-    if (success && mounted) {
-      Navigator.of(context).pop();
-    } else if (mounted) {
-      final error = ref.read(tasksControllerProvider).errorMessage;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error ?? 'Failed to create task.'),
-          backgroundColor: Colors.red.shade700,
-        ),
-      );
-    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final tasksState = ref.watch(tasksControllerProvider);
     final categories = tasksState.categories;
 
@@ -179,9 +192,9 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.only(
         top: 20,
@@ -202,7 +215,7 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.15),
+                    color: isDark ? Colors.white.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -217,11 +230,11 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
                     style: GoogleFonts.inter(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                      color: isDark ? Colors.white : AppColors.textPrimary,
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, size: 20),
+                    icon: Icon(Icons.close, size: 20, color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
@@ -232,27 +245,27 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
               TextFormField(
                 controller: _titleController,
                 autofocus: true,
-                style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface),
+                style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500, color: isDark ? Colors.white : AppColors.textPrimary),
                 decoration: InputDecoration(
                   hintText: 'What needs to be done?',
                   hintStyle: GoogleFonts.inter(
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                    color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                     fontSize: 15,
                   ),
                   filled: true,
-                  fillColor: Theme.of(context).colorScheme.surface,
+                  fillColor: isDark ? const Color(0xFF0F172A) : Colors.white,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12)),
+                    borderSide: BorderSide(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.12)),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12)),
+                    borderSide: BorderSide(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.12)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                    borderSide: BorderSide(color: isDark ? theme.colorScheme.secondary : AppColors.primary, width: 1.5),
                   ),
                 ),
                 validator: (value) {
@@ -270,7 +283,7 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -286,10 +299,10 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
                           duration: const Duration(milliseconds: 150),
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           decoration: BoxDecoration(
-                            color: isSelected ? p.backgroundColor : Colors.white,
+                            color: isSelected ? p.backgroundColor : (isDark ? const Color(0xFF0F172A) : Colors.white),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: isSelected ? p.color : Colors.black.withValues(alpha: 0.1),
+                              color: isSelected ? p.color : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.1)),
                               width: isSelected ? 1.5 : 1,
                             ),
                           ),
@@ -299,7 +312,7 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
                               style: GoogleFonts.inter(
                                 fontSize: 12,
                                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                color: isSelected ? p.color : AppColors.textSecondary,
+                                color: isSelected ? p.color : (isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
                               ),
                             ),
                           ),
@@ -324,21 +337,23 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                            color: isDark ? Colors.white : AppColors.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: isDark ? const Color(0xFF0F172A) : Colors.white,
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: Colors.black.withValues(alpha: 0.1)),
+                            border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.1)),
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
                               isExpanded: true,
                               value: _selectedCategoryId,
+                              dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                              style: GoogleFonts.inter(fontSize: 13, color: isDark ? Colors.white : AppColors.textPrimary),
                               items: categories.map((c) {
                                 return DropdownMenuItem<String>(
                                   value: c.id,
@@ -371,7 +386,7 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                            color: isDark ? Colors.white : AppColors.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -380,14 +395,14 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: isDark ? const Color(0xFF0F172A) : Colors.white,
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Colors.black.withValues(alpha: 0.1)),
+                              border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.1)),
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.calendar_today_rounded,
-                                    size: 15, color: AppColors.accent),
+                                Icon(Icons.calendar_today_rounded,
+                                    size: 15, color: theme.colorScheme.secondary),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
@@ -397,7 +412,7 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
                                     style: GoogleFonts.inter(
                                       fontSize: 12.5,
                                       fontWeight: FontWeight.w500,
-                                      color: AppColors.textPrimary,
+                                      color: isDark ? Colors.white : AppColors.textPrimary,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -419,7 +434,7 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -446,12 +461,14 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
                           duration: const Duration(milliseconds: 150),
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                           decoration: BoxDecoration(
-                            color: isSelected ? const Color(0xFFFEF3C7) : Colors.white,
+                            color: isSelected
+                                ? (isDark ? const Color(0xFF78350F).withValues(alpha: 0.4) : const Color(0xFFFEF3C7))
+                                : (isDark ? const Color(0xFF0F172A) : Colors.white),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
                               color: isSelected
                                   ? const Color(0xFFD97706)
-                                  : Colors.black.withValues(alpha: 0.1),
+                                  : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.1)),
                               width: isSelected ? 1.5 : 1,
                             ),
                           ),
@@ -465,7 +482,7 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
                                 size: 14,
                                 color: isSelected
                                     ? const Color(0xFFD97706)
-                                    : AppColors.textSecondary,
+                                    : (isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
                               ),
                               const SizedBox(width: 4),
                               Text(
@@ -476,11 +493,108 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
                                   fontSize: 12,
                                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                                   color: isSelected
-                                      ? const Color(0xFF92400E)
-                                      : AppColors.textSecondary,
+                                      ? (isDark ? const Color(0xFFFCD34D) : const Color(0xFF92400E))
+                                      : (isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
                                 ),
                               ),
                             ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Recurrence / Repeat Selector (ENH-005)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.repeat_rounded,
+                        size: 16,
+                        color: _selectedRepeatType != 'none'
+                            ? (isDark ? theme.colorScheme.secondary : AppColors.primary)
+                            : (isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Repeat',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_selectedRepeatType != 'none')
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: (isDark ? theme.colorScheme.secondary : AppColors.primary).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        _selectedRepeatType.toUpperCase(),
+                        style: GoogleFonts.inter(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? theme.colorScheme.secondary : AppColors.primary,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    {'id': 'none', 'label': 'Never'},
+                    {'id': 'daily', 'label': 'Daily'},
+                    {'id': 'weekly', 'label': 'Weekly'},
+                    {'id': 'monthly', 'label': 'Monthly'},
+                  ].map((option) {
+                    final isSelected = _selectedRepeatType == option['id'];
+                    final accentColor = isDark ? theme.colorScheme.secondary : AppColors.primary;
+
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(8),
+                        onTap: () {
+                          setState(() {
+                            _selectedRepeatType = option['id']!;
+                          });
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? accentColor.withValues(alpha: 0.15)
+                                : (isDark ? const Color(0xFF0F172A) : Colors.white),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isSelected
+                                  ? accentColor
+                                  : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.1)),
+                              width: isSelected ? 1.5 : 1,
+                            ),
+                          ),
+                          child: Text(
+                            option['label']!,
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                              color: isSelected
+                                  ? accentColor
+                                  : (isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
+                            ),
                           ),
                         ),
                       ),
@@ -497,14 +611,14 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.add_circle_outline, size: 16, color: AppColors.accent),
+                      Icon(Icons.add_circle_outline, size: 16, color: theme.colorScheme.secondary),
                       const SizedBox(width: 6),
                       Text(
                         'Add details / description',
                         style: GoogleFonts.inter(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.accent,
+                          color: theme.colorScheme.secondary,
                         ),
                       ),
                     ],
@@ -516,21 +630,26 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _descController,
                   maxLines: 3,
-                  style: GoogleFonts.inter(fontSize: 14),
+                  style: GoogleFonts.inter(fontSize: 14, color: isDark ? Colors.white : AppColors.textPrimary),
                   decoration: InputDecoration(
                     hintText: 'Add extra context or notes...',
+                    hintStyle: GoogleFonts.inter(color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: isDark ? const Color(0xFF0F172A) : Colors.white,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.1)),
+                      borderSide: BorderSide(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.1)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.1)),
                     ),
                   ),
                 ),
@@ -544,7 +663,7 @@ class _CreateTaskBottomSheetState extends ConsumerState<CreateTaskBottomSheet> {
                 child: ElevatedButton(
                   onPressed: tasksState.isCreating ? null : _handleSave,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: isDark ? theme.colorScheme.secondary : AppColors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

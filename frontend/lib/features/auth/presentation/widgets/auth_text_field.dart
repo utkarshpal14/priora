@@ -32,6 +32,9 @@ class _AuthTextFieldState extends State<AuthTextField> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -40,7 +43,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
           style: GoogleFonts.inter(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: isDark ? Colors.white : AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 6),
@@ -51,18 +54,18 @@ class _AuthTextFieldState extends State<AuthTextField> {
           validator: widget.validator,
           style: GoogleFonts.inter(
             fontSize: 15,
-            color: AppColors.textPrimary,
+            color: isDark ? Colors.white : AppColors.textPrimary,
           ),
           decoration: InputDecoration(
             hintText: widget.hintText,
             hintStyle: GoogleFonts.inter(
               fontSize: 14,
-              color: AppColors.textTertiary,
+              color: isDark ? const Color(0xFF64748B) : AppColors.textTertiary,
             ),
             prefixIcon: Icon(
               widget.prefixIcon,
               size: 20,
-              color: AppColors.textSecondary,
+              color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
             ),
             suffixIcon: widget.isPassword
                 ? IconButton(
@@ -71,7 +74,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
                           ? Icons.visibility_outlined
                           : Icons.visibility_off_outlined,
                       size: 20,
-                      color: AppColors.textSecondary,
+                      color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                     ),
                     onPressed: () {
                       setState(() {
@@ -81,19 +84,19 @@ class _AuthTextFieldState extends State<AuthTextField> {
                   )
                 : null,
             filled: true,
-            fillColor: AppColors.surface,
+            fillColor: isDark ? const Color(0xFF1E293B) : AppColors.surface,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.border, width: 1),
+              borderSide: BorderSide(color: isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.border, width: 1),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.border, width: 1),
+              borderSide: BorderSide(color: isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.border, width: 1),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+              borderSide: BorderSide(color: isDark ? theme.colorScheme.secondary : AppColors.primary, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

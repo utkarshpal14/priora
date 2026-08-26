@@ -1,3 +1,5 @@
+import 'reminder_sound_model.dart';
+
 class NotificationPreferencesModel {
   final bool notificationsEnabled;
   final bool soundEnabled;
@@ -5,6 +7,7 @@ class NotificationPreferencesModel {
   final bool sessionReminders;
   final bool reviewReminders;
   final bool goalAlerts;
+  final ReminderSound reminderSound;
 
   const NotificationPreferencesModel({
     this.notificationsEnabled = true,
@@ -13,6 +16,7 @@ class NotificationPreferencesModel {
     this.sessionReminders = true,
     this.reviewReminders = true,
     this.goalAlerts = true,
+    this.reminderSound = ReminderSound.chime,
   });
 
   factory NotificationPreferencesModel.fromJson(Map<String, dynamic> json) {
@@ -23,6 +27,7 @@ class NotificationPreferencesModel {
       sessionReminders: json['session_reminders'] ?? true,
       reviewReminders: json['review_reminders'] ?? true,
       goalAlerts: json['goal_alerts'] ?? true,
+      reminderSound: ReminderSound.fromId(json['reminder_sound'] as String?),
     );
   }
 
@@ -34,6 +39,7 @@ class NotificationPreferencesModel {
       'session_reminders': sessionReminders,
       'review_reminders': reviewReminders,
       'goal_alerts': goalAlerts,
+      'reminder_sound': reminderSound.id,
     };
   }
 
@@ -44,6 +50,7 @@ class NotificationPreferencesModel {
     bool? sessionReminders,
     bool? reviewReminders,
     bool? goalAlerts,
+    ReminderSound? reminderSound,
   }) {
     return NotificationPreferencesModel(
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
@@ -52,6 +59,7 @@ class NotificationPreferencesModel {
       sessionReminders: sessionReminders ?? this.sessionReminders,
       reviewReminders: reviewReminders ?? this.reviewReminders,
       goalAlerts: goalAlerts ?? this.goalAlerts,
+      reminderSound: reminderSound ?? this.reminderSound,
     );
   }
 }

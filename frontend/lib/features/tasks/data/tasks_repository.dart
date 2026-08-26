@@ -39,6 +39,9 @@ class TasksRepository {
     DateTime? deadline,
     DateTime? scheduledStart,
     DateTime? scheduledEnd,
+    String? repeatType,
+    int? repeatInterval,
+    DateTime? repeatEndDate,
   }) {
     return _api.createTask(
       title: title,
@@ -50,6 +53,9 @@ class TasksRepository {
       deadline: deadline,
       scheduledStart: scheduledStart,
       scheduledEnd: scheduledEnd,
+      repeatType: repeatType,
+      repeatInterval: repeatInterval,
+      repeatEndDate: repeatEndDate,
     );
   }
 
@@ -60,9 +66,14 @@ class TasksRepository {
     TaskPriority? priority,
     TaskStatus? status,
     String? categoryId,
+    String? goalId,
+    String? milestoneId,
     DateTime? deadline,
     DateTime? scheduledStart,
     DateTime? scheduledEnd,
+    String? repeatType,
+    int? repeatInterval,
+    DateTime? repeatEndDate,
   }) {
     return _api.updateTask(
       taskId,
@@ -71,9 +82,14 @@ class TasksRepository {
       priority: priority,
       status: status,
       categoryId: categoryId,
+      goalId: goalId,
+      milestoneId: milestoneId,
       deadline: deadline,
       scheduledStart: scheduledStart,
       scheduledEnd: scheduledEnd,
+      repeatType: repeatType,
+      repeatInterval: repeatInterval,
+      repeatEndDate: repeatEndDate,
     );
   }
 

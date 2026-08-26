@@ -18,6 +18,8 @@ class CalendarStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     // Render 14-day rolling window: 3 days past, today, 10 days future
@@ -39,7 +41,7 @@ class CalendarStrip extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
                   ),
                 ),
                 if (selectedDate.year != today.year ||
@@ -50,7 +52,7 @@ class CalendarStrip extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.accent.withValues(alpha: 0.1),
+                        color: theme.colorScheme.secondary.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -58,7 +60,7 @@ class CalendarStrip extends StatelessWidget {
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.accent,
+                          color: theme.colorScheme.secondary,
                         ),
                       ),
                     ),
@@ -86,6 +88,8 @@ class CalendarStrip extends StatelessWidget {
                 final dateKey = DateFormat('yyyy-MM-dd').format(date);
                 final taskCount = taskCountByDate[dateKey] ?? 0;
 
+                final selectedColor = isDark ? theme.colorScheme.secondary : AppColors.primary;
+
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: GestureDetector(
@@ -95,23 +99,25 @@ class CalendarStrip extends StatelessWidget {
                       width: 52,
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppColors.primary
+                            ? selectedColor
                             : (isToday
-                                ? AppColors.accent.withValues(alpha: 0.08)
-                                : Colors.white),
+                                ? theme.colorScheme.secondary.withValues(alpha: isDark ? 0.18 : 0.08)
+                                : (isDark ? const Color(0xFF1E293B) : Colors.white)),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: isSelected
-                              ? AppColors.primary
+                              ? selectedColor
                               : (isToday
-                                  ? AppColors.accent.withValues(alpha: 0.3)
-                                  : Colors.black.withValues(alpha: 0.06)),
+                                  ? theme.colorScheme.secondary.withValues(alpha: 0.4)
+                                  : (isDark
+                                      ? Colors.white.withValues(alpha: 0.08)
+                                      : Colors.black.withValues(alpha: 0.06))),
                           width: isSelected || isToday ? 1.5 : 1,
                         ),
                         boxShadow: isSelected
                             ? [
                                 BoxShadow(
-                                  color: AppColors.primary.withValues(alpha: 0.25),
+                                  color: selectedColor.withValues(alpha: 0.25),
                                   blurRadius: 8,
                                   offset: const Offset(0, 3),
                                 ),
@@ -128,7 +134,7 @@ class CalendarStrip extends StatelessWidget {
                               fontWeight: FontWeight.w600,
                               color: isSelected
                                   ? Colors.white.withValues(alpha: 0.8)
-                                  : AppColors.textSecondary,
+                                  : (isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -140,8 +146,8 @@ class CalendarStrip extends StatelessWidget {
                               color: isSelected
                                   ? Colors.white
                                   : (isToday
-                                      ? AppColors.accent
-                                      : AppColors.textPrimary),
+                                      ? theme.colorScheme.secondary
+                                      : (isDark ? Colors.white : AppColors.textPrimary)),
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -154,7 +160,7 @@ class CalendarStrip extends StatelessWidget {
                                     ? Colors.white
                                     : (taskCount > 2
                                         ? const Color(0xFFDC2626)
-                                        : AppColors.accent),
+                                        : theme.colorScheme.secondary),
                                 shape: BoxShape.circle,
                               ),
                             )

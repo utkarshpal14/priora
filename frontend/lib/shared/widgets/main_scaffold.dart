@@ -40,22 +40,28 @@ class MainScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final selectedIndex = _calculateSelectedIndex(location);
 
     return Scaffold(
       body: child,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.colorScheme.surface,
           border: Border(
             top: BorderSide(
-              color: Colors.black.withValues(alpha: 0.06),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.black.withValues(alpha: 0.06),
               width: 1,
             ),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.2)
+                  : Colors.black.withValues(alpha: 0.03),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -64,10 +70,12 @@ class MainScaffold extends StatelessWidget {
         child: BottomNavigationBar(
           currentIndex: selectedIndex,
           onTap: (index) => _onItemTapped(index, context),
-          backgroundColor: Colors.white,
+          backgroundColor: theme.colorScheme.surface,
           elevation: 0,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textSecondary.withValues(alpha: 0.7),
+          selectedItemColor: isDark ? theme.colorScheme.secondary : AppColors.primary,
+          unselectedItemColor: isDark
+              ? const Color(0xFF94A3B8)
+              : AppColors.textSecondary.withValues(alpha: 0.7),
           selectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 12),
           unselectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 12),
           type: BottomNavigationBarType.fixed,
