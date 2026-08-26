@@ -44,9 +44,13 @@ def _sync_sqlite_schema() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     # Auto-create tables on startup (DB-001 through DB-003)
-    Base.metadata.create_all(bind=engine)
-    if engine.dialect.name == "sqlite":
-        _sync_sqlite_schema()
+    try:
+        Base.metadata.create_all(bind=engine)
+        if engine.dialect.name == "sqlite":
+            _sync_sqlite_schema()
+    except Exception as e:
+        import logging
+        logging.getLogger("uvicorn.error").warning(f"Database startup schema notice: {e}")
     yield
 
 

@@ -9,7 +9,11 @@ from app.core.config import settings
 
 # Configure engine arguments based on dialect (PostgreSQL vs SQLite)
 is_sqlite = settings.DATABASE_URL.startswith("sqlite")
-connect_args = {"check_same_thread": False} if is_sqlite else {}
+if is_sqlite:
+    connect_args = {"check_same_thread": False}
+else:
+    # Disable prepared statements for PgBouncer / Supabase connection poolers (prevents DuplicatePreparedStatement)
+    connect_args = {"prepare_threshold": None}
 
 engine = create_engine(
     settings.DATABASE_URL,
