@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.2] - 2026-08-28
+
+### Fixed
+- **GoRouter Dialog Auto-Dismissal:** Attached update modal to `rootNavigatorKey` with `useRootNavigator: true`, preventing GoRouter auth/route redirects from prematurely closing the update modal during startup.
+- **Dynamic Rocket Version Card:** Replaced hardcoded `'v1.0.0 (Build 100)'` in Settings with dynamic binding to `AppConstants.appVersion` / `AppUpdateService.currentInstalledVersion`.
+- **Manual In-App Update Trigger:** Unified the Settings Rocket card with an interactive **"Check for Updates"** button providing immediate visual status snackbars.
+- **Android 13+ Unknown Sources Permission Resume:** Auto-triggers the APK package installer when returning from Android's "Install unknown apps" settings toggle without requiring a re-download.
+
+### Added
+- **Versioned APK Archive Engine:** Created automated `releases/vX.Y.Z/` folder structure with local APK binaries and catalog documentation.
+
+---
+
+## [1.1.0] - 2026-08-28
+
+### Added
+- **ENH-005 / TS-007 Custom Reminder Audio Engine:** Added 6 high-fidelity reminder sound options (`gentle_bell`, `marimba_pulse`, `zen_chime`, `crystal_ping`, `focus_bell`, `digital_alert`) with inline live audio preview in Settings.
+- **ENH-006 / TS-008 In-App OTA APK Update System:**
+  - Automated update check on startup comparing semantic versions against backend `/api/v1/system/app-version`.
+  - In-app modal with release notes, download progress bar, cancel tokens, and error retry handlers.
+  - Native Android `FileProvider` (`com.example.frontend.fileprovider`) and MethodChannel installation bridge.
+- **Backend App Version System Endpoint:** Fast, cached `/api/v1/system/app-version` configuration endpoint with environment variable controls (`LATEST_APP_VERSION`, `APK_DOWNLOAD_URL`, `FORCE_APP_UPDATE`).
+
+---
+
 ## [1.0.0] - 2026-08-22
 
 ### Added

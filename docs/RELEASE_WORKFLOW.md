@@ -36,34 +36,35 @@
 
 ---
 
-### Step 1: Bump the App Version
+### Step 1: Bump the App Version (Single Source of Truth)
 
-1. Open [`frontend/pubspec.yaml`](file:///c:/Users/Utkarsh%20Pal/Documents/priora/frontend/pubspec.yaml) and update the version:
-   ```yaml
-   # Example: moving from 1.1.0 to 1.1.1 (build number 2)
-   version: 1.1.1+2
-   ```
-
-2. Open [`frontend/lib/core/services/app_update_service.dart`](file:///c:/Users/Utkarsh%20Pal/Documents/priora/frontend/lib/core/services/app_update_service.dart) and update the constant:
+1. Open [`frontend/lib/core/constants/app_constants.dart`](file:///c:/Users/Utkarsh%20Pal/Documents/priora/frontend/lib/core/constants/app_constants.dart):
    ```dart
-   static const String currentInstalledVersion = '1.1.1';
+   static const String appVersion = '1.1.2';
    ```
+2. Open [`frontend/pubspec.yaml`](file:///c:/Users/Utkarsh%20Pal/Documents/priora/frontend/pubspec.yaml):
+   ```yaml
+   version: 1.1.2+3
+   ```
+*(Note: `AppUpdateService.currentInstalledVersion` and the Settings Rocket card dynamically read from `AppConstants.appVersion` automatically).*
 
 ---
 
-### Step 2: Build the Production Release APK
+### Step 2: Build & Archive the Production Release APK
 
-Run these commands in the terminal:
+Run these commands:
 
-```bash
+```powershell
 cd frontend
-flutter clean
-flutter pub get
 flutter build apk --release
+
+# Archive APK into versioned storage folder
+New-Item -ItemType Directory -Force -Path "..\releases\v1.1.2"
+Copy-Item -Path "build\app\outputs\flutter-apk\app-release.apk" -Destination "..\releases\v1.1.2\priora-v1.1.2-release.apk" -Force
 ```
 
-**Output APK Location:**  
-`frontend/build/app/outputs/flutter-apk/app-release.apk`
+**Local Archive Location:**  
+`releases/v1.1.2/priora-v1.1.2-release.apk`
 
 ---
 

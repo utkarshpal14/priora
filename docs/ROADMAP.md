@@ -1,6 +1,6 @@
 # Priora — Product Roadmap & Backlog Matrix
 
-> **Version:** v1.0.0 (Build 100 / RC1 Approved)  
+> **Version:** v1.1.2 (Build 3 / Live Released)  
 > **Status:** Active Roadmap  
 
 ---
@@ -23,13 +23,14 @@
                 │
                 ▼
 ┌───────────────────────────────┐
-│     Priora v1.1.0 (Minor)     │
-│       (PLANNED v1.1)          │
+│  Priora v1.1.0/v1.1.2 (Minor) │
+│  (COMPLETED & RELEASED)       │
 │                               │
-│ • ENH-004 Custom Audio Chimes │
-│ • 10-Second Strong Alerts     │
-│ • Recurring Tasks Engine      │
-│ • Habit Tracker & Streaks     │
+│ • ENH-005 6 Custom Sound Chimes│
+│ • ENH-006 In-App OTA Updater  │
+│ • Native FileProvider Bridge  │
+│ • Dynamic Versioning & Checks │
+│ • Versioned APK Archive       │
 └───────────────┬───────────────┘
                 │
                 ▼
@@ -37,7 +38,8 @@
 │     Priora v2.0.0 (Major)     │
 │       (FUTURE BACKLOG)        │
 │                               │
-│ • Project Planning System     │
+│ • Recurring Tasks Engine      │
+│ • Habit Tracker & Streaks     │
 │ • FCM Cloud Push Engine       │
 │ • Backend Scheduler Queue     │
 │ • Google Calendar Integration │
