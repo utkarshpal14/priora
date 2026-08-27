@@ -28,7 +28,11 @@ class _MainScaffoldState extends State<MainScaffold> {
     if (!_hasCheckedForUpdatesThisSession) {
       _hasCheckedForUpdatesThisSession = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        AppUpdateService.checkForUpdates(context);
+        Future.delayed(const Duration(milliseconds: 600), () {
+          if (mounted) {
+            AppUpdateService.checkForUpdates(context);
+          }
+        });
       });
     }
   }

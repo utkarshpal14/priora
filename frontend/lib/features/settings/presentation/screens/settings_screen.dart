@@ -12,6 +12,7 @@ import '../../../goals/presentation/controllers/goals_controller.dart';
 import '../../../tasks/presentation/controllers/tasks_controller.dart';
 import '../../../../core/services/local_notification_service.dart';
 import '../../../../core/services/audio_preview_service.dart';
+import '../../../../core/services/app_update_service.dart';
 import '../../domain/reminder_sound_model.dart';
 import '../controllers/notification_settings_controller.dart';
 
@@ -805,9 +806,88 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with WidgetsBin
                 ],
               ),
             ),
+            const SizedBox(height: 20),
+
+            // 7. App Version & In-App Updates
+            _buildSectionHeader('App Version & Updates', isDark),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.black.withValues(alpha: 0.06),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.info_outline_rounded, size: 20, color: AppColors.textTertiary),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Installed Version',
+                            style: GoogleFonts.inter(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? Colors.white : AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.secondary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          'v${AppUpdateService.currentInstalledVersion}',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? theme.colorScheme.secondary : AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: ElevatedButton.icon(
+                      onPressed: () => AppUpdateService.checkForUpdatesManual(context),
+                      icon: const Icon(Icons.system_update_rounded, size: 18),
+                      label: Text(
+                        'Check for Updates',
+                        style: GoogleFonts.inter(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.secondary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 24),
 
-            // 7. Log Out Action Button
+            // 8. Log Out Action Button
             SizedBox(
               width: double.infinity,
               height: 48,

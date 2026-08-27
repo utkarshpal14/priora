@@ -77,10 +77,54 @@ class AppUpdateService {
     if (isUpdateAvailable(currentInstalledVersion, versionModel.latestVersion)) {
       showDialog<void>(
         context: context,
+        useRootNavigator: true,
         barrierDismissible: !versionModel.forceUpdate,
         builder: (dialogContext) => AppUpdateDialog(
           versionModel: versionModel,
           currentVersion: currentInstalledVersion,
+        ),
+      );
+    }
+  }
+
+  /// Manually checks for updates with direct user feedback (for Settings screen).
+  static Future<void> checkForUpdatesManual(BuildContext context) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    scaffoldMessenger.showSnackBar(
+      const SnackBar(
+        content: Text('Checking for updates...'),
+        duration: Duration(seconds: 1),
+      ),
+    );
+
+    final versionModel = await fetchLatestVersion();
+    if (!context.mounted) return;
+
+    if (versionModel == null) {
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(
+          content: Text('Could not reach update server. Please check your internet connection.'),
+          backgroundColor: Color(0xFFEF4444),
+        ),
+      );
+      return;
+    }
+
+    if (isUpdateAvailable(currentInstalledVersion, versionModel.latestVersion)) {
+      showDialog<void>(
+        context: context,
+        useRootNavigator: true,
+        barrierDismissible: !versionModel.forceUpdate,
+        builder: (dialogContext) => AppUpdateDialog(
+          versionModel: versionModel,
+          currentVersion: currentInstalledVersion,
+        ),
+      );
+    } else {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('You are on the latest version of Priora (v$currentInstalledVersion)'),
+          backgroundColor: const Color(0xFF10B981),
         ),
       );
     }
