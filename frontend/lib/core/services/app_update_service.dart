@@ -13,7 +13,7 @@ import '../../shared/widgets/app_update_dialog.dart';
 class AppUpdateService {
   /// The current hardcoded client build version.
   /// Increment this when publishing new releases.
-  static const String currentInstalledVersion = '1.0.0';
+  static const String currentInstalledVersion = '1.1.0';
 
   static const MethodChannel _systemChannel = MethodChannel('com.example.frontend/system_settings');
 
@@ -86,12 +86,37 @@ class AppUpdateService {
     }
   }
 
+  /// Checks whether Android allows installing unknown apps.
+  static Future<bool> canRequestPackageInstalls() async {
+    if (kIsWeb || !Platform.isAndroid) return true;
+    try {
+      final res = await _systemChannel.invokeMethod<bool>('canRequestPackageInstalls');
+      return res ?? true;
+    } catch (_) {
+      return true;
+    }
+  }
+
+  /// Directly invokes the native Android package installer on an existing downloaded APK file.
+  /// Returns 'SUCCESS', 'PERMISSION_REQUIRED', or 'ERROR'.
+  static Future<String> installDownloadedApk(String apkPath) async {
+    if (kIsWeb || !Platform.isAndroid) return 'UNSUPPORTED';
+    try {
+      final res = await _systemChannel.invokeMethod<String>('installApk', {'filePath': apkPath});
+      return res ?? 'ERROR';
+    } catch (e) {
+      debugPrint('AppUpdateService: Error invoking native installer: $e');
+      return 'ERROR';
+    }
+  }
+
   /// Downloads the APK directly inside the app with a real-time progress callback,
   /// and automatically triggers the native Android package installer.
   static Future<void> downloadAndInstallApk({
     required String downloadUrl,
     required void Function(double progress, String progressLabel) onProgress,
     required void Function(String errorMessage) onError,
+    required void Function(String apkPath) onPermissionRequired,
     CancelToken? cancelToken,
   }) async {
     if (downloadUrl.isEmpty) {
@@ -137,8 +162,10 @@ class AppUpdateService {
       onProgress(1.0, 'Launching installer...');
 
       // Invoke native Android installer Intent with FileProvider
-      final bool? success = await _systemChannel.invokeMethod<bool>('installApk', {'filePath': apkPath});
-      if (success != true) {
+      final installResult = await installDownloadedApk(apkPath);
+      if (installResult == 'PERMISSION_REQUIRED') {
+        onPermissionRequired(apkPath);
+      } else if (installResult != 'SUCCESS') {
         // Fallback to external download if native package installer invocation fails
         await launchDownload(downloadUrl);
       }

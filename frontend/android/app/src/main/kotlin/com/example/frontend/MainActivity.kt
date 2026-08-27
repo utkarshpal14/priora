@@ -149,12 +149,37 @@ class MainActivity : FlutterActivity() {
                         result.success(false)
                     }
                 }
+                "canRequestPackageInstalls" -> {
+                    try {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            result.success(context.packageManager.canRequestPackageInstalls())
+                        } else {
+                            result.success(true)
+                        }
+                    } catch (e: Exception) {
+                        result.success(true)
+                    }
+                }
                 "installApk" -> {
                     try {
                         val filePath = call.argument<String>("filePath")
                         if (filePath != null) {
                             val file = java.io.File(filePath)
                             if (file.exists()) {
+                                // Check Android Unknown Sources permission (Android 8.0+ / Android 13+)
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    if (!context.packageManager.canRequestPackageInstalls()) {
+                                        android.util.Log.i("PrioraUpdate", "[MainActivity] Prompting user for ACTION_MANAGE_UNKNOWN_APP_SOURCES")
+                                        val manageIntent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                                            data = Uri.parse("package:$packageName")
+                                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        }
+                                        startActivity(manageIntent)
+                                        result.success("PERMISSION_REQUIRED")
+                                        return@setMethodCallHandler
+                                    }
+                                }
+
                                 val apkUri: Uri = androidx.core.content.FileProvider.getUriForFile(
                                     context,
                                     "${packageName}.fileprovider",
@@ -166,7 +191,7 @@ class MainActivity : FlutterActivity() {
                                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                 }
                                 startActivity(intent)
-                                result.success(true)
+                                result.success("SUCCESS")
                             } else {
                                 result.error("FILE_NOT_FOUND", "APK file does not exist at $filePath", null)
                             }

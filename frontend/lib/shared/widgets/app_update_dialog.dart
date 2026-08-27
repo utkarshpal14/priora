@@ -19,16 +19,55 @@ class AppUpdateDialog extends StatefulWidget {
   State<AppUpdateDialog> createState() => _AppUpdateDialogState();
 }
 
-class _AppUpdateDialogState extends State<AppUpdateDialog> {
+class _AppUpdateDialogState extends State<AppUpdateDialog> with WidgetsBindingObserver {
   bool _isDownloading = false;
+  bool _isPermissionRequired = false;
+  String? _downloadedApkPath;
   double _progress = 0.0;
   String _statusMessage = '';
   String? _errorMessage;
   CancelToken? _cancelToken;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _cancelToken?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // When returning from Android Settings (ACTION_MANAGE_UNKNOWN_APP_SOURCES)
+    if (state == AppLifecycleState.resumed && _isPermissionRequired && _downloadedApkPath != null) {
+      _checkPermissionAndInstall();
+    }
+  }
+
+  Future<void> _checkPermissionAndInstall() async {
+    final hasPermission = await AppUpdateService.canRequestPackageInstalls();
+    if (hasPermission && _downloadedApkPath != null && mounted) {
+      setState(() {
+        _isPermissionRequired = false;
+        _statusMessage = 'Launching installer...';
+      });
+      final res = await AppUpdateService.installDownloadedApk(_downloadedApkPath!);
+      if (res == 'SUCCESS' && mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+    }
+  }
+
   void _startDownload() {
     setState(() {
       _isDownloading = true;
+      _isPermissionRequired = false;
+      _downloadedApkPath = null;
       _progress = 0.0;
       _statusMessage = 'Connecting...';
       _errorMessage = null;
@@ -46,10 +85,21 @@ class _AppUpdateDialogState extends State<AppUpdateDialog> {
           });
         }
       },
+      onPermissionRequired: (apkPath) {
+        if (mounted) {
+          setState(() {
+            _isDownloading = false;
+            _isPermissionRequired = true;
+            _downloadedApkPath = apkPath;
+            _statusMessage = 'Permission needed to install';
+          });
+        }
+      },
       onError: (error) {
         if (mounted) {
           setState(() {
             _isDownloading = false;
+            _isPermissionRequired = false;
             _errorMessage = error;
           });
         }
@@ -57,10 +107,32 @@ class _AppUpdateDialogState extends State<AppUpdateDialog> {
     );
   }
 
+  Future<void> _installDownloadedApk() async {
+    if (_downloadedApkPath == null) {
+      _startDownload();
+      return;
+    }
+
+    final res = await AppUpdateService.installDownloadedApk(_downloadedApkPath!);
+    if (res == 'SUCCESS' && mounted) {
+      Navigator.of(context, rootNavigator: true).pop();
+    } else if (res == 'PERMISSION_REQUIRED') {
+      if (mounted) {
+        setState(() {
+          _isPermissionRequired = true;
+        });
+      }
+    } else {
+      // Fallback to external download if direct file installation fails
+      AppUpdateService.launchDownload(widget.versionModel.apkDownloadUrl);
+    }
+  }
+
   void _cancelDownload() {
     _cancelToken?.cancel();
     setState(() {
       _isDownloading = false;
+      _isPermissionRequired = false;
       _progress = 0.0;
       _statusMessage = '';
     });
@@ -83,7 +155,7 @@ class _AppUpdateDialogState extends State<AppUpdateDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Glowing Rocket / Downloading Icon Header
+              // Header Icon
               Container(
                 width: 64,
                 height: 64,
@@ -96,7 +168,11 @@ class _AppUpdateDialogState extends State<AppUpdateDialog> {
                   ),
                 ),
                 child: Icon(
-                  _isDownloading ? Icons.downloading_rounded : Icons.rocket_launch_rounded,
+                  _isDownloading
+                      ? Icons.downloading_rounded
+                      : _isPermissionRequired
+                          ? Icons.security_rounded
+                          : Icons.rocket_launch_rounded,
                   size: 32,
                   color: accentColor,
                 ),
@@ -105,7 +181,11 @@ class _AppUpdateDialogState extends State<AppUpdateDialog> {
 
               // Title
               Text(
-                _isDownloading ? 'Downloading Update...' : 'Update Available!',
+                _isDownloading
+                    ? 'Downloading Update...'
+                    : _isPermissionRequired
+                        ? 'Permission Required'
+                        : 'Update Available!',
                 style: GoogleFonts.outfit(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -189,6 +269,89 @@ class _AppUpdateDialogState extends State<AppUpdateDialog> {
                       ),
                     ),
                   ),
+                ),
+              ] else if (_isPermissionRequired) ...[
+                // Unknown App Sources Permission Guidance State
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: isDark ? 0.15 : 0.08),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: Colors.amber.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'APK downloaded successfully! Android requires permission to install updates directly.',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          height: 1.45,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '1. Enable "Allow from this source" in Settings\n2. Return here and tap "Install APK"',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          height: 1.4,
+                          color: isDark ? Colors.white70 : const Color(0xFF6B7280),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    if (!widget.versionModel.forceUpdate) ...[
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            side: BorderSide(
+                              color: isDark ? Colors.white.withValues(alpha: 0.2) : const Color(0xFFD1D5DB),
+                            ),
+                          ),
+                          child: Text(
+                            'Later',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white70 : const Color(0xFF6B7280),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                    ],
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _installDownloadedApk,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: accentColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: Text(
+                          'Install APK',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ] else ...[
                 // Error message if previous download failed
