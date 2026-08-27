@@ -3,10 +3,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/constants/app_constants.dart';
-import 'core/services/local_notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
-import 'features/auth/presentation/controllers/auth_controller.dart';
 import 'routes/app_router.dart';
 
 Future<void> main() async {
@@ -26,32 +24,11 @@ Future<void> main() async {
   );
 }
 
-class PrioraApp extends ConsumerStatefulWidget {
+class PrioraApp extends ConsumerWidget {
   const PrioraApp({super.key});
 
   @override
-  ConsumerState<PrioraApp> createState() => _PrioraAppState();
-}
-
-class _PrioraAppState extends ConsumerState<PrioraApp> {
-  @override
-  void initState() {
-    super.initState();
-    // Restore user session and initialize native notifications on app startup
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      try {
-        await ref.read(authControllerProvider.notifier).initialize();
-        final notifService = ref.read(localNotificationServiceProvider);
-        await notifService.initialize();
-        await notifService.requestPermissions();
-      } catch (e, stack) {
-        debugPrint("Startup initialization notice: $e\n$stack");
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     final themeState = ref.watch(themeControllerProvider);
 

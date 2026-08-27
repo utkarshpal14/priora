@@ -12,6 +12,7 @@ import '../features/goals/presentation/screens/goal_detail_screen.dart';
 import '../features/goals/presentation/screens/goals_screen.dart';
 import '../features/planner/presentation/screens/planner_screen.dart';
 import '../features/review/presentation/screens/review_screen.dart';
+import '../features/splash/presentation/screens/splash_screen.dart';
 import '../features/tasks/presentation/screens/tasks_screen.dart';
 import '../features/settings/presentation/screens/settings_screen.dart';
 import '../shared/widgets/main_scaffold.dart';
@@ -23,8 +24,15 @@ final routerProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
-    initialLocation: '/planner',
+    initialLocation: '/splash',
     routes: [
+      // Splash Route (UX-005 Cold-Start Warming)
+      GoRoute(
+        path: '/splash',
+        name: 'splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
+
       // Public Routes
       GoRoute(
         path: '/login',
@@ -109,14 +117,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
     redirect: (BuildContext context, GoRouterState state) {
+      final location = state.uri.path;
+
+      // Allow splash screen to execute warming sequence unimpeded
+      if (location == '/splash') {
+        return null;
+      }
+
       final isAuthenticating = authState.status == AuthStatus.initial;
       if (isAuthenticating) {
-        // App is still loading stored session on launch
         return null;
       }
 
       final isAuthenticated = authState.isAuthenticated;
-      final location = state.uri.path;
       final isPublicRoute = location == '/login' || location == '/register';
 
       // 1. Unauthenticated users trying to access protected routes go to /login

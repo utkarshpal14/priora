@@ -6,7 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/theme_controller.dart';
-import '../../../attachments/data/attachments_repository.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../goals/presentation/controllers/goals_controller.dart';
 import '../../../tasks/presentation/controllers/tasks_controller.dart';

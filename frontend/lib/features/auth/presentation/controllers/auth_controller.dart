@@ -4,6 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../data/auth_repository.dart';
 import '../../domain/auth_state.dart';
+import '../../domain/user_model.dart';
 
 final authControllerProvider =
     StateNotifierProvider<AuthController, AuthState>((ref) {
@@ -28,10 +29,35 @@ class AuthController extends StateNotifier<AuthState> {
       if (user != null) {
         state = AuthState.authenticated(user);
       } else {
-        state = AuthState.unauthenticated();
+        // If server was unreachable or warming, check if tokens exist in secure storage
+        final hasSession = await _repository.hasStoredSession();
+        if (hasSession) {
+          state = AuthState.authenticated(
+            UserModel(
+              id: 'offline_user',
+              email: 'user@priora.local',
+              fullName: 'Priora User',
+              isEmailVerified: true,
+            ),
+          );
+        } else {
+          state = AuthState.unauthenticated();
+        }
       }
     } catch (e) {
-      state = AuthState.unauthenticated();
+      final hasSession = await _repository.hasStoredSession();
+      if (hasSession) {
+        state = AuthState.authenticated(
+          UserModel(
+            id: 'offline_user',
+            email: 'user@priora.local',
+            fullName: 'Priora User',
+            isEmailVerified: true,
+          ),
+        );
+      } else {
+        state = AuthState.unauthenticated();
+      }
     }
   }
 

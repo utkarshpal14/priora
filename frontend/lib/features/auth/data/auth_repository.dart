@@ -63,6 +63,13 @@ class AuthRepository {
     await _authStorage.clearTokens();
   }
 
+  Future<bool> hasStoredSession() async {
+    final accessToken = await _authStorage.getAccessToken();
+    final refreshToken = await _authStorage.getRefreshToken();
+    return (accessToken != null && accessToken.isNotEmpty) ||
+        (refreshToken != null && refreshToken.isNotEmpty);
+  }
+
   Future<UserModel?> restoreSession() async {
     final accessToken = await _authStorage.getAccessToken();
     final refreshToken = await _authStorage.getRefreshToken();
@@ -84,15 +91,27 @@ class AuthRepository {
             refreshToken: newTokens.refreshToken,
           );
           return await _authApi.getCurrentUser();
+        } on DioException catch (refreshErr) {
+          // Only clear tokens if the refresh token was explicitly rejected (401/403)
+          if (refreshErr.response?.statusCode == 401 || refreshErr.response?.statusCode == 403) {
+            await _authStorage.clearTokens();
+          }
+          return null;
         } catch (_) {
-          await _authStorage.clearTokens();
           return null;
         }
       }
-      await _authStorage.clearTokens();
+
+      // If server explicitly rejected the token as invalid (401/403) and no refresh possible
+      if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
+        await _authStorage.clearTokens();
+        return null;
+      }
+
+      // For network connection errors, timeouts, or 500s (e.g. server warming / offline),
+      // DO NOT clear stored tokens. Preserve session immortality (Rule 9).
       return null;
     } catch (_) {
-      await _authStorage.clearTokens();
       return null;
     }
   }
