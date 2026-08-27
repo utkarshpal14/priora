@@ -53,4 +53,7 @@ class ApiEndpoints {
   static String get analyticsWeekly => '$baseUrl/analytics/weekly';
   static String get analyticsBreakdown => '$baseUrl/analytics/breakdown';
   static String get analyticsHeatmap => '$baseUrl/analytics/heatmap';
+
+  // System & Version Management (ENH-006 / TS-008)
+  static String get appVersion => '$baseUrl/system/app-version';
 }

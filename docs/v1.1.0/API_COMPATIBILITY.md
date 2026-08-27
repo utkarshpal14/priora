@@ -252,13 +252,47 @@ Before backend deployment verify:
 
 ---
 
-# Release Gate
+---
 
-Backend deployment may proceed only if:
-- Existing APK remains functional
-- Existing APIs remain compatible
-- Existing database records remain valid
-- No breaking contract changes exist
+# Priora v1.1.0 Zero-Disruption Compatibility Policy (10 Golden Rules)
+
+### Rule 1: Existing Users Must Continue Without Reinstalling
+If a user stays on `v1.0.0` and the backend upgrades to `v1.1.0`, their app must continue to:
+- ✅ Login & authenticate
+- ✅ View & filter tasks
+- ✅ Create & edit tasks
+- ✅ Receive notification reminders
+- ✅ Sync data without crashes or forced logouts
+
+### Rule 2: Database Changes Must Be Additive Only
+- **Allowed:** `ALTER TABLE ADD COLUMN` with default values, `CREATE TABLE IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`.
+- **Forbidden:** `DROP COLUMN`, `RENAME COLUMN`, `ALTER COLUMN TYPE`, deleting tables or relationships.
+- *v1.1.0 Scope:* `email_verifications` table (new), `app_versions` table (new), Google auth fields (additive).
+
+### Rule 3: New API Fields Must Be Optional
+- All new response and request fields (`repeat_type`, `repeat_interval`, `avatar_url`, etc.) must be optional with sensible defaults so `v1.0.0` clients safely ignore them without deserialization errors.
+
+### Rule 4: OTP Verification Must Not Lock Existing Users
+- Apply OTP verification strictly to **new registrations** created after v1.1.0 launch.
+- Existing accounts created prior to v1.1.0 are grandfathered (`is_email_verified = True`) and must never be blocked from logging in.
+
+### Rule 5: Google Sign-In Must Not Affect Password Users
+- Email + password authentication remains 100% active and supported. Google Sign-In is strictly an additional convenience option.
+
+### Rule 6: In-App Update Checker Must Be Opt-In
+- Users must always be able to dismiss update alerts via `Later` unless `force_update: true` is explicitly configured on the backend for a critical security patch.
+
+### Rule 7: Server Warming Must Never Block Forever
+- Splash screen health polling must have a strict 45–60s safety timeout with `[Try Again]` and `[Continue Offline]` fallbacks to prevent infinite loading screens.
+
+### Rule 8: Notification System Is Frozen
+- The validated notification engine (`priora_reminders` channel, raw WAV chimes, foreground receivers, and release shrinker settings) is in **Strict Feature Freeze** to preserve 100% reliability.
+
+### Rule 9: Session & Token Immortality
+- Active JWT access and refresh tokens stored in client `FlutterSecureStorage` must remain valid across backend deployments without forcing re-login.
+
+### Rule 10: Bi-Directional Version Safety
+- Tasks created or edited on `v1.1.0` clients (with recurrence attributes) must safely render and operate as standard tasks when viewed on older `v1.0.0` clients.
 
 ---
 

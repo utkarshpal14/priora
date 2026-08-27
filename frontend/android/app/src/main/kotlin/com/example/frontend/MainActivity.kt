@@ -149,6 +149,35 @@ class MainActivity : FlutterActivity() {
                         result.success(false)
                     }
                 }
+                "installApk" -> {
+                    try {
+                        val filePath = call.argument<String>("filePath")
+                        if (filePath != null) {
+                            val file = java.io.File(filePath)
+                            if (file.exists()) {
+                                val apkUri: Uri = androidx.core.content.FileProvider.getUriForFile(
+                                    context,
+                                    "${packageName}.fileprovider",
+                                    file
+                                )
+                                val intent = Intent(Intent.ACTION_VIEW).apply {
+                                    setDataAndType(apkUri, "application/vnd.android.package-archive")
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+                                startActivity(intent)
+                                result.success(true)
+                            } else {
+                                result.error("FILE_NOT_FOUND", "APK file does not exist at $filePath", null)
+                            }
+                        } else {
+                            result.error("INVALID_PATH", "filePath is required", null)
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("PrioraUpdate", "[MainActivity] Error installing APK: ${e.message}")
+                        result.error("INSTALL_ERROR", e.message, null)
+                    }
+                }
                 else -> result.notImplemented()
             }
         }

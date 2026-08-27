@@ -3,8 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/services/app_update_service.dart';
 
-class MainScaffold extends StatelessWidget {
+class MainScaffold extends StatefulWidget {
   final Widget child;
   final String location;
 
@@ -13,6 +14,24 @@ class MainScaffold extends StatelessWidget {
     required this.child,
     required this.location,
   });
+
+  @override
+  State<MainScaffold> createState() => _MainScaffoldState();
+}
+
+class _MainScaffoldState extends State<MainScaffold> {
+  static bool _hasCheckedForUpdatesThisSession = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!_hasCheckedForUpdatesThisSession) {
+      _hasCheckedForUpdatesThisSession = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        AppUpdateService.checkForUpdates(context);
+      });
+    }
+  }
 
   int _calculateSelectedIndex(String loc) {
     if (loc.startsWith('/tasks')) return 1;
@@ -42,10 +61,10 @@ class MainScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final selectedIndex = _calculateSelectedIndex(location);
+    final selectedIndex = _calculateSelectedIndex(widget.location);
 
     return Scaffold(
-      body: child,
+      body: widget.child,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,

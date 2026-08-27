@@ -316,19 +316,50 @@ Low
 # 16. ENH-004 — Custom Reminder Audio Playback
 
 ## Status
-Deferred (Post-v1.0.0 Backlog)
+Completed in v1.1.0
+
+---
+
+# 17. Email Verification & OTP Verification Gate
+
+## Status
+Planned for Future Vision (Post-v1.1.0)
 
 ## Priority
-Low
+Medium-High
 
-- 5-second custom reminder sound playback chooser.
-- Optional 10-second strong alert tone.
+## Objective
+Prevent registration with fake or non-existent email addresses.
+
+## Requirements
+- Send a 6-digit One-Time Password (OTP) or magic confirmation link to user's registered email via SMTP / Resend / SendGrid / Supabase Auth.
+- Gate access: require `is_email_verified = True` before issuing session access tokens or logging in via email/password.
+- Provide "Resend OTP" functionality with rate-limiting.
+
+---
+
+# 18. Native One-Tap Google Sign-In
+
+## Status
+Planned for Future Vision (Post-v1.1.0)
+
+## Priority
+High
+
+## Objective
+Allow users to log in or register with a single click using their device's Google Account.
+
+## Requirements
+- Integrate native Google Sign-In SDK on Android and Google Identity Services on Web.
+- One tap opens the native system account bottom sheet to select any logged-in Google account on the device.
+- Exchanges Google ID token with backend `POST /api/v1/auth/google`.
+- Automatically marks `is_email_verified = True` and auto-populates user's name and avatar.
 
 ---
 
 # MVP Boundary (Locked)
 
-The following are NOT required before Play Store launch:
+The following are NOT required before current milestone launch:
 - ❌ AI Assistant
 - ❌ AI Goal Breakdown
 - ❌ Project Planning System
@@ -337,7 +368,6 @@ The following are NOT required before Play Store launch:
 - ❌ Habit Tracker
 - ❌ Calendar Integrations
 - ❌ Desktop App
-- ❌ Email Notifications
 - ❌ Wearables
 
 ---
