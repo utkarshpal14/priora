@@ -42,10 +42,10 @@ class Settings(BaseSettings):
     SUPABASE_JWT_SECRET: str = ""
 
     # In-App Update Management (ENH-006 / TS-008)
-    LATEST_APP_VERSION: str = "1.1.0"
+    LATEST_APP_VERSION: str = "1.1.2"
     MIN_SUPPORTED_APP_VERSION: str = "1.0.0"
-    APK_DOWNLOAD_URL: str = "https://github.com/utkarshpal14/priora/releases/download/v1.1.0/priora-v1.1.0-release.apk"
-    APP_RELEASE_NOTES: str = "• 6 new custom reminder sounds\n• Global theme synchronization\n• Recurring tasks & reminders"
+    APK_DOWNLOAD_URL: str = "https://github.com/utkarshpal14/priora/releases/download/v1.1.2/priora-v1.1.2-release.apk"
+    APP_RELEASE_NOTES: str = "• Root navigator update modal stability\n• Direct 'Check for Updates' card in Settings\n• 6 custom reminder audio chimes\n• Theme sync & offline resilience"
     FORCE_APP_UPDATE: bool = False
 
     model_config = SettingsConfigDict(

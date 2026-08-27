@@ -13,7 +13,7 @@ import '../../shared/widgets/app_update_dialog.dart';
 class AppUpdateService {
   /// The current hardcoded client build version.
   /// Increment this when publishing new releases.
-  static const String currentInstalledVersion = '1.1.0';
+  static const String currentInstalledVersion = '1.1.2';
 
   static const MethodChannel _systemChannel = MethodChannel('com.example.frontend/system_settings');
 
