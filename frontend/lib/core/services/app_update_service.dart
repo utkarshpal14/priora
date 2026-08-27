@@ -7,13 +7,13 @@ import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../constants/api_endpoints.dart';
+import '../constants/app_constants.dart';
 import '../models/app_version_model.dart';
 import '../../shared/widgets/app_update_dialog.dart';
 
 class AppUpdateService {
-  /// The current hardcoded client build version.
-  /// Increment this when publishing new releases.
-  static const String currentInstalledVersion = '1.1.2';
+  /// The current hardcoded client build version (Single source of truth: AppConstants.appVersion).
+  static const String currentInstalledVersion = AppConstants.appVersion;
 
   static const MethodChannel _systemChannel = MethodChannel('com.example.frontend/system_settings');
 

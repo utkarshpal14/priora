@@ -749,67 +749,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with WidgetsBin
             ),
             const SizedBox(height: 20),
 
-            // 6. App Version & Info Card
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.06)
-                      : Colors.black.withValues(alpha: 0.05),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.secondary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(Icons.rocket_launch_rounded,
-                        color: theme.colorScheme.secondary, size: 24),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Priora Platform',
-                          style: GoogleFonts.inter(
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : AppColors.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          'Plan. Prioritize. Progress.',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    'v1.0.0 (Build 100)',
-                    style: GoogleFonts.inter(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textTertiary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // 7. App Version & In-App Updates
-            _buildSectionHeader('App Version & Updates', isDark),
+            // 6. App Platform & In-App Updates
+            _buildSectionHeader('App Info & Updates', isDark),
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.all(16),
@@ -825,27 +766,50 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with WidgetsBin
               child: Column(
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Icon(Icons.info_outline_rounded, size: 20, color: AppColors.textTertiary),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Installed Version',
-                            style: GoogleFonts.inter(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w500,
-                              color: isDark ? Colors.white : AppColors.textPrimary,
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.secondary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.rocket_launch_rounded,
+                          color: theme.colorScheme.secondary,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Priora Platform',
+                              style: GoogleFonts.inter(
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w700,
+                                color: isDark ? Colors.white : AppColors.textPrimary,
+                              ),
                             ),
-                          ),
-                        ],
+                            Text(
+                              'Plan. Prioritize. Progress.',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.secondary.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: theme.colorScheme.secondary.withValues(alpha: 0.3),
+                          ),
                         ),
                         child: Text(
                           'v${AppUpdateService.currentInstalledVersion}',
