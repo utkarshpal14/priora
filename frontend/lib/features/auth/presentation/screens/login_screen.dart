@@ -64,19 +64,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     // Brand Logo & Header
                     Center(
                       child: Container(
-                        width: 48,
-                        height: 48,
+                        width: 56,
+                        height: 56,
                         decoration: BoxDecoration(
-                          color: isDark ? theme.colorScheme.secondary : AppColors.primary,
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFE5A93C).withValues(alpha: 0.25),
+                              blurRadius: 18,
+                              spreadRadius: 2,
+                            ),
+                          ],
                         ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          'P',
-                          style: GoogleFonts.inter(
-                            color: Colors.white,
-                            fontSize: 26,
-                            fontWeight: FontWeight.w800,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.asset(
+                            'assets/images/app_icon.png',
+                            fit: BoxFit.cover,
                           ),
                         ),
                       ),

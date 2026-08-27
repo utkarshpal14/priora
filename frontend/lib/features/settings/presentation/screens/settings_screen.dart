@@ -767,15 +767,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with WidgetsBin
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(10),
+                        width: 42,
+                        height: 42,
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.secondary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFE5A93C).withValues(alpha: 0.2),
+                              blurRadius: 10,
+                              spreadRadius: 1,
+                            ),
+                          ],
                         ),
-                        child: Icon(
-                          Icons.rocket_launch_rounded,
-                          color: theme.colorScheme.secondary,
-                          size: 24,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.asset(
+                            'assets/images/app_icon.png',
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 14),
