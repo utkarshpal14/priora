@@ -84,11 +84,15 @@ class EmailService:
 
         # 1. Resend API Delivery
         if settings.RESEND_API_KEY:
-            return self._send_via_resend(to_email, subject, html_content, plain_content)
+            sent = self._send_via_resend(to_email, subject, html_content, plain_content)
+            if sent:
+                return True
 
         # 2. Standard SMTP Delivery
         if settings.SMTP_HOST and settings.SMTP_USER:
-            return self._send_via_smtp(to_email, subject, html_content, plain_content)
+            sent = self._send_via_smtp(to_email, subject, html_content, plain_content)
+            if sent:
+                return True
 
         # 3. Dev Logger Fallback
         logger.info(f"📧 [DEV EMAIL SERVICE] OTP Code for {to_email} is: {otp_code}")
@@ -102,6 +106,7 @@ class EmailService:
             headers = {
                 "Authorization": f"Bearer {settings.RESEND_API_KEY}",
                 "Content-Type": "application/json",
+                "User-Agent": "Priora-App/1.1.3 (https://priora.app)",
             }
             payload = {
                 "from": f"{settings.EMAILS_FROM_NAME} <{settings.EMAILS_FROM_EMAIL}>",
@@ -118,6 +123,11 @@ class EmailService:
                     return True
                 logger.error(f"Resend API returned status: {response.status}")
                 return False
+        except urllib.error.HTTPError as e:
+            error_body = e.read().decode("utf-8") if e.fp else str(e)
+            logger.error(f"Failed to send email via Resend HTTP {e.code}: {error_body}")
+            print(f"\n⚠️ [RESEND NOTICE] Could not deliver to {to_email} via Resend sandbox: {error_body}")
+            return False
         except Exception as e:
             logger.error(f"Failed to send email via Resend: {e!s}")
             return False
