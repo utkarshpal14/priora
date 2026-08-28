@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../../../core/constants/app_constants.dart';
 import '../../data/auth_repository.dart';
 import '../../domain/auth_state.dart';
 import '../../domain/user_model.dart';
@@ -26,7 +27,7 @@ class AuthController extends StateNotifier<AuthState> {
               serverClientId: (dotenv.isInitialized &&
                       (dotenv.maybeGet('GOOGLE_WEB_CLIENT_ID')?.isNotEmpty ?? false))
                   ? dotenv.maybeGet('GOOGLE_WEB_CLIENT_ID')
-                  : null,
+                  : AppConstants.googleWebClientId,
             ),
         super(AuthState.initial());
 
