@@ -57,7 +57,7 @@ class Settings(BaseSettings):
     LATEST_APP_VERSION: str = "1.1.3"
     MIN_SUPPORTED_APP_VERSION: str = "1.0.0"
     APK_DOWNLOAD_URL: str = "https://github.com/utkarshpal14/priora/releases/download/v1.1.3/priora-v1.1.3-release.apk"
-    APP_RELEASE_NOTES: str = "• Email Verification with Hashed 6-Digit OTP\n• Google OAuth 2.0 Sign-In\n• Official com.priora.app package with production signing\n• Cold-start server warming & router stability\n• 6 custom reminder audio chimes"
+    APP_RELEASE_NOTES: str = "• Forgot Password & Password Reset with 6-digit OTP\n• Email Verification with Hashed 6-Digit OTP\n• Global JWT Session Invalidation on Password Reset\n• Verified transactional email delivery via verify@priorapp.co.in\n• Google OAuth 2.0 Sign-In\n• Official com.priora.app package with production signing"
     FORCE_APP_UPDATE: bool = False
 
     model_config = SettingsConfigDict(
