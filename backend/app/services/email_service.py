@@ -82,22 +82,67 @@ class EmailService:
 """
         plain_content = f"Your Priora verification code is: {otp_code}. This code expires in {settings.OTP_EXPIRE_MINUTES} minutes."
 
-        # 1. Resend API Delivery
+        # 1. Resend API Delivery (HTTPS)
         if settings.RESEND_API_KEY:
             sent = self._send_via_resend(to_email, subject, html_content, plain_content)
             if sent:
                 return True
 
-        # 2. Standard SMTP Delivery
+        # 2. Brevo API Delivery (HTTPS - No custom domain required)
+        if settings.BREVO_API_KEY:
+            sent = self._send_via_brevo(to_email, subject, html_content, plain_content)
+            if sent:
+                return True
+
+        # 3. Standard SMTP Delivery (TLS/SSL)
         if settings.SMTP_HOST and settings.SMTP_USER:
             sent = self._send_via_smtp(to_email, subject, html_content, plain_content)
             if sent:
                 return True
 
-        # 3. Dev Logger Fallback
+        # 4. Dev Logger Fallback
         logger.info(f"📧 [DEV EMAIL SERVICE] OTP Code for {to_email} is: {otp_code}")
         print(f"\n========================================\n📧 [DEV EMAIL] To: {to_email}\n🔑 OTP Code: {otp_code} (Valid for {settings.OTP_EXPIRE_MINUTES}m)\n========================================\n")
         return True
+
+    def _send_via_brevo(self, to_email: str, subject: str, html: str, text: str) -> bool:
+        """Send email using Brevo (Sendinblue) HTTPS REST API (Port 443 - never blocked by cloud firewalls)."""
+        try:
+            url = "https://api.brevo.com/v3/smtp/email"
+            headers = {
+                "api-key": settings.BREVO_API_KEY,
+                "Content-Type": "application/json",
+                "User-Agent": "Priora-App/1.1.3 (https://priora.app)",
+            }
+            payload = {
+                "sender": {
+                    "name": settings.EMAILS_FROM_NAME,
+                    "email": settings.EMAILS_FROM_EMAIL,
+                },
+                "to": [
+                    {
+                        "email": to_email,
+                    }
+                ],
+                "subject": subject,
+                "htmlContent": html,
+                "textContent": text,
+            }
+            data = json.dumps(payload).encode("utf-8")
+            req = urllib.request.Request(url, data=data, headers=headers, method="POST")
+            with urllib.request.urlopen(req, timeout=10) as response:
+                if response.status in (200, 201):
+                    logger.info(f"Successfully sent OTP to {to_email} via Brevo API")
+                    return True
+                logger.error(f"Brevo API returned status: {response.status}")
+                return False
+        except urllib.error.HTTPError as e:
+            error_body = e.read().decode("utf-8") if e.fp else str(e)
+            logger.error(f"Failed to send email via Brevo HTTP {e.code}: {error_body}")
+            return False
+        except Exception as e:
+            logger.error(f"Failed to send email via Brevo: {e!s}")
+            return False
 
     def _send_via_resend(self, to_email: str, subject: str, html: str, text: str) -> bool:
         """Send email using Resend HTTP API."""

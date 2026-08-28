@@ -38,6 +38,7 @@ class Settings(BaseSettings):
 
     # Email Service & OTP Verification (v1.1.3)
     RESEND_API_KEY: str = ""
+    BREVO_API_KEY: str = ""
     SMTP_HOST: str = ""
     SMTP_PORT: int = 465
     SMTP_USER: str = ""
