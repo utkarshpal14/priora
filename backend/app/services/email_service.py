@@ -133,34 +133,43 @@ class EmailService:
             return False
 
     def _send_via_smtp(self, to_email: str, subject: str, html: str, text: str) -> bool:
-        """Send email using standard SMTP with TLS."""
-        try:
-            msg = MIMEMultipart("alternative")
-            msg["Subject"] = subject
-            msg["From"] = f"{settings.EMAILS_FROM_NAME} <{settings.EMAILS_FROM_EMAIL}>"
-            msg["To"] = to_email
+        """Send email using standard SMTP with TLS / SSL fallback."""
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = f"{settings.EMAILS_FROM_NAME} <{settings.EMAILS_FROM_EMAIL}>"
+        msg["To"] = to_email
 
-            part1 = MIMEText(text, "plain")
-            part2 = MIMEText(html, "html")
-            msg.attach(part1)
-            msg.attach(part2)
+        part1 = MIMEText(text, "plain")
+        part2 = MIMEText(html, "html")
+        msg.attach(part1)
+        msg.attach(part2)
 
-            if settings.SMTP_PORT == 465:
-                server = smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10)
-            else:
-                server = smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10)
-                server.starttls()
+        # Try configured port first, fallback between 465 (SSL) and 587 (TLS)
+        ports_to_try = [settings.SMTP_PORT, 465, 587]
+        seen = set()
+        ports_to_try = [p for p in ports_to_try if not (p in seen or seen.add(p))]
 
-            if settings.SMTP_USER and settings.SMTP_PASSWORD:
-                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+        for port in ports_to_try:
+            try:
+                if port == 465:
+                    server = smtplib.SMTP_SSL(settings.SMTP_HOST, 465, timeout=12)
+                else:
+                    server = smtplib.SMTP(settings.SMTP_HOST, port, timeout=12)
+                    server.starttls()
 
-            server.sendmail(settings.EMAILS_FROM_EMAIL, [to_email], msg.as_string())
-            server.quit()
-            logger.info(f"Successfully sent OTP to {to_email} via SMTP")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to send email via SMTP: {e!s}")
-            return False
+                if settings.SMTP_USER and settings.SMTP_PASSWORD:
+                    server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+
+                server.sendmail(settings.EMAILS_FROM_EMAIL, [to_email], msg.as_string())
+                server.quit()
+                logger.info(f"Successfully sent OTP to {to_email} via SMTP on port {port}")
+                return True
+            except Exception as e:
+                logger.warning(f"SMTP delivery attempt to {to_email} failed on port {port}: {e!s}")
+                continue
+
+        logger.error(f"Failed to send email to {to_email} via SMTP on all attempted ports.")
+        return False
 
 
 email_service = EmailService()
