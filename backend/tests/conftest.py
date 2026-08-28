@@ -24,6 +24,11 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 
 @pytest.fixture(scope="session", autouse=True)
 def create_test_db():
+    from unittest.mock import MagicMock
+    from app.services.email_service import email_service
+    # Mock real external email dispatch during test runs
+    email_service.send_verification_otp = MagicMock(return_value=True)
+
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
