@@ -59,20 +59,21 @@ def test_verify_otp_success_and_login(client: TestClient, db_session: Session):
     assert login_res.json()["data"]["user"]["is_email_verified"] is True
 
 
-def test_login_unverified_rejected(client: TestClient):
-    email = "unverified@priora.app"
+def test_login_legacy_user_zero_lockout(client: TestClient):
+    email = "legacy_user@priora.app"
     client.post(
         "/api/v1/auth/register",
-        json={"email": email, "password": "SecurePassword123!", "full_name": "Unverified User"},
+        json={"email": email, "password": "SecurePassword123!", "full_name": "Legacy User"},
     )
 
-    # Login without verifying OTP should return 403 Forbidden
+    # Login with valid password succeeds seamlessly with zero-lockout
     login_res = client.post(
         "/api/v1/auth/login",
         json={"email": email, "password": "SecurePassword123!"},
     )
-    assert login_res.status_code == 403
-    assert "not verified" in login_res.json()["detail"].lower()
+    assert login_res.status_code == 200
+    assert login_res.json()["data"]["user"]["is_email_verified"] is True
+    assert "access_token" in login_res.json()["data"]["tokens"]
 
 
 def test_verify_otp_invalid_code(client: TestClient):

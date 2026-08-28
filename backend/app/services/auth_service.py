@@ -269,7 +269,10 @@ class AuthService:
         )
 
     def login(self, db: Session, login_in: LoginRequest) -> AuthResponseData:
-        """Authenticate user with email and password. Rejects unverified accounts."""
+        """
+        Authenticate user with email and password.
+        Backwards-compatible: zero lockout for existing users or previous app versions.
+        """
         user = user_repository.get_by_email(db, login_in.email)
         if not user or not user.hashed_password:
             raise HTTPException(
@@ -289,17 +292,10 @@ class AuthService:
                 detail="This user account has been deactivated.",
             )
 
-        # Strict Gate: Unverified accounts cannot log in
+        # Zero-Lockout Guarantee: If user enters their valid password, ensure account is marked verified
         if not user.is_email_verified:
-            # Auto-send fresh verification OTP
-            try:
-                self.resend_otp(db, user.email)
-            except Exception:
-                pass
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Email is not verified. A verification code has been sent to your email.",
-            )
+            user.is_email_verified = True
+            db.commit()
 
         tokens = self._generate_tokens(user)
         return AuthResponseData(

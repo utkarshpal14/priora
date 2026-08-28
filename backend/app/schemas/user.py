@@ -40,9 +40,9 @@ class DeviceTokenRegister(BaseModel):
 
 class UserRead(UserBase):
     id: uuid.UUID
-    auth_provider: str
-    is_email_verified: bool
-    is_active: bool
+    auth_provider: str = "email"
+    is_email_verified: bool = True
+    is_active: bool = True
     storage_used_bytes: int = 0
     notifications_enabled: bool = True
     sound_enabled: bool = True
@@ -56,6 +56,8 @@ class UserRead(UserBase):
 
     @field_validator(
         "storage_used_bytes",
+        "is_email_verified",
+        "is_active",
         "notifications_enabled",
         "sound_enabled",
         "deadline_reminders",
@@ -68,5 +70,7 @@ class UserRead(UserBase):
         if v is None:
             if info.field_name == "storage_used_bytes":
                 return 0
+            if info.field_name == "auth_provider":
+                return "email"
             return True
         return v
