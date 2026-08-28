@@ -1,4 +1,4 @@
-package com.example.frontend
+package com.priora.app
 
 import android.content.Context
 import android.content.Intent
@@ -14,7 +14,7 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugins.GeneratedPluginRegistrant
 
 class MainActivity : FlutterActivity() {
-    private val CHANNEL = "com.example.frontend/system_settings"
+    private val CHANNEL = "com.priora.app/system_settings"
     private var mediaPlayer: MediaPlayer? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {

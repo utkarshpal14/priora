@@ -15,7 +15,7 @@ class AppUpdateService {
   /// The current hardcoded client build version (Single source of truth: AppConstants.appVersion).
   static const String currentInstalledVersion = AppConstants.appVersion;
 
-  static const MethodChannel _systemChannel = MethodChannel('com.example.frontend/system_settings');
+  static const MethodChannel _systemChannel = MethodChannel('com.priora.app/system_settings');
 
   static final Dio _dio = Dio(
     BaseOptions(

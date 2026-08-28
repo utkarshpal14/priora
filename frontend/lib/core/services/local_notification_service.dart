@@ -23,7 +23,7 @@ class LocalNotificationService {
   final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
   bool _isInitialized = false;
   ReminderSound _activeSound = ReminderSound.chime;
-  static const MethodChannel _systemSettingsChannel = MethodChannel('com.example.frontend/system_settings');
+  static const MethodChannel _systemSettingsChannel = MethodChannel('com.priora.app/system_settings');
 
   static const String _channelId = 'priora_reminders';
   static const String _channelName = 'Reminders & Task Alerts';

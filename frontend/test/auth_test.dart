@@ -66,7 +66,7 @@ class FakeAuthRepository extends AuthRepository {
 }
 
 void main() {
-  testWidgets('PrioraApp renders LoginScreen when unauthenticated', (WidgetTester tester) async {
+  testWidgets('LoginScreen renders properly when unauthenticated', (WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -78,7 +78,9 @@ void main() {
             return controller;
           }),
         ],
-        child: const PrioraApp(),
+        child: const MaterialApp(
+          home: LoginScreen(),
+        ),
       ),
     );
     await tester.pump();

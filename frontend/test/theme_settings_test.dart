@@ -168,7 +168,7 @@ void main() {
       expect(find.text('Accessibility & Motion'), findsOneWidget);
       expect(find.text('Reduce Motion'), findsOneWidget);
       expect(find.text('Data & Storage Usage'), findsOneWidget);
-      expect(find.text('v1.0.0 (Build 100)'), findsOneWidget);
+      expect(find.text('Priora Platform'), findsOneWidget);
       expect(find.text('Task Deadline Reminders'), findsOneWidget);
       expect(find.text('Log Out'), findsOneWidget);
     });

@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 
-const MethodChannel _channel = MethodChannel('com.example.frontend/system_settings');
+const MethodChannel _channel = MethodChannel('com.priora.app/system_settings');
 
 void playWebSound(String soundResourceName) {
   try {

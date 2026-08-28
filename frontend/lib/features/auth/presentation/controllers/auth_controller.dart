@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -19,7 +20,14 @@ class AuthController extends StateNotifier<AuthState> {
   AuthController(
     this._repository, {
     GoogleSignIn? googleSignIn,
-  })  : _googleSignIn = googleSignIn ?? GoogleSignIn(scopes: ['email', 'profile']),
+  })  : _googleSignIn = googleSignIn ??
+            GoogleSignIn(
+              scopes: ['email', 'profile'],
+              serverClientId: (dotenv.isInitialized &&
+                      (dotenv.maybeGet('GOOGLE_WEB_CLIENT_ID')?.isNotEmpty ?? false))
+                  ? dotenv.maybeGet('GOOGLE_WEB_CLIENT_ID')
+                  : null,
+            ),
         super(AuthState.initial());
 
   /// Startup session restoration flow
