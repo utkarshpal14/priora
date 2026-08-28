@@ -390,8 +390,9 @@ class AuthService:
                     detail="User account no longer exists or is deactivated.",
                 )
 
-            token_version = payload.get("tv", 1)
-            if token_version != getattr(user, "token_version", 1):
+            token_version = payload.get("tv", 1) or 1
+            user_token_version = (getattr(user, "token_version", 1) or 1)
+            if token_version != user_token_version:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Session has been revoked due to password reset. Please sign in again.",

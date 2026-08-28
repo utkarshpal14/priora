@@ -31,7 +31,7 @@ def _sync_sqlite_schema() -> None:
                 text(
                     "UPDATE users SET "
                     "storage_used_bytes = COALESCE(storage_used_bytes, 0), "
-                    "is_email_verified = COALESCE(is_email_verified, 1), "
+                    "is_email_verified = CASE WHEN is_email_verified IS NULL THEN 1 ELSE is_email_verified END, "
                     "token_version = COALESCE(token_version, 1), "
                     "notifications_enabled = COALESCE(notifications_enabled, 1), "
                     "sound_enabled = COALESCE(sound_enabled, 1), "
@@ -54,7 +54,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
             # Protect existing users on Postgres
             with engine.connect() as conn:
                 conn.execute(
-                    text("UPDATE users SET is_email_verified = TRUE WHERE is_email_verified IS NULL OR is_email_verified = FALSE;")
+                    text("UPDATE users SET is_email_verified = TRUE, token_version = COALESCE(token_version, 1) WHERE is_email_verified IS NULL OR is_email_verified = FALSE OR token_version IS NULL;")
                 )
                 conn.commit()
     except Exception as e:
