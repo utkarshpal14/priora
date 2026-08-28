@@ -150,6 +150,46 @@ class AuthController extends StateNotifier<AuthState> {
     }
   }
 
+  /// Request 6-digit password reset OTP
+  Future<({bool success, String message})> forgotPassword({
+    required String email,
+  }) async {
+    try {
+      final msg = await _repository.forgotPassword(email: email);
+      return (success: true, message: msg);
+    } on DioException catch (e) {
+      final message = _extractErrorMessage(e, fallback: 'Could not send reset code. Please try again.');
+      return (success: false, message: message);
+    } catch (e) {
+      return (success: false, message: 'An unexpected error occurred. Please try again.');
+    }
+  }
+
+  /// Reset password using 6-digit OTP
+  Future<({bool success, String message})> resetPassword({
+    required String email,
+    required String otpCode,
+    required String newPassword,
+  }) async {
+    state = AuthState.authenticating();
+    try {
+      final msg = await _repository.resetPassword(
+        email: email,
+        otpCode: otpCode,
+        newPassword: newPassword,
+      );
+      state = AuthState.unauthenticated();
+      return (success: true, message: msg);
+    } on DioException catch (e) {
+      final message = _extractErrorMessage(e, fallback: 'Failed to reset password. Please check the code.');
+      state = AuthState.unauthenticated();
+      return (success: false, message: message);
+    } catch (e) {
+      state = AuthState.unauthenticated();
+      return (success: false, message: 'An unexpected error occurred. Please try again.');
+    }
+  }
+
   /// Google Sign-In flow
   Future<bool> loginWithGoogle() async {
     state = AuthState.authenticating();

@@ -66,4 +66,13 @@ def get_current_user(
             detail="User account is deactivated.",
         )
 
+    # Global session revocation validation (SEC: password reset invalidates all existing JWTs)
+    token_version = payload.get("tv", 1)
+    if token_version != user.token_version:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Session has been revoked due to password reset. Please log in again.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     return user

@@ -194,3 +194,289 @@ def test_expired_token_rejected(client: TestClient):
     response = client.get("/api/v1/users/me", headers=headers)
     assert response.status_code == 401
     assert "expired" in response.json()["detail"].lower()
+
+
+def test_forgot_password_valid_user(client: TestClient, db_session: Session):
+    email = "forgot_valid@priora.app"
+    client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "Password123!", "full_name": "Forgot User"},
+    )
+    # Mark verified
+    db_session.query(User).filter(User.email == email).update({"is_email_verified": True})
+    db_session.commit()
+
+    res = client.post("/api/v1/auth/forgot-password", json={"email": email})
+    assert res.status_code == 200
+    assert res.json()["success"] is True
+
+    # Confirm password_reset OTP is stored
+    otp = db_session.query(OtpVerification).filter(
+        OtpVerification.email == email,
+        OtpVerification.purpose == "password_reset",
+        OtpVerification.is_used == False,
+    ).first()
+    assert otp is not None
+
+
+def test_forgot_password_nonexistent_user_enumeration_safe(client: TestClient, db_session: Session):
+    email = "nonexistent_stranger@priora.app"
+    res = client.post("/api/v1/auth/forgot-password", json={"email": email})
+    assert res.status_code == 200
+    assert res.json()["success"] is True
+
+    # No OTP created
+    otp = db_session.query(OtpVerification).filter(OtpVerification.email == email).first()
+    assert otp is None
+
+
+def test_forgot_password_cooldown_rejection(client: TestClient, db_session: Session):
+    email = "cooldown_forgot@priora.app"
+    client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "Password123!", "full_name": "Cooldown User"},
+    )
+    db_session.query(User).filter(User.email == email).update({"is_email_verified": True})
+    db_session.commit()
+
+    # First request
+    client.post("/api/v1/auth/forgot-password", json={"email": email})
+
+    # Immediate second request
+    res2 = client.post("/api/v1/auth/forgot-password", json={"email": email})
+    assert res2.status_code == 200
+    assert "recently sent" in res2.json()["data"]["message"].lower()
+
+
+def test_reset_password_success_and_login(client: TestClient, db_session: Session):
+    from app.services.auth_service import auth_service
+
+    email = "reset_success@priora.app"
+    client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "OldPassword123!", "full_name": "Reset Hero"},
+    )
+    db_session.query(User).filter(User.email == email).update({"is_email_verified": True})
+    db_session.commit()
+
+    # Request reset
+    client.post("/api/v1/auth/forgot-password", json={"email": email})
+
+    # Set known OTP
+    test_otp = "654321"
+    test_hash = auth_service._hash_otp(test_otp)
+    db_session.query(OtpVerification).filter(
+        OtpVerification.email == email,
+        OtpVerification.purpose == "password_reset",
+    ).update({"otp_hash": test_hash})
+    db_session.commit()
+
+    # Reset password
+    res = client.post(
+        "/api/v1/auth/reset-password",
+        json={"email": email, "otp_code": test_otp, "new_password": "NewStrongPassword999!"},
+    )
+    assert res.status_code == 200
+    assert res.json()["success"] is True
+
+    # Old password fails
+    old_login = client.post(
+        "/api/v1/auth/login",
+        json={"email": email, "password": "OldPassword123!"},
+    )
+    assert old_login.status_code == 401
+
+    # New password succeeds
+    new_login = client.post(
+        "/api/v1/auth/login",
+        json={"email": email, "password": "NewStrongPassword999!"},
+    )
+    assert new_login.status_code == 200
+    assert new_login.json()["success"] is True
+
+
+def test_reset_password_revokes_existing_jwt_sessions(client: TestClient, db_session: Session):
+    from app.services.auth_service import auth_service
+
+    email = "revoke_session@priora.app"
+    client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "OldPassword123!", "full_name": "Revoke User"},
+    )
+    db_session.query(User).filter(User.email == email).update({"is_email_verified": True})
+    db_session.commit()
+
+    # Login and acquire active session tokens
+    login_res = client.post(
+        "/api/v1/auth/login",
+        json={"email": email, "password": "OldPassword123!"},
+    )
+    access_token = login_res.json()["data"]["tokens"]["access_token"]
+    refresh_token = login_res.json()["data"]["tokens"]["refresh_token"]
+
+    # Verify access token works initially
+    headers = {"Authorization": f"Bearer {access_token}"}
+    me_res = client.get("/api/v1/users/me", headers=headers)
+    assert me_res.status_code == 200
+
+    # Perform password reset
+    client.post("/api/v1/auth/forgot-password", json={"email": email})
+    test_otp = "112233"
+    db_session.query(OtpVerification).filter(
+        OtpVerification.email == email,
+        OtpVerification.purpose == "password_reset",
+    ).update({"otp_hash": auth_service._hash_otp(test_otp)})
+    db_session.commit()
+
+    client.post(
+        "/api/v1/auth/reset-password",
+        json={"email": email, "otp_code": test_otp, "new_password": "NewBrandPassword888!"},
+    )
+
+    # Old access token is now REVOKED (token_version mismatch)
+    me_revoked = client.get("/api/v1/users/me", headers=headers)
+    assert me_revoked.status_code == 401
+    assert "revoked" in me_revoked.json()["detail"].lower()
+
+    # Old refresh token is also REVOKED
+    refresh_revoked = client.post("/api/v1/auth/refresh", json={"refresh_token": refresh_token})
+    assert refresh_revoked.status_code == 401
+    assert "revoked" in refresh_revoked.json()["detail"].lower()
+
+
+def test_reset_password_expired_otp_rejection(client: TestClient, db_session: Session):
+    from app.services.auth_service import auth_service
+
+    email = "expired_reset@priora.app"
+    client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "Password123!"},
+    )
+    db_session.query(User).filter(User.email == email).update({"is_email_verified": True})
+    db_session.commit()
+
+    client.post("/api/v1/auth/forgot-password", json={"email": email})
+
+    # Set expired
+    test_otp = "777777"
+    db_session.query(OtpVerification).filter(
+        OtpVerification.email == email,
+        OtpVerification.purpose == "password_reset",
+    ).update({
+        "otp_hash": auth_service._hash_otp(test_otp),
+        "expires_at": datetime.now(UTC) - timedelta(minutes=5),
+    })
+    db_session.commit()
+
+    res = client.post(
+        "/api/v1/auth/reset-password",
+        json={"email": email, "otp_code": test_otp, "new_password": "NewStrongPassword777!"},
+    )
+    assert res.status_code == 400
+    assert "expired" in res.json()["detail"].lower()
+
+
+def test_reset_password_reused_otp_rejection(client: TestClient, db_session: Session):
+    from app.services.auth_service import auth_service
+
+    email = "reused_reset@priora.app"
+    client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "Password123!"},
+    )
+    db_session.query(User).filter(User.email == email).update({"is_email_verified": True})
+    db_session.commit()
+
+    client.post("/api/v1/auth/forgot-password", json={"email": email})
+    test_otp = "888111"
+    db_session.query(OtpVerification).filter(
+        OtpVerification.email == email,
+        OtpVerification.purpose == "password_reset",
+    ).update({"otp_hash": auth_service._hash_otp(test_otp)})
+    db_session.commit()
+
+    # Use once
+    res1 = client.post(
+        "/api/v1/auth/reset-password",
+        json={"email": email, "otp_code": test_otp, "new_password": "NewStrongPassword1!"},
+    )
+    assert res1.status_code == 200
+
+    # Try reusing same OTP
+    res2 = client.post(
+        "/api/v1/auth/reset-password",
+        json={"email": email, "otp_code": test_otp, "new_password": "AnotherNewPassword2!"},
+    )
+    assert res2.status_code == 400
+    assert "no active" in res2.json()["detail"].lower()
+
+
+def test_reset_password_bruteforce_lockout_5_attempts(client: TestClient, db_session: Session):
+    from app.services.auth_service import auth_service
+
+    email = "bruteforce_reset@priora.app"
+    client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "Password123!"},
+    )
+    db_session.query(User).filter(User.email == email).update({"is_email_verified": True})
+    db_session.commit()
+
+    client.post("/api/v1/auth/forgot-password", json={"email": email})
+    test_otp = "999000"
+    db_session.query(OtpVerification).filter(
+        OtpVerification.email == email,
+        OtpVerification.purpose == "password_reset",
+    ).update({"otp_hash": auth_service._hash_otp(test_otp)})
+    db_session.commit()
+
+    # 4 bad attempts
+    for _ in range(4):
+        bad_res = client.post(
+            "/api/v1/auth/reset-password",
+            json={"email": email, "otp_code": "000000", "new_password": "NewStrongPassword1!"},
+        )
+        assert bad_res.status_code == 400
+
+    # 5th bad attempt -> 429 lockout
+    lockout_res = client.post(
+        "/api/v1/auth/reset-password",
+        json={"email": email, "otp_code": "000000", "new_password": "NewStrongPassword1!"},
+    )
+    assert lockout_res.status_code == 429
+    assert "too many failed attempts" in lockout_res.json()["detail"].lower()
+
+
+def test_reset_password_purpose_isolation(client: TestClient, db_session: Session):
+    from app.services.auth_service import auth_service
+
+    email = "isolation@priora.app"
+    # Registration creates email_verification OTP
+    client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "Password123!"},
+    )
+    test_otp = "555666"
+    db_session.query(OtpVerification).filter(
+        OtpVerification.email == email,
+        OtpVerification.purpose == "email_verification",
+    ).update({"otp_hash": auth_service._hash_otp(test_otp)})
+    db_session.commit()
+
+    # Attempting to use email_verification OTP on reset-password endpoint must fail
+    res = client.post(
+        "/api/v1/auth/reset-password",
+        json={"email": email, "otp_code": test_otp, "new_password": "NewStrongPassword1!"},
+    )
+    assert res.status_code == 400
+    assert "no active password reset code" in res.json()["detail"].lower()
+
+
+def test_reset_password_weak_password_rejected(client: TestClient):
+    # Missing uppercase, number, etc.
+    res = client.post(
+        "/api/v1/auth/reset-password",
+        json={"email": "weak@priora.app", "otp_code": "123456", "new_password": "weak"},
+    )
+    assert res.status_code == 422
+

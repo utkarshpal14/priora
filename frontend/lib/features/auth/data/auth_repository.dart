@@ -52,6 +52,26 @@ class AuthRepository {
     );
   }
 
+  Future<String> forgotPassword({
+    required String email,
+  }) async {
+    return await _authApi.forgotPassword(
+      email: email,
+    );
+  }
+
+  Future<String> resetPassword({
+    required String email,
+    required String otpCode,
+    required String newPassword,
+  }) async {
+    return await _authApi.resetPassword(
+      email: email,
+      otpCode: otpCode,
+      newPassword: newPassword,
+    );
+  }
+
   Future<UserModel> login({
     required String email,
     required String password,

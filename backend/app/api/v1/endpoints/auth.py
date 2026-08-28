@@ -1,14 +1,18 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.schemas.auth import (
     AuthResponseData,
+    ForgotPasswordRequest,
+    ForgotPasswordResponseData,
     GoogleLoginRequest,
     LoginRequest,
     RegistrationResponseData,
     ResendOtpRequest,
     ResendOtpResponseData,
+    ResetPasswordRequest,
+    ResetPasswordResponseData,
     TokenRefreshRequest,
     TokenResponse,
     VerifyOtpRequest,
@@ -126,6 +130,46 @@ def refresh_token(
         success=True,
         message="Token refreshed successfully.",
         data=token_data,
+    )
+
+
+@router.post(
+    "/forgot-password",
+    response_model=ApiResponse[ForgotPasswordResponseData],
+    summary="Request a 6-digit password reset OTP",
+)
+def forgot_password(
+    req: ForgotPasswordRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> ApiResponse[ForgotPasswordResponseData]:
+    """Request a password reset code. Timing-safe & enumeration-resistant."""
+    client_ip = request.client.host if request.client else None
+    result = auth_service.forgot_password(db, req, client_ip=client_ip)
+    return ApiResponse(
+        success=True,
+        message=result.message,
+        data=result,
+    )
+
+
+@router.post(
+    "/reset-password",
+    response_model=ApiResponse[ResetPasswordResponseData],
+    summary="Reset password using 6-digit OTP and revoke all existing sessions",
+)
+def reset_password(
+    req: ResetPasswordRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> ApiResponse[ResetPasswordResponseData]:
+    """Verify 6-digit reset code, update password, and revoke previous sessions."""
+    client_ip = request.client.host if request.client else None
+    result = auth_service.reset_password(db, req, client_ip=client_ip)
+    return ApiResponse(
+        success=True,
+        message=result.message,
+        data=result,
     )
 
 

@@ -32,6 +32,7 @@ def _sync_sqlite_schema() -> None:
                     "UPDATE users SET "
                     "storage_used_bytes = COALESCE(storage_used_bytes, 0), "
                     "is_email_verified = COALESCE(is_email_verified, 1), "
+                    "token_version = COALESCE(token_version, 1), "
                     "notifications_enabled = COALESCE(notifications_enabled, 1), "
                     "sound_enabled = COALESCE(sound_enabled, 1), "
                     "deadline_reminders = COALESCE(deadline_reminders, 1), "

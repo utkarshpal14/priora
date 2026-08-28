@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from sqlalchemy import BigInteger, Boolean, String
+from sqlalchemy import BigInteger, Boolean, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import BaseDBModel
@@ -51,6 +51,11 @@ class User(BaseDBModel):
     storage_used_bytes: Mapped[int] = mapped_column(
         BigInteger,
         default=0,
+        nullable=False,
+    )
+    token_version: Mapped[int] = mapped_column(
+        Integer,
+        default=1,
         nullable=False,
     )
 

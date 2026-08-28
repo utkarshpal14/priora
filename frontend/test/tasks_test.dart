@@ -252,6 +252,20 @@ class FakeAuthController extends StateNotifier<AuthState> implements AuthControl
   }
 
   @override
+  Future<({bool success, String message})> forgotPassword({required String email}) async {
+    return (success: true, message: 'Reset code sent.');
+  }
+
+  @override
+  Future<({bool success, String message})> resetPassword({
+    required String email,
+    required String otpCode,
+    required String newPassword,
+  }) async {
+    return (success: true, message: 'Password reset.');
+  }
+
+  @override
   Future<void> logout() async {}
 }
 

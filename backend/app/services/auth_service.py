@@ -1,4 +1,5 @@
 import hashlib
+import hmac
 import logging
 import secrets
 import string
@@ -24,9 +25,14 @@ from app.models.user import User
 from app.repositories.user_repository import user_repository
 from app.schemas.auth import (
     AuthResponseData,
+    ForgotPasswordRequest,
+    ForgotPasswordResponseData,
     LoginRequest,
     RegistrationResponseData,
+    ResendOtpRequest,
     ResendOtpResponseData,
+    ResetPasswordRequest,
+    ResetPasswordResponseData,
     TokenResponse,
     VerifyOtpRequest,
 )
@@ -45,8 +51,8 @@ class AuthService:
         return hashlib.sha256(salted).hexdigest()
 
     def _generate_otp_code(self) -> str:
-        """Generate a cryptographically secure 6-digit numeric OTP."""
-        return "".join(secrets.choice(string.digits) for _ in range(6))
+        """Generate a cryptographically secure 6-digit numeric OTP using secrets."""
+        return f"{secrets.randbelow(900000) + 100000:06d}"
 
     def register(self, db: Session, user_in: UserCreate) -> RegistrationResponseData:
         """
@@ -384,6 +390,13 @@ class AuthService:
                     detail="User account no longer exists or is deactivated.",
                 )
 
+            token_version = payload.get("tv", 1)
+            if token_version != getattr(user, "token_version", 1):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Session has been revoked due to password reset. Please sign in again.",
+                )
+
             return self._generate_tokens(user)
         except ExpiredSignatureError as e:
             raise HTTPException(
@@ -395,6 +408,162 @@ class AuthService:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid or malformed refresh token.",
             ) from e
+
+    def forgot_password(self, db: Session, req: ForgotPasswordRequest, client_ip: str | None = None) -> ForgotPasswordResponseData:
+        """
+        Initiate password reset flow for an account.
+        Enumeration-safe: always returns generic success message.
+        Enforces 60-second cooldown, invalidates existing reset codes, hashes OTP with salt,
+        and dispatches reset email.
+        """
+        now = datetime.now(timezone.utc)
+        user = user_repository.get_by_email(db, req.email)
+
+        # Audit logging (no OTP values logged)
+        logger.info(
+            f"Password reset requested for {req.email}",
+            extra={"email": req.email, "ip": client_ip},
+        )
+
+        if not user or not user.is_active or not user.hashed_password:
+            # Safe generic return to prevent user enumeration
+            return ForgotPasswordResponseData()
+
+        # Enforce rate-limit cooldown against latest password reset OTP
+        latest_otp = (
+            db.query(OtpVerification)
+            .filter(
+                OtpVerification.email == req.email,
+                OtpVerification.purpose == "password_reset",
+            )
+            .order_by(OtpVerification.created_at.desc())
+            .first()
+        )
+
+        if latest_otp:
+            created_at = latest_otp.created_at
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc)
+            elapsed = (now - created_at).total_seconds()
+            if elapsed < settings.OTP_RESEND_COOLDOWN_SECONDS:
+                # Timing-safe generic cooldown message
+                return ForgotPasswordResponseData(
+                    message="A reset code was recently sent. Please check your inbox or try again shortly."
+                )
+
+        # Invalidate previous password_reset codes immediately
+        db.query(OtpVerification).filter(
+            OtpVerification.email == req.email,
+            OtpVerification.purpose == "password_reset",
+            OtpVerification.is_used == False,
+        ).update({"is_used": True}, synchronize_session=False)
+
+        # Generate cryptographically secure OTP
+        otp_code = self._generate_otp_code()
+        otp_hash = self._hash_otp(otp_code)
+        expires_at = now + timedelta(minutes=settings.OTP_EXPIRE_MINUTES)
+
+        otp_record = OtpVerification(
+            email=req.email,
+            otp_hash=otp_hash,
+            purpose="password_reset",
+            expires_at=expires_at,
+            is_used=False,
+            attempts=0,
+        )
+        db.add(otp_record)
+        db.commit()
+
+        # Dispatch email
+        email_service.send_password_reset_otp(req.email, otp_code, user.full_name)
+
+        return ForgotPasswordResponseData()
+
+    def reset_password(self, db: Session, req: ResetPasswordRequest, client_ip: str | None = None) -> ResetPasswordResponseData:
+        """
+        Reset user password using 6-digit OTP.
+        Validates hash, checks attempt count (max 5), expiry, updates password hash,
+        increments token_version to invalidate all existing JWTs/sessions, and marks OTP as used.
+        """
+        now = datetime.now(timezone.utc)
+        user = user_repository.get_by_email(db, req.email)
+        if not user or not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid password reset request. Please request a new code.",
+            )
+
+        # Fetch latest active password_reset OTP (Strict Purpose Isolation)
+        otp_record = (
+            db.query(OtpVerification)
+            .filter(
+                OtpVerification.email == req.email,
+                OtpVerification.purpose == "password_reset",
+                OtpVerification.is_used == False,
+            )
+            .order_by(OtpVerification.created_at.desc())
+            .first()
+        )
+
+        if not otp_record:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No active password reset code found. Please request a new code.",
+            )
+
+        # Check expiration
+        expires_at = otp_record.expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+        if now > expires_at:
+            otp_record.is_used = True
+            db.commit()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Password reset code has expired. Please request a new code.",
+            )
+
+        # Check brute force lockout (max 5 attempts)
+        if otp_record.attempts >= 5:
+            otp_record.is_used = True
+            db.commit()
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Too many failed attempts. This code is now invalid. Please request a new code.",
+            )
+
+        # Verify hashed code
+        provided_hash = self._hash_otp(req.otp_code)
+        if not hmac.compare_digest(provided_hash, otp_record.otp_hash):
+            otp_record.attempts += 1
+            db.commit()
+            remaining_attempts = max(0, 5 - otp_record.attempts)
+            if remaining_attempts == 0:
+                otp_record.is_used = True
+                db.commit()
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail="Too many failed attempts. This code is now invalid. Please request a new code.",
+                )
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid verification code. {remaining_attempts} attempts remaining.",
+            )
+
+        # Success: update password hash, increment token_version (Global session invalidation)
+        user.hashed_password = hash_password(req.new_password)
+        user.token_version = (getattr(user, "token_version", 1) or 1) + 1
+        otp_record.is_used = True
+        db.commit()
+
+        # Audit logging
+        logger.info(
+            f"Password reset successful for user {user.id}",
+            extra={"user_id": str(user.id), "ip": client_ip},
+        )
+
+        return ResetPasswordResponseData()
 
     def cleanup_abandoned_accounts(self, db: Session) -> int:
         """Purge unverified accounts older than 24 hours."""
@@ -427,8 +596,9 @@ class AuthService:
 
     def _generate_tokens(self, user: User) -> TokenResponse:
         """Generate Access and Refresh tokens for a given user."""
-        access_token = create_access_token(subject=str(user.id), email=user.email)
-        refresh_token = create_refresh_token(subject=str(user.id), email=user.email)
+        tv = getattr(user, "token_version", 1) or 1
+        access_token = create_access_token(subject=str(user.id), email=user.email, token_version=tv)
+        refresh_token = create_refresh_token(subject=str(user.id), email=user.email, token_version=tv)
         return TokenResponse(
             access_token=access_token,
             refresh_token=refresh_token,

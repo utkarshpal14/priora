@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 import '../features/analytics/presentation/screens/analytics_screen.dart';
 import '../features/auth/domain/auth_state.dart';
 import '../features/auth/presentation/controllers/auth_controller.dart';
+import '../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
+import '../features/auth/presentation/screens/reset_password_screen.dart';
 import '../features/auth/presentation/screens/verify_email_screen.dart';
 import '../features/dashboard/presentation/screens/placeholder_screen.dart';
 import '../features/goals/presentation/screens/goal_detail_screen.dart';
@@ -46,14 +48,18 @@ class RouterNotifier extends ChangeNotifier {
     }
 
     final isAuthenticated = authState.isAuthenticated;
-    final isPublicRoute = location == '/login' || location == '/register' || location == '/verify-email';
+    final isPublicRoute = location == '/login' ||
+        location == '/register' ||
+        location == '/verify-email' ||
+        location == '/forgot-password' ||
+        location == '/reset-password';
 
     // 1. Unauthenticated users trying to access protected routes go to /login
     if (!isAuthenticated && !isPublicRoute) {
       return '/login';
     }
 
-    // 2. Authenticated users on /login, /register, /verify-email, or / go to /planner
+    // 2. Authenticated users on public auth screens or / go to /planner
     if (isAuthenticated && (isPublicRoute || location == '/')) {
       return '/planner';
     }
@@ -99,6 +105,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final email = state.uri.queryParameters['email'] ?? '';
           return VerifyEmailScreen(email: email);
+        },
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        name: 'forgot_password',
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/reset-password',
+        name: 'reset_password',
+        builder: (context, state) {
+          final email = state.uri.queryParameters['email'] ?? '';
+          return ResetPasswordScreen(email: email);
         },
       ),
 

@@ -81,7 +81,87 @@ class EmailService:
 </html>
 """
         plain_content = f"Your Priora verification code is: {otp_code}. This code expires in {settings.OTP_EXPIRE_MINUTES} minutes."
+        return self._dispatch_email(to_email, subject, html_content, plain_content, otp_code)
 
+    def send_password_reset_otp(self, to_email: str, otp_code: str, full_name: str | None = None) -> bool:
+        """
+        Send 6-digit password reset OTP code with security warnings to the recipient.
+        """
+        display_name = full_name if full_name else "Valued User"
+        subject = f"{otp_code} is your Priora password reset code"
+
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #090D16; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #F8FAFC;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #090D16; padding: 40px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" style="max-width: 520px; background: #0F172A; border-radius: 16px; border: 1px solid #1E293B; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);" cellspacing="0" cellpadding="0">
+          <!-- Header Banner -->
+          <tr>
+            <td style="padding: 32px 32px 20px 32px; text-align: center; border-bottom: 1px solid #1E293B; background: linear-gradient(180deg, rgba(239, 68, 68, 0.08) 0%, rgba(15, 23, 42, 0) 100%);">
+              <div style="font-size: 28px; font-weight: 800; color: #F59E0B; letter-spacing: -0.5px;">⚡ Priora</div>
+              <div style="font-size: 13px; color: #94A3B8; margin-top: 4px; font-weight: 500;">Account Security</div>
+            </td>
+          </tr>
+
+          <!-- Content Body -->
+          <tr>
+            <td style="padding: 32px;">
+              <h1 style="font-size: 20px; font-weight: 700; color: #F8FAFC; margin: 0 0 12px 0;">Reset Your Password</h1>
+              <p style="font-size: 14px; line-height: 22px; color: #CBD5E1; margin: 0 0 24px 0;">
+                Hello {display_name},<br>
+                We received a request to reset your Priora workspace password. Use the 6-digit code below to set a new password for your account:
+              </p>
+
+              <!-- OTP Code Display Box -->
+              <div style="background-color: #090D16; border: 1.5px solid #F59E0B; border-radius: 12px; padding: 20px; text-align: center; margin: 24px 0;">
+                <span style="font-family: 'Courier New', Courier, monospace; font-size: 36px; font-weight: 800; letter-spacing: 10px; color: #FBBF24; display: inline-block; margin-left: 10px;">{otp_code}</span>
+              </div>
+
+              <div style="background-color: rgba(245, 158, 11, 0.05); border-left: 3px solid #F59E0B; padding: 12px 16px; border-radius: 4px; margin-top: 20px;">
+                <p style="font-size: 13px; color: #CBD5E1; margin: 0; line-height: 20px;">
+                  ⚠️ <strong>Security Notice:</strong><br>
+                  If you did not request a password reset, you can safely ignore this email. Your password will remain unchanged.
+                </p>
+              </div>
+
+              <p style="font-size: 12px; color: #94A3B8; line-height: 18px; margin: 16px 0 0 0;">
+                ⏱️ This code will expire in {settings.OTP_EXPIRE_MINUTES} minutes.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 32px; background-color: #0B1120; border-top: 1px solid #1E293B; text-align: center;">
+              <p style="font-size: 12px; color: #64748B; margin: 0;">
+                © 2026 Priora Productivity Platform • Secure Identity Protection
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+"""
+        plain_content = (
+            f"Your Priora password reset code is: {otp_code}. "
+            f"This code expires in {settings.OTP_EXPIRE_MINUTES} minutes. "
+            "If you did not request this, you can safely ignore this email."
+        )
+        return self._dispatch_email(to_email, subject, html_content, plain_content, otp_code)
+
+    def _dispatch_email(self, to_email: str, subject: str, html_content: str, plain_content: str, otp_code: str) -> bool:
+        """Internal multi-channel email dispatcher (Resend -> Brevo -> SMTP -> Dev fallback)."""
         # 1. Resend API Delivery (HTTPS)
         if settings.RESEND_API_KEY:
             sent = self._send_via_resend(to_email, subject, html_content, plain_content)

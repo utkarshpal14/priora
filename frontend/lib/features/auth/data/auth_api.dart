@@ -126,6 +126,34 @@ class AuthApi {
     return UserModel.fromJson(data);
   }
 
+  Future<String> forgotPassword({required String email}) async {
+    final response = await _dio.post(
+      ApiEndpoints.forgotPassword,
+      data: {
+        'email': email.trim(),
+      },
+    );
+    final data = response.data['data'] as Map<String, dynamic>?;
+    return data?['message'] as String? ?? 'If an account exists, a reset code was sent.';
+  }
+
+  Future<String> resetPassword({
+    required String email,
+    required String otpCode,
+    required String newPassword,
+  }) async {
+    final response = await _dio.post(
+      ApiEndpoints.resetPassword,
+      data: {
+        'email': email.trim(),
+        'otp_code': otpCode.trim(),
+        'new_password': newPassword,
+      },
+    );
+    final data = response.data['data'] as Map<String, dynamic>?;
+    return data?['message'] as String? ?? 'Your password has been successfully reset.';
+  }
+
   Future<void> logout() async {
     try {
       await _dio.post(ApiEndpoints.logout);
