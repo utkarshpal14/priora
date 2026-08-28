@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 
+from app.core.config import settings
 from main import app
 
 client = TestClient(app)
@@ -20,4 +21,4 @@ def test_app_version_endpoint():
     assert "release_notes" in payload
     assert "force_update" in payload
     assert isinstance(payload["force_update"], bool)
-    assert payload["latest_version"] == "1.1.0"
+    assert payload["latest_version"] == settings.LATEST_APP_VERSION
