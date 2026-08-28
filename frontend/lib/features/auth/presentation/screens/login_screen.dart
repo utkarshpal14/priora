@@ -152,20 +152,42 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
                         ),
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.error_outline, size: 18, color: AppColors.error),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                authState.errorMessage!,
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  color: AppColors.error,
-                                  fontWeight: FontWeight.w500,
+                            Row(
+                              children: [
+                                const Icon(Icons.error_outline, size: 18, color: AppColors.error),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    authState.errorMessage!,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      color: AppColors.error,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (authState.errorMessage!.toLowerCase().contains('not verified')) ...[
+                              const SizedBox(height: 8),
+                              GestureDetector(
+                                onTap: () {
+                                  final email = _emailController.text.trim();
+                                  context.push('/verify-email?email=${Uri.encodeComponent(email)}');
+                                },
+                                child: Text(
+                                  'Enter 6-digit verification code →',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    color: const Color(0xFFF59E0B),
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
                       ),

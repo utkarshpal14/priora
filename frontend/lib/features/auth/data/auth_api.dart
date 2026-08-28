@@ -16,7 +16,7 @@ class AuthApi {
 
   AuthApi(this._dio);
 
-  Future<({UserModel user, AuthTokens tokens})> register({
+  Future<({String email, bool isEmailVerified, String message})> register({
     required String email,
     required String password,
     String? fullName,
@@ -31,9 +31,47 @@ class AuthApi {
     );
 
     final data = response.data['data'] as Map<String, dynamic>;
+    return (
+      email: data['email'] as String,
+      isEmailVerified: data['is_email_verified'] as bool? ?? false,
+      message: data['message'] as String? ?? 'Verification code sent.',
+    );
+  }
+
+  Future<({UserModel user, AuthTokens tokens})> verifyOtp({
+    required String email,
+    required String otpCode,
+  }) async {
+    final response = await _dio.post(
+      ApiEndpoints.verifyOtp,
+      data: {
+        'email': email.trim(),
+        'otp_code': otpCode.trim(),
+      },
+    );
+
+    final data = response.data['data'] as Map<String, dynamic>;
     final user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
     final tokens = AuthTokens.fromJson(data['tokens'] as Map<String, dynamic>);
     return (user: user, tokens: tokens);
+  }
+
+  Future<({String email, int cooldownSeconds, String message})> resendOtp({
+    required String email,
+  }) async {
+    final response = await _dio.post(
+      ApiEndpoints.resendOtp,
+      data: {
+        'email': email.trim(),
+      },
+    );
+
+    final data = response.data['data'] as Map<String, dynamic>;
+    return (
+      email: data['email'] as String,
+      cooldownSeconds: data['cooldown_seconds'] as int? ?? 60,
+      message: data['message'] as String? ?? 'A new verification code has been sent.',
+    );
   }
 
   Future<({UserModel user, AuthTokens tokens})> login({

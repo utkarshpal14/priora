@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.core.database import Base, get_db
+from app.core.security import create_access_token
+from app.models.user import User
 from main import app
 
 # In-memory SQLite database for fast, isolated testing
@@ -52,3 +54,35 @@ def client(db_session: Session) -> Generator[TestClient]:
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+
+
+def create_auth_headers(client: TestClient, email: str = "testuser@priora.app", full_name: str = "Test User") -> dict[str, str]:
+    """Helper to register and return authenticated headers with verified status in tests."""
+    client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "Password123!", "full_name": full_name},
+    )
+    db = next(client.app.dependency_overrides[get_db]())
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise RuntimeError(f"User {email} could not be created in test")
+    user.is_email_verified = True
+    db.commit()
+    token = create_access_token(subject=str(user.id), email=user.email)
+    return {"Authorization": f"Bearer {token}"}
+
+
+def create_auth_headers_with_user_id(client: TestClient, email: str = "testuser@priora.app", full_name: str = "Test User") -> tuple[dict[str, str], str]:
+    """Helper returning both authenticated headers and the user's UUID string."""
+    client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "Password123!", "full_name": full_name},
+    )
+    db = next(client.app.dependency_overrides[get_db]())
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise RuntimeError(f"User {email} could not be created in test")
+    user.is_email_verified = True
+    db.commit()
+    token = create_access_token(subject=str(user.id), email=user.email)
+    return {"Authorization": f"Bearer {token}"}, str(user.id)

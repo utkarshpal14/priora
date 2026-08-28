@@ -30,13 +30,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     super.dispose();
   }
 
-  void _handleRegister() {
+  Future<void> _handleRegister() async {
     if (_formKey.currentState?.validate() ?? false) {
-      ref.read(authControllerProvider.notifier).register(
-            email: _emailController.text,
+      final email = _emailController.text.trim();
+      final success = await ref.read(authControllerProvider.notifier).register(
+            email: email,
             password: _passwordController.text,
             fullName: _fullNameController.text.isNotEmpty ? _fullNameController.text : null,
           );
+      if (success && mounted) {
+        context.push('/verify-email?email=${Uri.encodeComponent(email)}');
+      }
     }
   }
 

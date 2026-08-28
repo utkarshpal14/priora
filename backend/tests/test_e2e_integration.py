@@ -9,14 +9,17 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.models.notification_log import NotificationLog
+from app.models.otp_verification import OtpVerification
 from app.models.reminder import Reminder
+from app.models.user import User
+from app.services.auth_service import auth_service
 from app.services.notification_dispatcher import notification_dispatcher
 
 
 def test_full_user_workflow_e2e(client: TestClient, db_session: Session):
     """
-    E2E Test: Tests complete Priora user journey from registration to analytics reporting,
-    including session time-blocking, scheduled reminder dispatcher execution, and audit logs.
+    E2E Test: Tests complete Priora user journey from registration & OTP verification
+    to analytics reporting, including session time-blocking, scheduled reminder dispatch, and audit logs.
     """
     # 1. Register User
     email = "integration_hero@priora.app"
@@ -26,17 +29,19 @@ def test_full_user_workflow_e2e(client: TestClient, db_session: Session):
         json={"email": email, "password": password, "full_name": "Integration User"},
     )
     assert reg_res.status_code == 201
-    user_data = reg_res.json()["data"]["user"]
-    assert user_data["email"] == email
+    assert reg_res.json()["data"]["email"] == email
+    assert reg_res.json()["data"]["is_email_verified"] is False
 
-    # 2. Login
-    login_res = client.post(
-        "/api/v1/auth/login",
-        json={"email": email, "password": password},
+    # 2. Verify 6-digit OTP
+    test_otp = "123456"
+    db_session.query(OtpVerification).filter(OtpVerification.email == email).update(
+        {"otp_hash": auth_service._hash_otp(test_otp)}
     )
-    assert login_res.status_code == 200
-    token_data = login_res.json()["data"]["tokens"]
-    access_token = token_data["access_token"]
+    db_session.commit()
+
+    verify_res = client.post("/api/v1/auth/verify-otp", json={"email": email, "otp_code": test_otp})
+    assert verify_res.status_code == 200
+    access_token = verify_res.json()["data"]["tokens"]["access_token"]
     headers = {"Authorization": f"Bearer {access_token}"}
 
     # 3. Register FCM Device Token
@@ -62,14 +67,10 @@ def test_full_user_workflow_e2e(client: TestClient, db_session: Session):
         "/api/v1/goals",
         headers=headers,
         json={
-            "title": "Master Full-Stack Integration",
-            "description": "Build high-reliability production applications",
+            "title": "Ship Priora v1.1.3",
             "category_id": category_id,
             "target_date": target_date,
-            "milestones": [
-                {"title": "Phase 1: Database Schema & API", "order_index": 0},
-                {"title": "Phase 2: UI & Integration", "order_index": 1},
-            ],
+            "milestones": [{"title": "Ship Email Verification & OTP"}],
         },
     )
     assert goal_res.status_code == 201
@@ -77,95 +78,85 @@ def test_full_user_workflow_e2e(client: TestClient, db_session: Session):
     goal_id = goal_data["id"]
     milestone_id = goal_data["milestones"][0]["id"]
 
-    # 6. Create Task linked to Goal & Milestone
-    deadline = (datetime.now(timezone.utc) + timedelta(hours=4)).isoformat()
+    # 6. Create Task Linked to Goal and Category
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     task_res = client.post(
         "/api/v1/tasks",
         headers=headers,
         json={
-            "title": "Implement Integration Tests",
-            "description": "Write automated pytest and Flutter test suites",
-            "priority": "HIGH",
+            "title": "Complete Email Verification & OTP System",
             "category_id": category_id,
             "goal_id": goal_id,
             "milestone_id": milestone_id,
-            "deadline": deadline,
-            "estimated_minutes": 120,
+            "priority": "CRITICAL",
+            "due_date": today_str,
+            "due_time": "18:00",
+            "estimated_minutes": 60,
         },
     )
     assert task_res.status_code == 201
     task_id = task_res.json()["data"]["id"]
 
-    # 7. Add Note Attachment to Task
-    note_res = client.post(
-        "/api/v1/attachments/note",
-        headers=headers,
-        json={
-            "task_id": task_id,
-            "name": "Testing Architecture Spec",
-            "content": "# Test Specifications\n\nEnsure 100% coverage.",
-            "tags": "test,e2e,docs",
-        },
+    # 7. Create Scheduled Reminder for Task
+    due_reminder = Reminder(
+        task_id=uuid.UUID(task_id),
+        remind_at=datetime.now(timezone.utc) - timedelta(minutes=5),
+        status="SCHEDULED",
     )
-    assert note_res.status_code == 201
-    assert note_res.json()["data"]["type"] == "NOTE"
+    db_session.add(due_reminder)
+    db_session.commit()
 
-    # 8. Schedule Timeblock Session
-    session_start = (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()
-    session_end = (datetime.now(timezone.utc) + timedelta(hours=3)).isoformat()
-    timeblock_res = client.post(
+    # 8. Dispatch Pending Reminders and Audit Log Check
+    dispatched_count = notification_dispatcher.process_pending_reminders(db_session)
+    assert dispatched_count >= 1
+
+    # 9. Verify Notification Audit Log
+    user_obj = db_session.query(User).filter(User.email == email).first()
+    logs = db_session.query(NotificationLog).filter(NotificationLog.user_id == user_obj.id).all()
+    assert len(logs) >= 1
+    assert logs[0].status == "SENT"
+
+    # 10. Schedule Task Session (Time Blocking)
+    start_dt = datetime.now(timezone.utc).replace(hour=9, minute=0, second=0, microsecond=0)
+    end_dt = start_dt + timedelta(hours=1)
+    session_res = client.post(
         "/api/v1/planner/sessions",
         headers=headers,
         json={
             "task_id": task_id,
-            "scheduled_start": session_start,
-            "scheduled_end": session_end,
+            "scheduled_start": start_dt.isoformat(),
+            "scheduled_end": end_dt.isoformat(),
         },
     )
-    assert timeblock_res.status_code == 201
+    assert session_res.status_code == 201
 
-    # 9. Create Reminder Alert
-    remind_at = (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()
-    rem_res = client.post(
-        "/api/v1/reminders",
-        headers=headers,
-        json={"task_id": task_id, "remind_at": remind_at},
-    )
-    assert rem_res.status_code == 201
-    reminder_id = rem_res.json()["data"]["id"]
+    # 11. Fetch Daily Timeline Planner
+    planner_res = client.get(f"/api/v1/planner/day?date={today_str}&tz_offset=0", headers=headers)
+    assert planner_res.status_code == 200
+    timeline = planner_res.json()["data"]["timeline"]
+    assert len(timeline) == 4
 
-    # Make reminder due immediately for dispatcher test execution
-    db_reminder = db_session.query(Reminder).filter(Reminder.id == uuid.UUID(reminder_id)).first()
-    if db_reminder:
-        db_reminder.remind_at = datetime.now(timezone.utc) - timedelta(minutes=5)
-        db_session.commit()
+    # 12. Complete Task & Milestone
+    task_comp = client.patch(f"/api/v1/tasks/{task_id}/complete", headers=headers)
+    assert task_comp.status_code == 200
+    client.patch(f"/api/v1/goals/{goal_id}/milestones/{milestone_id}/toggle", headers=headers)
 
-    # 10. Execute Dispatcher Service & Verify NotificationLog Audit Entry
-    sent_count = notification_dispatcher.process_pending_reminders(db_session)
-    assert sent_count >= 1
+    # 13. Verify Goal Progress Auto-Calculates to 100%
+    goal_check = client.get(f"/api/v1/goals/{goal_id}", headers=headers)
+    assert goal_check.status_code == 200
+    assert goal_check.json()["data"]["progress_percentage"] == 100
+    assert goal_check.json()["data"]["status"] == "COMPLETED"
 
-    logs = db_session.query(NotificationLog).filter(NotificationLog.user_id == uuid.UUID(user_data["id"])).all()
-    assert len(logs) >= 1
-    assert logs[0].status == "SENT"
-
-    # 11. Complete Task
-    complete_res = client.patch(
-        f"/api/v1/tasks/{task_id}/complete",
-        headers=headers,
-    )
-    assert complete_res.status_code == 200
-    assert complete_res.json()["data"]["status"] == "COMPLETED"
-
-    # 12. Perform Evening Review Check
+    # 14. Evening Review Summary
     review_res = client.get(
-        "/api/v1/review/daily",
+        f"/api/v1/review/daily?date={today_str}",
         headers=headers,
     )
     assert review_res.status_code == 200
-    assert "completion_rate" in review_res.json()["data"]
+    assert review_res.json()["data"]["completed_count"] >= 1
 
-    # 13. Fetch Analytics & Verify Reporting Data
-    analytics_res = client.get("/api/v1/analytics/overview", headers=headers)
+    # 15. Analytics Verification
+    analytics_res = client.get("/api/v1/analytics/overview?tz_offset=0", headers=headers)
     assert analytics_res.status_code == 200
     analytics_data = analytics_res.json()["data"]
     assert analytics_data["personal_records"]["best_day_tasks"] >= 1
@@ -176,7 +167,7 @@ def test_full_user_workflow_e2e(client: TestClient, db_session: Session):
     assert "heatmap" in heatmap_res.json()["data"]
 
 
-def test_auth_token_refresh_e2e(client: TestClient):
+def test_auth_token_refresh_e2e(client: TestClient, db_session: Session):
     """
     E2E Test: Verifies refresh token exchange issuing new valid access credentials.
     """
@@ -187,11 +178,16 @@ def test_auth_token_refresh_e2e(client: TestClient):
         "/api/v1/auth/register",
         json={"email": email, "password": password, "full_name": "Refresh User"},
     )
-    login_res = client.post(
-        "/api/v1/auth/login",
-        json={"email": email, "password": password},
+
+    test_otp = "777777"
+    db_session.query(OtpVerification).filter(OtpVerification.email == email).update(
+        {"otp_hash": auth_service._hash_otp(test_otp)}
     )
-    refresh_token = login_res.json()["data"]["tokens"]["refresh_token"]
+    db_session.commit()
+
+    verify_res = client.post("/api/v1/auth/verify-otp", json={"email": email, "otp_code": test_otp})
+    assert verify_res.status_code == 200
+    refresh_token = verify_res.json()["data"]["tokens"]["refresh_token"]
 
     # Refresh access token
     ref_res = client.post("/api/v1/auth/refresh", json={"refresh_token": refresh_token})

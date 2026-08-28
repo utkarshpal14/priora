@@ -10,7 +10,7 @@ import 'package:frontend/features/auth/domain/user_model.dart';
 import 'package:frontend/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:frontend/features/auth/presentation/screens/login_screen.dart';
 import 'package:frontend/features/auth/presentation/screens/register_screen.dart';
-import 'package:frontend/main.dart';
+import 'package:frontend/features/auth/presentation/screens/verify_email_screen.dart';
 
 class FakeAuthStorage extends AuthStorage {
   String? _access;
@@ -52,12 +52,35 @@ class FakeAuthRepository extends AuthRepository {
   }
 
   @override
-  Future<UserModel> register({required String email, required String password, String? fullName}) async {
+  Future<({String email, bool isEmailVerified, String message})> register({
+    required String email,
+    required String password,
+    String? fullName,
+  }) async {
+    return (
+      email: email,
+      isEmailVerified: false,
+      message: 'Verification code sent.',
+    );
+  }
+
+  @override
+  Future<UserModel> verifyOtp({required String email, required String otpCode}) async {
     return UserModel(
       id: 'test-uuid',
       email: email,
-      fullName: fullName ?? 'Test User',
+      fullName: 'Test User',
       authProvider: 'email',
+      isEmailVerified: true,
+    );
+  }
+
+  @override
+  Future<({String email, int cooldownSeconds, String message})> resendOtp({required String email}) async {
+    return (
+      email: email,
+      cooldownSeconds: 60,
+      message: 'New code sent.',
     );
   }
 
@@ -137,5 +160,28 @@ void main() {
 
     expect(find.text('Please enter your email address.'), findsOneWidget);
     expect(find.text('Please enter a password.'), findsOneWidget);
+  });
+
+  testWidgets('VerifyEmailScreen renders 6 OTP boxes and resend countdown timer', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(FakeAuthRepository()),
+        ],
+        child: const MaterialApp(
+          home: VerifyEmailScreen(email: 'tester@priora.app'),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Verify your email'), findsOneWidget);
+    expect(find.textContaining('tester@priora.app'), findsOneWidget);
+    expect(find.text('Verify & Activate Account'), findsOneWidget);
+    expect(find.byType(TextField), findsNWidgets(6));
+
+    // Dispose widget to cancel periodic timer cleanly
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
   });
 }

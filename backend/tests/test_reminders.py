@@ -4,25 +4,12 @@ from datetime import UTC, datetime, timedelta
 from fastapi.testclient import TestClient
 
 
+from tests.conftest import create_auth_headers
+
+
 def _get_auth_headers(client: TestClient, email: str = "reminders_user@priora.app") -> dict[str, str]:
     """Helper to register and login a user, returning auth Bearer headers."""
-    client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": email,
-            "password": "Password123!",
-            "full_name": "Reminder Tester",
-        },
-    )
-    login_res = client.post(
-        "/api/v1/auth/login",
-        json={
-            "email": email,
-            "password": "Password123!",
-        },
-    )
-    token = login_res.json()["data"]["tokens"]["access_token"]
-    return {"Authorization": f"Bearer {token}"}
+    return create_auth_headers(client, email=email, full_name="Reminder Tester")
 
 
 def test_reminder_create_and_read_success(client: TestClient):

@@ -38,9 +38,11 @@ Priora is an intelligent, full-stack productivity platform built to help users s
   - 📝 **Quick Notes:** In-app markdown revision notes with copy actions.
 - **Tags & Pinning:** Tag organization (`#DSA`, `#OS`, `#Placement`) and resource pinning to top of lists.
 
-### 🔐 Hybrid Authentication & Google OAuth 2.0
+### 🔐 Hybrid Authentication, Google OAuth 2.0 & Hashed OTP (v1.1.3)
+- **Email Verification & Hashed OTP Code System:** Strict account verification gate requiring 6-digit OTP confirmation before issuing JWT tokens. Hashed at rest using SHA-256 (`sha256(otp + secret_salt)`).
 - **Google One-Tap Sign-In:** Direct Google identity authentication on Android & Web with Priora JWT issuance.
-- **Email & Password Authentication:** Secure registration and login with bcrypt hashing and JWT token expiration.
+- **Resend API & Production SMTP:** High-deliverability transactional emails with branded dark/gold HTML templates.
+- **Brute-Force & Flooding Protection:** 5-attempt rate-limiting lockout and 60-second cooldown timer.
 - **Offline Session Caching:** Secure token storage for instant offline workspace loading.
 
 ---

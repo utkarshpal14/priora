@@ -2,7 +2,7 @@ name: frontend
 description: "Priora - Smart Productivity and Planning Platform"
 publish_to: 'none'
 
-version: 1.1.2+3
+version: 1.1.3+4
 
 environment:
   sdk: ^3.13.0

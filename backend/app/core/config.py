@@ -36,16 +36,27 @@ class Settings(BaseSettings):
     # Google OAuth
     GOOGLE_CLIENT_ID: str = ""
 
+    # Email Service & OTP Verification (v1.1.3)
+    RESEND_API_KEY: str = ""
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    EMAILS_FROM_EMAIL: str = "noreply@priora.app"
+    EMAILS_FROM_NAME: str = "Priora"
+    OTP_EXPIRE_MINUTES: int = 10
+    OTP_RESEND_COOLDOWN_SECONDS: int = 60
+
     # Supabase credentials (for future milestones)
     SUPABASE_URL: str = ""
     SUPABASE_KEY: str = ""
     SUPABASE_JWT_SECRET: str = ""
 
     # In-App Update Management (ENH-006 / TS-008)
-    LATEST_APP_VERSION: str = "1.1.2"
+    LATEST_APP_VERSION: str = "1.1.3"
     MIN_SUPPORTED_APP_VERSION: str = "1.0.0"
-    APK_DOWNLOAD_URL: str = "https://github.com/utkarshpal14/priora/releases/download/v1.1.2/priora-v1.1.2-release.apk"
-    APP_RELEASE_NOTES: str = "• Root navigator update modal stability\n• Direct 'Check for Updates' card in Settings\n• 6 custom reminder audio chimes\n• Theme sync & offline resilience"
+    APK_DOWNLOAD_URL: str = "https://github.com/utkarshpal14/priora/releases/download/v1.1.3/priora-v1.1.3-release.apk"
+    APP_RELEASE_NOTES: str = "• Email Verification with Hashed 6-Digit OTP\n• Google OAuth 2.0 Sign-In\n• Official com.priora.app package with production signing\n• Cold-start server warming & router stability\n• 6 custom reminder audio chimes"
     FORCE_APP_UPDATE: bool = False
 
     model_config = SettingsConfigDict(

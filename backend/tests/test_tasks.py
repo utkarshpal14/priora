@@ -2,13 +2,11 @@ from datetime import UTC, datetime, timedelta
 from fastapi.testclient import TestClient
 
 
+from tests.conftest import create_auth_headers
+
+
 def _get_auth_headers(client: TestClient, email: str) -> dict[str, str]:
-    response = client.post(
-        "/api/v1/auth/register",
-        json={"email": email, "password": "Password123!", "full_name": f"User {email}"},
-    )
-    token = response.json()["data"]["tokens"]["access_token"]
-    return {"Authorization": f"Bearer {token}"}
+    return create_auth_headers(client, email=email)
 
 
 def test_default_categories_and_crud(client: TestClient):

@@ -31,6 +31,7 @@ def _sync_sqlite_schema() -> None:
                 text(
                     "UPDATE users SET "
                     "storage_used_bytes = COALESCE(storage_used_bytes, 0), "
+                    "is_email_verified = COALESCE(is_email_verified, 1), "
                     "notifications_enabled = COALESCE(notifications_enabled, 1), "
                     "sound_enabled = COALESCE(sound_enabled, 1), "
                     "deadline_reminders = COALESCE(deadline_reminders, 1), "
@@ -48,6 +49,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         Base.metadata.create_all(bind=engine)
         if engine.dialect.name == "sqlite":
             _sync_sqlite_schema()
+        else:
+            # Protect existing users on Postgres
+            with engine.connect() as conn:
+                conn.execute(
+                    text("UPDATE users SET is_email_verified = TRUE WHERE is_email_verified IS NULL OR is_email_verified = FALSE;")
+                )
+                conn.commit()
     except Exception as e:
         import logging
         logging.getLogger("uvicorn.error").warning(f"Database startup schema notice: {e}")

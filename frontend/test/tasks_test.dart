@@ -244,6 +244,14 @@ class FakeAuthController extends StateNotifier<AuthState> implements AuthControl
   Future<bool> register({required String email, required String password, String? fullName}) async => true;
 
   @override
+  Future<bool> verifyOtp({required String email, required String otpCode}) async => true;
+
+  @override
+  Future<({bool success, int cooldownSeconds, String message})> resendOtp({required String email}) async {
+    return (success: true, cooldownSeconds: 60, message: 'New code sent.');
+  }
+
+  @override
   Future<void> logout() async {}
 }
 

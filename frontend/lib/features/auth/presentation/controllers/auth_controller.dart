@@ -90,7 +90,7 @@ class AuthController extends StateNotifier<AuthState> {
     }
   }
 
-  /// Email & password account registration
+  /// Email & password account registration (Dispatches 6-digit OTP)
   Future<bool> register({
     required String email,
     required String password,
@@ -98,12 +98,12 @@ class AuthController extends StateNotifier<AuthState> {
   }) async {
     state = AuthState.authenticating();
     try {
-      final user = await _repository.register(
+      await _repository.register(
         email: email,
         password: password,
         fullName: fullName,
       );
-      state = AuthState.authenticated(user);
+      state = AuthState.unauthenticated();
       return true;
     } on DioException catch (e) {
       final message = _extractErrorMessage(e, fallback: 'Failed to create account.');
@@ -112,6 +112,41 @@ class AuthController extends StateNotifier<AuthState> {
     } catch (e) {
       state = AuthState.error('An unexpected error occurred. Please try again.');
       return false;
+    }
+  }
+
+  /// Verify 6-digit OTP code and issue JWT sessions
+  Future<bool> verifyOtp({
+    required String email,
+    required String otpCode,
+  }) async {
+    state = AuthState.authenticating();
+    try {
+      final user = await _repository.verifyOtp(email: email, otpCode: otpCode);
+      state = AuthState.authenticated(user);
+      return true;
+    } on DioException catch (e) {
+      final message = _extractErrorMessage(e, fallback: 'Verification failed. Please check the code.');
+      state = AuthState.error(message);
+      return false;
+    } catch (e) {
+      state = AuthState.error('An unexpected error occurred. Please try again.');
+      return false;
+    }
+  }
+
+  /// Resend 6-digit OTP code with rate limit handling
+  Future<({bool success, int cooldownSeconds, String message})> resendOtp({
+    required String email,
+  }) async {
+    try {
+      final result = await _repository.resendOtp(email: email);
+      return (success: true, cooldownSeconds: result.cooldownSeconds, message: result.message);
+    } on DioException catch (e) {
+      final message = _extractErrorMessage(e, fallback: 'Failed to resend verification code.');
+      return (success: false, cooldownSeconds: 60, message: message);
+    } catch (e) {
+      return (success: false, cooldownSeconds: 60, message: 'Could not resend code. Please try again.');
     }
   }
 

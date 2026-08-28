@@ -17,21 +17,39 @@ class AuthRepository {
 
   AuthRepository(this._authApi, this._authStorage);
 
-  Future<UserModel> register({
+  Future<({String email, bool isEmailVerified, String message})> register({
     required String email,
     required String password,
     String? fullName,
   }) async {
-    final result = await _authApi.register(
+    return await _authApi.register(
       email: email,
       password: password,
       fullName: fullName,
+    );
+  }
+
+  Future<UserModel> verifyOtp({
+    required String email,
+    required String otpCode,
+  }) async {
+    final result = await _authApi.verifyOtp(
+      email: email,
+      otpCode: otpCode,
     );
     await _authStorage.saveTokens(
       accessToken: result.tokens.accessToken,
       refreshToken: result.tokens.refreshToken,
     );
     return result.user;
+  }
+
+  Future<({String email, int cooldownSeconds, String message})> resendOtp({
+    required String email,
+  }) async {
+    return await _authApi.resendOtp(
+      email: email,
+    );
   }
 
   Future<UserModel> login({

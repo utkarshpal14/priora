@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.3] - 2026-08-28
+
+### Added
+- **Email Verification & Hashed OTP Architecture:**
+  - Strict account verification gate: Account registration generates a 6-digit OTP code and requires validation before issuing JWT sessions.
+  - SHA-256 Hashed OTP Storage: Security best-practice implementation where database stores `otp_hash = sha256(otp_code + salt)` instead of raw plaintext numbers.
+  - Brute-Force Lockout Protection: Limits verification attempts to a maximum of 5 tries per code before invalidation.
+  - Rate-Limited Resend: 60-second cooldown enforcement preventing notification flooding.
+  - Automated Cleanup: Automatic purge of abandoned unverified accounts older than 24 hours.
+  - Seamless Existing User Migration: Automated startup schema synchronization marking all existing active users as verified so beta testers and Google users remain uninterrupted.
+  - Dual Email Delivery Engine: Integrated Resend API support (`RESEND_API_KEY`) alongside production SMTP TLS dispatch and development console fallback.
+  - Dedicated `VerifyEmailScreen`: High-impact verification UI featuring 6 auto-advancing digit boxes, clipboard paste parsing, 60s interactive countdown timer, and one-tap unverified login routing.
+
+---
+
 ## [1.1.2] - 2026-08-28
 
 ### Added

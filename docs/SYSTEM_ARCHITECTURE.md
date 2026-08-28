@@ -49,6 +49,12 @@ Priora uses a clean, decoupled client-server architecture. The frontend mobile c
 ### B. Hybrid Authentication Architecture
 - **Google OAuth 2.0:** Frontend requests Google identity with `GoogleSignIn(serverClientId: ...)` and sends `id_token` to `/api/v1/auth/google`.
 - **Backend Token Verification:** FastAPI verifies Google cryptographic signatures using Google's public certs, auto-provisions or links the user, and issues Priora access & refresh JWT tokens.
+- **Email Verification & Hashed OTP Code System (v1.1.3):**
+  - **Account Gating:** `POST /api/v1/auth/register` creates accounts with `is_email_verified = False` and issues **no JWT tokens**. Login attempts by unverified accounts are rejected with HTTP 403.
+  - **Hashed OTP Storage:** The database stores `otp_hash = sha256(f"{otp_code}:{settings.JWT_SECRET_KEY}".encode("utf-8"))`, never raw 6-digit codes.
+  - **Brute-Force & Flooding Defenses:** Limits validation attempts to 5 per OTP and enforces a 60-second cooldown on resends.
+  - **Transactional Email Dispatch:** Dual delivery pipeline via Resend REST API (`RESEND_API_KEY`) and SMTP TLS, with fallback to dev console logger.
+  - **Automated Lifecycle Maintenance:** Automated deletion of unverified abandoned registrations older than 24 hours, paired with zero-downtime startup migrations marking existing active users verified.
 - **Token Persistence:** Stored in `FlutterSecureStorage` with offline session restoration support.
 
 ### C. State Management Layer (`Riverpod`)

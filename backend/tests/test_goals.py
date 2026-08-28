@@ -5,25 +5,11 @@ import pytest
 from fastapi.testclient import TestClient
 
 
+from tests.conftest import create_auth_headers_with_user_id
+
+
 def _get_auth_context(client: TestClient, email: str = "goal_user@priora.app") -> tuple[dict[str, str], str]:
-    client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": email,
-            "password": "Password123!",
-            "full_name": "Goal Tester",
-        },
-    )
-    login_res = client.post(
-        "/api/v1/auth/login",
-        json={
-            "email": email,
-            "password": "Password123!",
-        },
-    )
-    token = login_res.json()["data"]["tokens"]["access_token"]
-    user_id = login_res.json()["data"]["user"]["id"]
-    return {"Authorization": f"Bearer {token}"}, user_id
+    return create_auth_headers_with_user_id(client, email=email, full_name="Goal Tester")
 
 
 def test_create_goal_with_milestones(client: TestClient):

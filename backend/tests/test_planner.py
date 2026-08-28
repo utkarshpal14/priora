@@ -5,26 +5,12 @@ import pytest
 from fastapi.testclient import TestClient
 
 
+from tests.conftest import create_auth_headers_with_user_id
+
+
 def _get_auth_context(client: TestClient, email: str = "planner_user@priora.app") -> tuple[dict[str, str], str]:
     """Helper to register and login a user, returning auth Bearer headers and user_id."""
-    client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": email,
-            "password": "Password123!",
-            "full_name": "Planner Tester",
-        },
-    )
-    login_res = client.post(
-        "/api/v1/auth/login",
-        json={
-            "email": email,
-            "password": "Password123!",
-        },
-    )
-    token = login_res.json()["data"]["tokens"]["access_token"]
-    user_id = login_res.json()["data"]["user"]["id"]
-    return {"Authorization": f"Bearer {token}"}, user_id
+    return create_auth_headers_with_user_id(client, email=email, full_name="Planner Tester")
 
 
 def test_get_daily_plan_empty(client: TestClient):

@@ -7,6 +7,7 @@ import '../features/auth/domain/auth_state.dart';
 import '../features/auth/presentation/controllers/auth_controller.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
+import '../features/auth/presentation/screens/verify_email_screen.dart';
 import '../features/dashboard/presentation/screens/placeholder_screen.dart';
 import '../features/goals/presentation/screens/goal_detail_screen.dart';
 import '../features/goals/presentation/screens/goals_screen.dart';
@@ -45,14 +46,14 @@ class RouterNotifier extends ChangeNotifier {
     }
 
     final isAuthenticated = authState.isAuthenticated;
-    final isPublicRoute = location == '/login' || location == '/register';
+    final isPublicRoute = location == '/login' || location == '/register' || location == '/verify-email';
 
     // 1. Unauthenticated users trying to access protected routes go to /login
     if (!isAuthenticated && !isPublicRoute) {
       return '/login';
     }
 
-    // 2. Authenticated users on /login, /register, or / go to /planner
+    // 2. Authenticated users on /login, /register, /verify-email, or / go to /planner
     if (isAuthenticated && (isPublicRoute || location == '/')) {
       return '/planner';
     }
@@ -91,6 +92,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/register',
         name: 'register',
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/verify-email',
+        name: 'verify_email',
+        builder: (context, state) {
+          final email = state.uri.queryParameters['email'] ?? '';
+          return VerifyEmailScreen(email: email);
+        },
       ),
 
       // Goal Detail Screen

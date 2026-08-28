@@ -4,6 +4,7 @@ from app.models.category import Category
 from app.models.device_token import DeviceToken
 from app.models.goal import Goal, GoalMilestone
 from app.models.notification_log import NotificationLog
+from app.models.otp_verification import OtpVerification
 from app.models.reminder import Reminder
 from app.models.task import Task
 from app.models.task_session import TaskSession
@@ -18,6 +19,7 @@ __all__ = [
     "Goal",
     "GoalMilestone",
     "NotificationLog",
+    "OtpVerification",
     "Reminder",
     "Task",
     "TaskSession",

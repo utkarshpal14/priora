@@ -9,19 +9,11 @@ from app.models.task import Task
 from app.models.user import User
 
 
+from tests.conftest import create_auth_headers_with_user_id
+
+
 def _get_auth_context(client: TestClient, email: str = "attachments_user@priora.app"):
-    client.post(
-        "/api/v1/auth/register",
-        json={"email": email, "password": "Password123!", "full_name": "Resource Tester"},
-    )
-    res = client.post(
-        "/api/v1/auth/login",
-        json={"email": email, "password": "Password123!"},
-    )
-    token = res.json()["data"]["tokens"]["access_token"]
-    user_id = res.json()["data"]["user"]["id"]
-    headers = {"Authorization": f"Bearer {token}"}
-    return headers, user_id
+    return create_auth_headers_with_user_id(client, email=email, full_name="Resource Tester")
 
 
 def _create_sample_image_bytes(width: int = 100, height: int = 100, format_name: str = "PNG") -> bytes:

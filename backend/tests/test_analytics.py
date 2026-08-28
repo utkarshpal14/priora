@@ -10,15 +10,12 @@ from app.schemas.goal import GoalStatus
 from app.schemas.task import TaskPriority, TaskStatus
 
 
+from tests.conftest import create_auth_headers_with_user_id
+
+
 def _get_auth_data(client: TestClient, email: str) -> tuple[dict[str, str], uuid.UUID]:
-    response = client.post(
-        "/api/v1/auth/register",
-        json={"email": email, "password": "Password123!", "full_name": f"User {email}"},
-    )
-    res_data = response.json()["data"]
-    token = res_data["tokens"]["access_token"]
-    user_id = uuid.UUID(res_data["user"]["id"])
-    return {"Authorization": f"Bearer {token}"}, user_id
+    headers, user_id_str = create_auth_headers_with_user_id(client, email=email, full_name=f"User {email}")
+    return headers, uuid.UUID(user_id_str)
 
 
 def test_analytics_overview_and_streaks(client: TestClient, db_session: Session) -> None:

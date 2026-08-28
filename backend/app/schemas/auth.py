@@ -26,3 +26,24 @@ class TokenResponse(BaseModel):
 class AuthResponseData(BaseModel):
     user: UserRead
     tokens: TokenResponse
+
+
+class RegistrationResponseData(BaseModel):
+    email: EmailStr
+    is_email_verified: bool = False
+    message: str = "A 6-digit verification code has been sent to your email."
+
+
+class VerifyOtpRequest(BaseModel):
+    email: EmailStr
+    otp_code: str = Field(min_length=6, max_length=6, description="6-digit verification code")
+
+
+class ResendOtpRequest(BaseModel):
+    email: EmailStr
+
+
+class ResendOtpResponseData(BaseModel):
+    email: EmailStr
+    cooldown_seconds: int = 60
+    message: str = "A new verification code has been sent to your email."
