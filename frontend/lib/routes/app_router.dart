@@ -19,12 +19,60 @@ import '../shared/widgets/main_scaffold.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
+class RouterNotifier extends ChangeNotifier {
+  final Ref _ref;
+
+  RouterNotifier(this._ref) {
+    _ref.listen<AuthState>(
+      authControllerProvider,
+      (_, __) => notifyListeners(),
+    );
+  }
+
+  String? redirect(BuildContext context, GoRouterState state) {
+    final authState = _ref.read(authControllerProvider);
+    final location = state.uri.path;
+
+    // Splash screen handles its own navigation when warmup finishes
+    if (location == '/splash') {
+      return null;
+    }
+
+    final isAuthenticating = authState.status == AuthStatus.initial ||
+        authState.status == AuthStatus.authenticating;
+    if (isAuthenticating) {
+      return null;
+    }
+
+    final isAuthenticated = authState.isAuthenticated;
+    final isPublicRoute = location == '/login' || location == '/register';
+
+    // 1. Unauthenticated users trying to access protected routes go to /login
+    if (!isAuthenticated && !isPublicRoute) {
+      return '/login';
+    }
+
+    // 2. Authenticated users on /login, /register, or / go to /planner
+    if (isAuthenticated && (isPublicRoute || location == '/')) {
+      return '/planner';
+    }
+
+    return null;
+  }
+}
+
+final routerNotifierProvider = Provider<RouterNotifier>((ref) {
+  return RouterNotifier(ref);
+});
+
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authControllerProvider);
+  final notifier = ref.watch(routerNotifierProvider);
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
+    refreshListenable: notifier,
+    redirect: notifier.redirect,
     routes: [
       // Splash Route (UX-005 Cold-Start Warming)
       GoRoute(
@@ -116,33 +164,5 @@ final routerProvider = Provider<GoRouter>((ref) {
         ],
       ),
     ],
-    redirect: (BuildContext context, GoRouterState state) {
-      final location = state.uri.path;
-
-      // Allow splash screen to execute warming sequence unimpeded
-      if (location == '/splash') {
-        return null;
-      }
-
-      final isAuthenticating = authState.status == AuthStatus.initial;
-      if (isAuthenticating) {
-        return null;
-      }
-
-      final isAuthenticated = authState.isAuthenticated;
-      final isPublicRoute = location == '/login' || location == '/register';
-
-      // 1. Unauthenticated users trying to access protected routes go to /login
-      if (!isAuthenticated && !isPublicRoute) {
-        return '/login';
-      }
-
-      // 2. Authenticated users on /login, /register, or / go to /planner
-      if (isAuthenticated && (isPublicRoute || location == '/')) {
-        return '/planner';
-      }
-
-      return null;
-    },
   );
 });
