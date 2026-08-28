@@ -9,14 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.2] - 2026-08-28
 
-### Fixed
-- **GoRouter Dialog Auto-Dismissal:** Attached update modal to `rootNavigatorKey` with `useRootNavigator: true`, preventing GoRouter auth/route redirects from prematurely closing the update modal during startup.
-- **Dynamic Rocket Version Card:** Replaced hardcoded `'v1.0.0 (Build 100)'` in Settings with dynamic binding to `AppConstants.appVersion` / `AppUpdateService.currentInstalledVersion`.
-- **Manual In-App Update Trigger:** Unified the Settings Rocket card with an interactive **"Check for Updates"** button providing immediate visual status snackbars.
-- **Android 13+ Unknown Sources Permission Resume:** Auto-triggers the APK package installer when returning from Android's "Install unknown apps" settings toggle without requiring a re-download.
-
 ### Added
-- **Versioned APK Archive Engine:** Created automated `releases/vX.Y.Z/` folder structure with local APK binaries and catalog documentation.
+- **Google OAuth 2.0 Sign-In Integration:**
+  - Integrated one-tap Google authentication on Android and Web with `GoogleSignIn(serverClientId: ...)`.
+  - Backend `AuthService.authenticate_google` verifies Google ID tokens, auto-provisions or links user accounts, extracts profile photos, and issues standard Priora JWT tokens.
+- **Production Release Signing Key:**
+  - Generated official RSA 2048-bit `release-keystore.jks` with alias `priora-release`.
+  - Automated release APK signing via `frontend/android/key.properties` and Gradle Signature Scheme v2.
+- **Package Name Migration to `com.priora.app`:**
+  - Migrated namespace and application ID from `com.example.frontend` to `com.priora.app` across Android, iOS, macOS, Linux, and Windows.
+  - Standardized platform MethodChannels to `com.priora.app/system_settings`.
+- **Cold-Start Server Warming & Ambient Splash Screen (UX-005):**
+  - High-impact branded splash screen featuring gold/navy brand emblem with pulsing glowing halos.
+  - Animated 4-feature carousel highlighting Hourly Timeline, Priority Matrix, Custom Audio Chimes, and Daily Review.
+  - Live progress bar tracking Render cold-start waking pings against `/api/v1/health` with a 45s offline safety fallback.
+- **Versioned Release Archive Engine:**
+  - Established `releases/vX.Y.Z/` repository structure for version-by-version APK binary archiving and direct distribution.
+
+### Fixed
+- **Router Destruction on Auth State Transitions:**
+  - Refactored `GoRouter` in `frontend/lib/routes/app_router.dart` to use a dedicated `RouterNotifier` with `refreshListenable`.
+  - Prevents Riverpod from recreating `GoRouter` and resetting to `/splash` during authentication, ensuring instant, smooth transitions from login straight into `/planner`.
+- **GoRouter Dialog Auto-Dismissal:**
+  - Attached in-app update modal to `rootNavigatorKey` with `useRootNavigator: true`, preventing route changes from prematurely closing the updater.
+- **Dynamic Settings Version Badge:**
+  - Replaced static version text with dynamic binding to `AppConstants.appVersion` (`v1.1.2`) and `AppUpdateService.currentInstalledVersion`.
+- **Manual In-App Update Trigger:**
+  - Added interactive **"Check for Updates"** button on the Settings Rocket card providing immediate status feedback.
+- **Android 13+ Unknown Sources Permission Resume:**
+  - Automatically triggers the APK installer when returning from Android's "Install unknown apps" permission toggle.
 
 ---
 

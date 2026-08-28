@@ -21,8 +21,8 @@ releases/
 
 | Version | Build | APK File | Size | Key Highlights |
 | :--- | :---: | :--- | :---: | :--- |
-| **`v1.1.2`** | `+3` | [`releases/v1.1.2/priora-v1.1.2-release.apk`](v1.1.2/priora-v1.1.2-release.apk) | ~64.4 MB | • Fixed route transitions auto-dismissing update dialog (`rootNavigatorKey`)<br>• Added **"Check for Updates"** button in Settings Screen<br>• Enhanced Android 13+ permission resume lifecycle |
-| **`v1.1.0`** | `+2` | [`releases/v1.1.0/priora-v1.1.0-release.apk`](v1.1.0/priora-v1.1.0-release.apk) | ~64.4 MB | • 6 Custom reminder audio chimes<br>• In-App OTA APK updater engine<br>• Global theme synchronization |
+| **`v1.1.2`** | `+3` | [`releases/v1.1.2/priora-v1.1.2-release.apk`](v1.1.2/priora-v1.1.2-release.apk) | 67.98 MB | • **Google OAuth 2.0 Sign-In** with backend verification<br>• Migrated package identifier to **`com.priora.app`**<br>• Production release keystore signing (`release-keystore.jks`)<br>• `RouterNotifier` fix: smooth auth navigation into `/planner`<br>• Rich ambient cold-start warming splash screen (UX-005)<br>• In-App OTA Updater with **"Check for Updates"** button in Settings |
+| **`v1.1.0`** | `+2` | [`releases/v1.1.0/priora-v1.1.0-release.apk`](v1.1.0/priora-v1.1.0-release.apk) | 64.4 MB | • 6 Custom reminder audio chimes<br>• In-App OTA APK updater engine<br>• Global theme synchronization |
 
 ---
 

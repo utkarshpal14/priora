@@ -38,6 +38,11 @@ Priora is an intelligent, full-stack productivity platform built to help users s
   - 📝 **Quick Notes:** In-app markdown revision notes with copy actions.
 - **Tags & Pinning:** Tag organization (`#DSA`, `#OS`, `#Placement`) and resource pinning to top of lists.
 
+### 🔐 Hybrid Authentication & Google OAuth 2.0
+- **Google One-Tap Sign-In:** Direct Google identity authentication on Android & Web with Priora JWT issuance.
+- **Email & Password Authentication:** Secure registration and login with bcrypt hashing and JWT token expiration.
+- **Offline Session Caching:** Secure token storage for instant offline workspace loading.
+
 ---
 
 ## 🛠️ Technology Stack
@@ -46,11 +51,11 @@ Priora is an intelligent, full-stack productivity platform built to help users s
 |---|---|
 | **Backend Framework** | [FastAPI](https://fastapi.tiangolo.com/) (Python 3.13) |
 | **Database & ORM** | [PostgreSQL](https://www.postgresql.org/) / [Supabase](https://supabase.com/) with [SQLAlchemy 2.0](https://www.sqlalchemy.org/) |
-| **Authentication** | OAuth2 Password Bearer with JWT (HS256) & Bcrypt password hashing |
-| **Frontend Framework** | [Flutter](https://flutter.dev/) (Cross-Platform: Web, Desktop, Mobile) |
-| **State Management** | [Flutter Riverpod](https://riverpod.dev/) (StateNotifier & Family Controllers) |
-| **Routing** | [GoRouter](https://pub.dev/packages/go_router) with Auth Guard Protection |
-| **Notifications** | Local Notifications (`flutter_local_notifications`) & FCM |
+| **Authentication** | OAuth2 Bearer (Priora JWT) + Google OAuth 2.0 Token Verification |
+| **Frontend Framework** | [Flutter](https://flutter.dev/) (Android: `com.priora.app`, Web, Desktop) |
+| **State Management** | [Flutter Riverpod](https://riverpod.dev/) (StateNotifier & Listenable Notifiers) |
+| **Routing** | [GoRouter](https://pub.dev/packages/go_router) with `RouterNotifier` & Auth Guards |
+| **Notifications** | Local Notifications (`flutter_local_notifications`), Custom Sound Chimes & Exact Alarms |
 
 ---
 
@@ -67,8 +72,8 @@ Priora is an intelligent, full-stack productivity platform built to help users s
 - [x] **Milestone 8** — [Attachments & Multi-Entity Resources](file:///docs/milestones/M8_Attachments.md)
 - [x] **Milestone 9** — [Analytics & Productivity Reports](file:///docs/milestones/M9_Analytics.md)
 - [x] **Milestone 10** — [UI Polish, Dark Mode Themes & Settings](file:///docs/milestones/M10_UI_Polish_and_Themes.md)
-- [ ] **Milestone 11** — [End-to-End Integration Testing & Cloud Push Engine](file:///docs/milestones/M11_Integration_Testing_and_Notifications.md)
-- [ ] **Milestone 12** — Production Release & Deployment
+- [x] **Milestone 11** — [End-to-End Integration Testing & Cloud Push Engine](file:///docs/milestones/M11_Integration_Testing_and_Notifications.md)
+- [x] **Milestone 12** — Production Release & Deployment (`v1.1.2`)
 
 ---
 
@@ -83,12 +88,8 @@ Priora is an intelligent, full-stack productivity platform built to help users s
 - 🗺️ **Product Roadmap**: [`docs/ROADMAP.md`](docs/ROADMAP.md)
 - 🔮 **Future Vision & Backlog**: [`docs/FUTURE_VISION.md`](docs/FUTURE_VISION.md)
 - 📜 **Changelog**: [`docs/CHANGELOG.md`](docs/CHANGELOG.md)
-
-### Release Specifics
-- 📦 **v1.0.0 Release Notes**: [`docs/v1.0.0/RELEASE_NOTES_V1.0.0.md`](docs/v1.0.0/RELEASE_NOTES_V1.0.0.md)
-- 📋 **v1.0.0 Product Requirements**: [`docs/v1.0.0/PRODUCT_REQUIREMENTS.md`](docs/v1.0.0/PRODUCT_REQUIREMENTS.md)
-- 🧪 **v1.0.0 Test Report & Matrix**: [`docs/v1.0.0/TEST_REPORT_V1.md`](docs/v1.0.0/TEST_REPORT_V1.md)
-- 🏛️ **Historical Milestone Specs**: [`docs/archive/milestones/`](docs/archive/milestones/)
+- 🚀 **Release Workflow SOP**: [`docs/RELEASE_WORKFLOW.md`](docs/RELEASE_WORKFLOW.md)
+- 📦 **Release APK Catalog**: [`releases/README.md`](releases/README.md)
 
 ---
 
@@ -139,11 +140,11 @@ Priora maintains comprehensive test suites for both backend and frontend.
 cd backend
 .venv\Scripts\pytest.exe
 ```
-> **Result:** 52 / 52 Passed (100% Pass Rate)
+> **Result:** 65 / 65 Passed (100% Pass Rate)
 
 ### Running Frontend Flutter Tests
 ```bash
 cd frontend
 flutter test
 ```
-> **Result:** 31 / 31 Passed (100% Pass Rate)
+> **Result:** 52 / 52 Passed (100% Pass Rate)
