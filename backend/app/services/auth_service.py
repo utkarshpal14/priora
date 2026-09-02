@@ -304,63 +304,77 @@ class AuthService:
         )
 
     def authenticate_google(self, db: Session, token: str) -> AuthResponseData:
-        """Verify Google ID token and return user session."""
+        """Verify Google ID token or OAuth2 Access token and return user session."""
+        email = None
+        name = None
+        picture = None
+
+        # 1. First attempt: Verify as Google ID Token (JWT for Android/iOS/GIS)
         try:
             request = google_requests.Request()
             audience = settings.GOOGLE_CLIENT_ID if settings.GOOGLE_CLIENT_ID else None
             id_info = google_id_token.verify_oauth2_token(token, request, audience)
-
             email = id_info.get("email")
-            if not email:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Google token missing email claim.",
-                )
-
             name = id_info.get("name")
             picture = id_info.get("picture")
-
-            user = user_repository.get_by_email(db, email)
-            if not user:
-                new_user = User(
-                    email=email,
-                    hashed_password=None,
-                    full_name=name,
-                    avatar_url=picture,
-                    auth_provider="google",
-                    is_email_verified=True,  # Google accounts are pre-verified
-                    is_active=True,
+        except Exception:
+            # 2. Second attempt: Verify as Google OAuth2 Access Token (Web popup token)
+            try:
+                import requests as http_requests
+                userinfo_res = http_requests.get(
+                    "https://www.googleapis.com/oauth2/v3/userinfo",
+                    headers={"Authorization": f"Bearer {token}"},
+                    timeout=10,
                 )
-                user = user_repository.create(db, new_user)
-            else:
-                update_data = {}
-                if name and not user.full_name:
-                    update_data["full_name"] = name
-                if picture and not user.avatar_url:
-                    update_data["avatar_url"] = picture
-                if not user.is_email_verified:
-                    update_data["is_email_verified"] = True
-                if update_data:
-                    user = user_repository.update(db, user, update_data)
+                if userinfo_res.status_code == 200:
+                    user_data = userinfo_res.json()
+                    email = user_data.get("email")
+                    name = user_data.get("name")
+                    picture = user_data.get("picture")
+            except Exception as ex:
+                import logging
+                logging.getLogger("uvicorn.error").warning(f"Google access token verification failed: {ex}")
 
-            if not user.is_active:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="This user account has been deactivated.",
-                )
-
-            tokens = self._generate_tokens(user)
-            return AuthResponseData(
-                user=UserRead.model_validate(user),
-                tokens=tokens,
-            )
-        except HTTPException:
-            raise
-        except Exception as e:
+        if not email:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"Invalid Google ID token: {e!s}",
-            ) from e
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid Google token or missing email claim.",
+            )
+
+        user = user_repository.get_by_email(db, email)
+        if not user:
+            new_user = User(
+                email=email,
+                hashed_password=None,
+                full_name=name,
+                avatar_url=picture,
+                auth_provider="google",
+                is_email_verified=True,  # Google accounts are pre-verified
+                is_active=True,
+            )
+            user = user_repository.create(db, new_user)
+        else:
+            update_data = {}
+            if name and not user.full_name:
+                update_data["full_name"] = name
+            if picture and not user.avatar_url:
+                update_data["avatar_url"] = picture
+            if not user.is_email_verified:
+                update_data["is_email_verified"] = True
+            if update_data:
+                user = user_repository.update(db, user, update_data)
+
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This user account has been deactivated.",
+            )
+
+        tokens = self._generate_tokens(user)
+        return AuthResponseData(
+            user=UserRead.model_validate(user),
+            tokens=tokens,
+        )
 
     def refresh_token(self, db: Session, refresh_token: str) -> TokenResponse:
         """Validate a refresh token and issue new token pair."""

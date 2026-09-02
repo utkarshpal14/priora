@@ -23,11 +23,15 @@ class AuthController extends StateNotifier<AuthState> {
     GoogleSignIn? googleSignIn,
   })  : _googleSignIn = googleSignIn ??
             GoogleSignIn(
-              scopes: ['email', 'profile'],
+              clientId: (dotenv.isInitialized &&
+                      (dotenv.maybeGet('GOOGLE_WEB_CLIENT_ID')?.isNotEmpty ?? false))
+                  ? dotenv.maybeGet('GOOGLE_WEB_CLIENT_ID')
+                  : AppConstants.googleWebClientId,
               serverClientId: (dotenv.isInitialized &&
                       (dotenv.maybeGet('GOOGLE_WEB_CLIENT_ID')?.isNotEmpty ?? false))
                   ? dotenv.maybeGet('GOOGLE_WEB_CLIENT_ID')
                   : AppConstants.googleWebClientId,
+              scopes: ['email', 'profile'],
             ),
         super(AuthState.initial());
 
@@ -202,14 +206,16 @@ class AuthController extends StateNotifier<AuthState> {
       }
 
       final auth = await account.authentication;
-      final idToken = auth.idToken;
+      final token = (auth.idToken != null && auth.idToken!.isNotEmpty)
+          ? auth.idToken
+          : auth.accessToken;
 
-      if (idToken == null || idToken.isEmpty) {
-        state = AuthState.error('Could not retrieve Google ID Token.');
+      if (token == null || token.isEmpty) {
+        state = AuthState.error('Could not retrieve Google authentication token.');
         return false;
       }
 
-      final user = await _repository.loginWithGoogle(idToken);
+      final user = await _repository.loginWithGoogle(token);
       state = AuthState.authenticated(user);
       return true;
     } on DioException catch (e) {
