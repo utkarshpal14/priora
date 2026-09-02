@@ -78,10 +78,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware supporting dynamic Flutter Web ports
+# CORS middleware supporting dynamic Flutter Web ports and production web deployments
+cors_origins = settings.CORS_ORIGINS if isinstance(settings.CORS_ORIGINS, list) else [settings.CORS_ORIGINS]
+is_wildcard = "*" in cors_origins
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
+    allow_origins=[] if is_wildcard else cors_origins,
+    allow_origin_regex=r"^https?://.*$" if is_wildcard else r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

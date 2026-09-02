@@ -3,8 +3,14 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiEndpoints {
+  static const String _compileTimeUrl = String.fromEnvironment('API_BASE_URL');
+
   static String get baseUrl {
-    final rawUrl = dotenv.env['API_BASE_URL'] ?? 'http://localhost:8000/api/v1';
+    if (_compileTimeUrl.isNotEmpty) {
+      return _compileTimeUrl;
+    }
+
+    final rawUrl = dotenv.env['API_BASE_URL'] ?? 'https://priora-api.onrender.com/api/v1';
 
     // Android emulator cannot reach host PC via "localhost".
     // 10.0.2.2 is the special alias to host loopback interface on Android emulators.
