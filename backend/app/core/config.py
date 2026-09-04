@@ -54,10 +54,10 @@ class Settings(BaseSettings):
     SUPABASE_JWT_SECRET: str = ""
 
     # In-App Update Management (ENH-006 / TS-008)
-    LATEST_APP_VERSION: str = "1.1.3"
+    LATEST_APP_VERSION: str = "1.1.4"
     MIN_SUPPORTED_APP_VERSION: str = "1.0.0"
-    APK_DOWNLOAD_URL: str = "https://github.com/utkarshpal14/priora/releases/download/v1.1.3/priora-v1.1.3-release.apk"
-    APP_RELEASE_NOTES: str = "• Forgot Password & Password Reset with 6-digit OTP\n• Email Verification with Hashed 6-Digit OTP\n• Global JWT Session Invalidation on Password Reset\n• Verified transactional email delivery via verify@priorapp.co.in\n• Google OAuth 2.0 Sign-In\n• Official com.priora.app package with production signing"
+    APK_DOWNLOAD_URL: str = "https://github.com/utkarshpal14/priora/releases/download/v1.1.4/priora-v1.1.4-release.apk"
+    APP_RELEASE_NOTES: str = "• Fix recurring tasks reminder rescheduling on next occurrence\n• Full reminder cloning across daily/weekly/monthly routines\n• Reliable native Android high-priority alarm notification dispatch"
     FORCE_APP_UPDATE: bool = False
 
     model_config = SettingsConfigDict(

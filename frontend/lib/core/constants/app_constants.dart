@@ -1,7 +1,7 @@
 class AppConstants {
   static const String appName = 'Priora';
   static const String appTagline = 'Plan. Prioritize. Progress.';
-  static const String appVersion = '1.1.3';
+  static const String appVersion = '1.1.4';
   static const String googleWebClientId = '651097112936-6dt4gcdl586kor8iqsscj868an9upo87.apps.googleusercontent.com';
 
   // Animation durations (Document 07 & 08: 200-300ms)

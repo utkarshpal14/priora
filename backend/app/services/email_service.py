@@ -192,7 +192,7 @@ class EmailService:
             headers = {
                 "api-key": settings.BREVO_API_KEY,
                 "Content-Type": "application/json",
-                "User-Agent": "Priora-App/1.1.3 (https://priora.app)",
+                "User-Agent": "Priora-App/1.1.4 (https://priora.app)",
             }
             payload = {
                 "sender": {
@@ -231,7 +231,7 @@ class EmailService:
             headers = {
                 "Authorization": f"Bearer {settings.RESEND_API_KEY}",
                 "Content-Type": "application/json",
-                "User-Agent": "Priora-App/1.1.3 (https://priora.app)",
+                "User-Agent": "Priora-App/1.1.4 (https://priora.app)",
             }
             payload = {
                 "from": f"{settings.EMAILS_FROM_NAME} <{settings.EMAILS_FROM_EMAIL}>",
