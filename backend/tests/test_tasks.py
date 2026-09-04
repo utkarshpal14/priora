@@ -360,4 +360,174 @@ def test_recurring_task_respects_repeat_end_date(client: TestClient):
     assert len(pending_tasks) == 0
 
 
+def test_recurring_task_clones_active_reminders_on_completion(client: TestClient):
+    headers = _get_auth_headers(client, "user_recur_rem1@priora.app")
+
+    # 1. Create daily recurring task with deadline in 4 hours
+    now = datetime.now(UTC)
+    deadline = now + timedelta(hours=4)
+    create_res = client.post(
+        "/api/v1/tasks",
+        headers=headers,
+        json={
+            "title": "Daily Standup Notes",
+            "priority": "HIGH",
+            "deadline": deadline.isoformat(),
+            "repeat_type": "daily",
+            "repeat_interval": 1,
+        },
+    )
+    assert create_res.status_code == 201
+    task_id = create_res.json()["data"]["id"]
+
+    # 2. Add a reminder 30 minutes before deadline
+    remind_at = deadline - timedelta(minutes=30)
+    rem_res = client.post(
+        "/api/v1/reminders",
+        headers=headers,
+        json={
+            "task_id": task_id,
+            "remind_at": remind_at.isoformat(),
+            "notification_id": 1001,
+        },
+    )
+    assert rem_res.status_code == 201
+    assert rem_res.json()["data"]["status"] == "SCHEDULED"
+
+    # 3. Complete the task
+    complete_res = client.patch(f"/api/v1/tasks/{task_id}/complete", headers=headers)
+    assert complete_res.status_code == 200
+
+    # 4. Verify original task's reminder was cancelled
+    old_task_res = client.get(f"/api/v1/tasks/{task_id}", headers=headers)
+    assert old_task_res.status_code == 200
+    old_task_data = old_task_res.json()["data"]
+    assert old_task_data["status"] == "COMPLETED"
+    assert len(old_task_data["reminders"]) == 1
+    assert old_task_data["reminders"][0]["status"] == "CANCELLED"
+    assert old_task_data["has_active_reminder"] is False
+
+    # 5. Verify next occurrence was generated with a cloned active reminder
+    list_res = client.get("/api/v1/tasks", headers=headers)
+    all_tasks = list_res.json()["data"]["tasks"]
+    pending_tasks = [t for t in all_tasks if t["status"] == "PENDING" and t["title"] == "Daily Standup Notes"]
+    assert len(pending_tasks) == 1
+
+    next_task = pending_tasks[0]
+    assert next_task["id"] != task_id
+    assert next_task["repeat_type"] == "daily"
+    assert next_task["has_active_reminder"] is True
+    assert len(next_task["reminders"]) == 1
+
+    next_rem = next_task["reminders"][0]
+    assert next_rem["status"] == "SCHEDULED"
+
+    # Verify time difference: exactly 1 day after original reminder
+    orig_rem_dt = datetime.fromisoformat(remind_at.isoformat().replace("Z", "+00:00"))
+    next_rem_dt = datetime.fromisoformat(next_rem["remind_at"].replace("Z", "+00:00"))
+    assert round((next_rem_dt - orig_rem_dt).total_seconds()) == 86400
+
+    # Verify offset relative to next deadline is preserved (30 minutes before next deadline)
+    next_dl_dt = datetime.fromisoformat(next_task["deadline"].replace("Z", "+00:00"))
+    assert round((next_dl_dt - next_rem_dt).total_seconds()) == 1800
+
+
+def test_recurring_task_clones_reminders_when_previous_reminder_was_sent(client: TestClient):
+    headers = _get_auth_headers(client, "user_recur_sent@priora.app")
+
+    # 1. Create daily recurring task
+    now = datetime.now(UTC)
+    deadline = now + timedelta(hours=3)
+    create_res = client.post(
+        "/api/v1/tasks",
+        headers=headers,
+        json={
+            "title": "Evening Review & Reflection",
+            "priority": "MEDIUM",
+            "deadline": deadline.isoformat(),
+            "repeat_type": "daily",
+            "repeat_interval": 1,
+        },
+    )
+    task_id = create_res.json()["data"]["id"]
+
+    # 2. Add reminder 15m before deadline
+    remind_at = deadline - timedelta(minutes=15)
+    rem_res = client.post(
+        "/api/v1/reminders",
+        headers=headers,
+        json={
+            "task_id": task_id,
+            "remind_at": remind_at.isoformat(),
+        },
+    )
+    rem_id = rem_res.json()["data"]["id"]
+
+    # 3. Simulate notification delivery: reminder marked as SENT
+    put_res = client.put(
+        f"/api/v1/reminders/{rem_id}",
+        headers=headers,
+        json={"status": "SENT"},
+    )
+    assert put_res.status_code == 200
+    assert put_res.json()["data"]["status"] == "SENT"
+
+    # 4. User completes task after reminder fired
+    complete_res = client.patch(f"/api/v1/tasks/{task_id}/complete", headers=headers)
+    assert complete_res.status_code == 200
+
+    # 5. Verify next occurrence still inherited the reminder
+    list_res = client.get("/api/v1/tasks", headers=headers)
+    pending_tasks = [t for t in list_res.json()["data"]["tasks"] if t["status"] == "PENDING" and t["title"] == "Evening Review & Reflection"]
+    assert len(pending_tasks) == 1
+    next_task = pending_tasks[0]
+    assert next_task["has_active_reminder"] is True
+    assert len(next_task["reminders"]) == 1
+    assert next_task["reminders"][0]["status"] == "SCHEDULED"
+
+
+def test_recurring_task_clones_custom_1min_reminder(client: TestClient):
+    headers = _get_auth_headers(client, "user_recur_1min@priora.app")
+
+    # 1. Create task with 1-minute reminder
+    now = datetime.now(UTC)
+    deadline = now + timedelta(hours=2)
+    create_res = client.post(
+        "/api/v1/tasks",
+        headers=headers,
+        json={
+            "title": "Quick Medication",
+            "priority": "CRITICAL",
+            "deadline": deadline.isoformat(),
+            "repeat_type": "daily",
+            "repeat_interval": 1,
+        },
+    )
+    task_id = create_res.json()["data"]["id"]
+
+    remind_at = deadline - timedelta(minutes=1)
+    client.post(
+        "/api/v1/reminders",
+        headers=headers,
+        json={
+            "task_id": task_id,
+            "remind_at": remind_at.isoformat(),
+        },
+    )
+
+    # 2. Complete task
+    client.patch(f"/api/v1/tasks/{task_id}/complete", headers=headers)
+
+    # 3. Verify next occurrence has reminder 1 minute before next deadline
+    list_res = client.get("/api/v1/tasks", headers=headers)
+    pending_tasks = [t for t in list_res.json()["data"]["tasks"] if t["status"] == "PENDING" and t["title"] == "Quick Medication"]
+    assert len(pending_tasks) == 1
+    next_task = pending_tasks[0]
+    assert len(next_task["reminders"]) == 1
+    next_dl = datetime.fromisoformat(next_task["deadline"].replace("Z", "+00:00"))
+    next_rem = datetime.fromisoformat(next_task["reminders"][0]["remind_at"].replace("Z", "+00:00"))
+    assert round((next_dl - next_rem).total_seconds()) == 60
+
+
+
 
