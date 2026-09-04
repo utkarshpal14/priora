@@ -615,6 +615,48 @@ void main() {
     expect(find.text('Daily'), findsOneWidget);
     expect(find.text('Daily Code Review'), findsOneWidget);
   });
+
+  testWidgets('TaskCard displays both recurring badge and active reminder bell icon for recurring task with reminder', (WidgetTester tester) async {
+    final task = TaskModel(
+      id: 'task-recur-rem-1',
+      userId: 'user-1',
+      title: 'Daily Standup Call',
+      priority: TaskPriority.critical,
+      status: TaskStatus.pending,
+      repeatType: 'daily',
+      repeatInterval: 1,
+      reminders: [
+        ReminderModel(
+          id: 'rem-rec-1',
+          taskId: 'task-recur-rem-1',
+          notificationId: 54321,
+          remindAt: DateTime.now().add(const Duration(hours: 24)),
+          status: 'SCHEDULED',
+        ),
+      ],
+    );
+
+    expect(task.isRecurring, isTrue);
+    expect(task.hasActiveReminder, isTrue);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: TaskCard(
+            task: task,
+            onToggleComplete: (_) {},
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Verify both recurring and reminder indicators are shown
+    expect(find.byIcon(Icons.repeat_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.notifications_active_rounded), findsOneWidget);
+    expect(find.text('Daily'), findsOneWidget);
+    expect(find.text('Daily Standup Call'), findsOneWidget);
+  });
 }
 
 

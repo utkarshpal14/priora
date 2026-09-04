@@ -82,26 +82,27 @@ class TasksController extends StateNotifier<TasksState> {
     try {
       final now = DateTime.now();
       for (final task in tasks) {
-        // 1. Sync active reminders (BUG-006)
-        if (task.reminders != null) {
-          for (final rem in task.reminders!) {
-            if (rem.remindAt.isAfter(now)) {
-              await _notificationService.scheduleNotification(
-                notificationId: rem.notificationId ?? rem.id.hashCode,
-                title: '⏰ Reminder: ${task.title}',
-                body: task.deadline != null
-                    ? 'Deadline approaching: ${task.formattedDeadline}'
-                    : 'Task reminder: ${task.title}',
-                scheduledDate: rem.remindAt,
-              );
-            }
+        if (task.isCompleted || task.status == TaskStatus.cancelled) {
+          continue;
+        }
+
+        // 1. Sync active reminders (BUG-006, ENH-006)
+        for (final rem in task.reminders) {
+          if (rem.isScheduled && rem.remindAt.isAfter(now)) {
+            final notifId = rem.notificationId ?? (rem.id.hashCode.abs() % 100000);
+            await _notificationService.scheduleNotification(
+              notificationId: notifId,
+              title: '⏰ Reminder: ${task.title}',
+              body: task.deadline != null
+                  ? 'Deadline approaching: ${task.formattedDeadline}'
+                  : 'Task reminder: ${task.title}',
+              scheduledDate: rem.remindAt,
+            );
           }
         }
 
         // 2. Sync upcoming overdue deadline notification (BUG-007)
-        if (task.deadline != null &&
-            task.status != TaskStatus.completed &&
-            task.status != TaskStatus.cancelled) {
+        if (task.deadline != null) {
           if (task.deadline!.isAfter(now)) {
             final overdueNotifId = (task.id.hashCode + 9999).abs() % 100000;
             await _notificationService.scheduleNotification(
@@ -334,6 +335,11 @@ class TasksController extends StateNotifier<TasksState> {
       );
       final finalTasks = state.tasks.map((t) => t.id == taskId ? updated : t).toList();
       state = state.copyWith(tasks: finalTasks);
+      if (status == TaskStatus.completed && updated.isRecurring) {
+        await refreshTasks();
+      } else {
+        _syncLocalNotifications(finalTasks);
+      }
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -380,8 +386,7 @@ class TasksController extends StateNotifier<TasksState> {
     // Auto-Cancel Rule: Clear local notifications when task is completed
     if (willComplete) {
       final notifIds = task.reminders
-          .map((r) => r.notificationId)
-          .whereType<int>()
+          .map((r) => r.notificationId ?? (r.id.hashCode.abs() % 100000))
           .toList();
       if (notifIds.isNotEmpty) {
         _notificationService.cancelTaskNotifications(notifIds);
@@ -433,8 +438,7 @@ class TasksController extends StateNotifier<TasksState> {
 
     // Auto-Cancel Rule: Clear local alarms when task is deleted
     final notifIds = targetTask.reminders
-        .map((r) => r.notificationId)
-        .whereType<int>()
+        .map((r) => r.notificationId ?? (r.id.hashCode.abs() % 100000))
         .toList();
     if (notifIds.isNotEmpty) {
       _notificationService.cancelTaskNotifications(notifIds);
